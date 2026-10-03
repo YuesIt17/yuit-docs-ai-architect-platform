@@ -1,0 +1,22 @@
+[
+  {
+    "doc_id": "reg-consumer-001",
+    "title": "Consumer Protection — Labeling Essentials (sample RusLawOD-style)",
+    "corpus": "regulatory",
+    "classification": "public",
+    "allowed_roles": ["guest", "store_associate", "category_manager", "compliance_officer"],
+    "text": "Sample regulatory abstract for retail: food labels must indicate composition and allergens in a clear manner. Retailers are responsible for accurate on-shelf information derived from manufacturer labeling. Source corpus: RusLawOD-style NPA excerpt for demo (not official consolidation).",
+    "entities": [{"name": "allergen labeling", "type": "term"}],
+    "topics": ["consumer", "labeling"]
+  },
+  {
+    "doc_id": "reg-pdn-002",
+    "title": "Personal Data in Retail Loyalty — Sample Act Abstract",
+    "corpus": "regulatory",
+    "classification": "internal",
+    "allowed_roles": ["category_manager", "compliance_officer"],
+    "text": "Sample regulatory guidance for retail loyalty programs: personal data processing requires lawful basis, minimization, and security measures. Knowledge assistants must not echo raw customer identifiers in answers.",
+    "entities": [{"name": "personal data", "type": "term"}],
+    "topics": ["privacy", "loyalty"]
+  }
+]

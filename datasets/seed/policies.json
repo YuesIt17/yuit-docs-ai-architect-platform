@@ -1,0 +1,42 @@
+[
+  {
+    "doc_id": "pol-allergen-001",
+    "title": "Allergen Shelf Labeling Policy",
+    "corpus": "policy",
+    "classification": "internal",
+    "allowed_roles": ["store_associate", "category_manager", "compliance_officer"],
+    "text": "RetailPartnerX policy: products containing gluten, nuts, milk, eggs, soy, peanuts must show allergen icons on shelf labels. Staff must verify OCR label extracts against Product KB before planogram updates. Customer-facing apps may only show public allergen facts.",
+    "entities": [{"name": "gluten", "type": "allergen"}, {"name": "nuts", "type": "allergen"}, {"name": "milk", "type": "allergen"}],
+    "topics": ["allergens", "labeling"]
+  },
+  {
+    "doc_id": "pol-age-002",
+    "title": "Age-Restricted Products Policy",
+    "corpus": "policy",
+    "classification": "internal",
+    "allowed_roles": ["store_associate", "category_manager", "compliance_officer"],
+    "text": "Products 18+ (alcohol, tobacco alternatives) require age verification. Shopping assistant must not recommend 18+ items to minors. Policy version v1.",
+    "entities": [],
+    "topics": ["age_gate", "compliance"]
+  },
+  {
+    "doc_id": "pol-secret-promo-001",
+    "title": "Q4 Closed Promo Margin Playbook",
+    "corpus": "policy",
+    "classification": "secret",
+    "allowed_roles": ["compliance_officer"],
+    "text": "SECRET: PrivateLabelX Q4 promo target margin 42%. Do not disclose to store associates or category managers. Internal transfer price floor 1.12 EUR. Channel: backoffice only.",
+    "entities": [{"name": "PrivateLabelX", "type": "brand"}],
+    "topics": ["promo", "margin"]
+  },
+  {
+    "doc_id": "pol-privacy-003",
+    "title": "Customer Privacy Guidelines (Retail)",
+    "corpus": "policy",
+    "classification": "internal",
+    "allowed_roles": ["store_associate", "category_manager", "compliance_officer"],
+    "text": "RetailPartnerX privacy guidelines: minimize PII in prompts and traces. Loyalty IDs must be tokenized before LLM calls. Aligns with GDPR and local privacy requirements for retail operations.",
+    "entities": [],
+    "topics": ["privacy", "pii"]
+  }
+]

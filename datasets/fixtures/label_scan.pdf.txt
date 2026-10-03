@@ -1,0 +1,7 @@
+%PDF-TEXT-FIXTURE
+Brand: FreshFarm
+Barcode: 4609876543210
+Ingredients: oats, honey, almonds, salt
+Contains allergens: gluten, nuts
+Net weight: 400g
+Note: scanned PDF without text layer — OCR path demo fixture

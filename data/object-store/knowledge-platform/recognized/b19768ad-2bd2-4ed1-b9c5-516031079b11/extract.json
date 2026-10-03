@@ -1,0 +1,14 @@
+{
+  "brand": "FreshFarm",
+  "barcode": "4609876543210",
+  "net_weight": "400g",
+  "ingredients": "oats, honey, almonds, salt",
+  "allergens": [
+    "gluten",
+    "milk",
+    "nut"
+  ],
+  "pages_processed": 0,
+  "confidence": 0.82,
+  "raw_ocr_text": "Brand: FreshFarm\r\nBarcode: 4609876543210\r\nIngredients: oats, honey, almonds, salt\r\nContains allergens: gluten, nuts\r\nAllergen advice: may contain milk\r\nNet weight: 400g\r\n"
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "doc_id": "sku-oats-001",
+    "title": "FreshFarm Honey Almond Oats 400g",
+    "corpus": "product",
+    "classification": "public",
+    "allowed_roles": ["guest", "store_associate", "category_manager", "compliance_officer"],
+    "text": "SKU FreshFarm Honey Almond Oats. Category: breakfast. Ingredients: oats, honey, almonds, salt. Allergens: gluten, nuts. May contain milk. Barcode 4609876543210.",
+    "entities": [
+      {"name": "gluten", "type": "allergen"},
+      {"name": "nuts", "type": "allergen"},
+      {"name": "FreshFarm", "type": "brand"}
+    ],
+    "topics": ["breakfast", "allergens"]
+  },
+  {
+    "doc_id": "sku-milk-002",
+    "title": "DairyPure Whole Milk 1L",
+    "corpus": "product",
+    "classification": "public",
+    "allowed_roles": ["guest", "store_associate", "category_manager", "compliance_officer"],
+    "text": "SKU DairyPure Whole Milk 1L. Ingredients: milk. Allergens: milk, lactose. Keep refrigerated.",
+    "entities": [{"name": "milk", "type": "allergen"}, {"name": "DairyPure", "type": "brand"}],
+    "topics": ["dairy", "allergens"]
+  }
+]
