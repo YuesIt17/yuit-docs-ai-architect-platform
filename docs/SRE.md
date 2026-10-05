@@ -196,3 +196,22 @@ docker compose -f infra/docker-compose.yml logs ollama --tail=50
 3. `kubectl -n kp rollout restart deploy/api` (если меняли Helm env)  
 4. `curl` `/api/health` → `llm_provider=OLLAMA`, `llm_reachable=true`  
 5. UI Chat → ответ с `model_uri` не `mock://`
+
+## Почему чат «отвечает странно»
+
+- **`qwen2.5:0.5b`** — крошечная модель для ноутбука; связность/стиль слабые. Качество демо выше на MOCK или 1.5b+.
+- GraphRAG отвечает **только из seed KB** (`datasets/seed`). Нет факта в базе → «недостаточно контекста», а не общие знания модели.
+- Раньше MOCK-embeddings всегда отдавали top‑5 даже по мусорному запросу; теперь фильтр по lexical overlap + score floor.
+- Хорошие демо-вопросы: FreshFarm / oats / gluten / nuts / творог / молоко / allergen policy / secret promo (по роли).
+
+## Качество ответов чата (не «обучение»)
+
+Модель **не дообучается** на KB. GraphRAG: retrieval → промпт → `qwen2.5:0.5b` (tiny, для ноутбука).
+
+| Симптом | Почему |
+|---------|--------|
+| Бред / «Возможно, вы не знаете…» + куча чужих политик | Раньше MOCK-embeddings всегда отдавали top‑5; 0.5b «суммировал» шум. Сейчас lexical filter + score floor |
+| Нет фактов про продукт | Продукта нет в `datasets/seed` |
+| Хочется нормальный стиль | Больше модель (`1.5b`+) или MOCK для детерминированного демо |
+
+Демо-вопросы с seed: FreshFarm / овсянка, творог / FarmSoft, аллергены gluten/nuts, ACL promo 42%.

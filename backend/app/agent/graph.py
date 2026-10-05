@@ -166,10 +166,14 @@ class KnowledgeAgent:
                 "Use only CONTEXT. Reply in Russian."
             )
         else:
-            user = f"QUESTION: {state.get('guarded_message')}\nCONTEXT:\n" + "\n".join(ctx_lines[:8])
+            user = f"QUESTION: {state.get('guarded_message')}\nCONTEXT:\n" + "\n".join(ctx_lines[:5])
             system = (
-                "You are RetailPartnerX Knowledge Assistant. Answer using CONTEXT only. "
-                "Cite doc ids. Reply in Russian. If context empty, say insufficient access/data."
+                "You are RetailPartnerX Knowledge Assistant. "
+                "Answer ONLY from CONTEXT. Reply in Russian, 2-4 short sentences. "
+                "Cite doc_id in parentheses when using a fact. "
+                "If CONTEXT does not answer the QUESTION, reply exactly: "
+                "Недостаточно релевантного контекста в документах, доступных вашей роли. "
+                "Do not invent products. Do not dump unrelated policies."
             )
         if not ctx_lines:
             return {
@@ -178,8 +182,9 @@ class KnowledgeAgent:
                 "tokens_in": 0,
                 "tokens_out": 0,
                 "model_uri": self.llm.model_uri,
+                "citations": [],
             }
-        answer, tin, tout = await self.llm.complete(system, user)
+        answer, tin, tout = await self.llm.complete(system, user, max_tokens=256)
         degraded = answer.startswith("[degraded:")
         return {
             "answer": answer,

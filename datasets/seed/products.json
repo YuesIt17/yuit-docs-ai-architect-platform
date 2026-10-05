@@ -5,7 +5,7 @@
     "corpus": "product",
     "classification": "public",
     "allowed_roles": ["guest", "store_associate", "category_manager", "compliance_officer"],
-    "text": "SKU FreshFarm Honey Almond Oats. Category: breakfast. Ingredients: oats, honey, almonds, salt. Allergens: gluten, nuts. May contain milk. Barcode 4609876543210.",
+    "text": "SKU FreshFarm Honey Almond Oats (овсянка / овёс). Category: breakfast. Ingredients: oats, honey, almonds, salt. Allergens: gluten, nuts. May contain milk. Barcode 4609876543210.",
     "entities": [
       {"name": "gluten", "type": "allergen"},
       {"name": "nuts", "type": "allergen"},
@@ -19,8 +19,22 @@
     "corpus": "product",
     "classification": "public",
     "allowed_roles": ["guest", "store_associate", "category_manager", "compliance_officer"],
-    "text": "SKU DairyPure Whole Milk 1L. Ingredients: milk. Allergens: milk, lactose. Keep refrigerated.",
+    "text": "SKU DairyPure Whole Milk 1L (молоко). Ingredients: milk. Allergens: milk, lactose. Keep refrigerated. Категория: dairy / молочные продукты.",
     "entities": [{"name": "milk", "type": "allergen"}, {"name": "DairyPure", "type": "brand"}],
     "topics": ["dairy", "allergens"]
+  },
+  {
+    "doc_id": "sku-cottage-003",
+    "title": "FarmSoft Cottage Cheese 200g",
+    "corpus": "product",
+    "classification": "public",
+    "allowed_roles": ["guest", "store_associate", "category_manager", "compliance_officer"],
+    "text": "SKU FarmSoft Cottage Cheese 200g (творог). Category: dairy / молочные. Ingredients: milk, cream, salt. Allergens: milk, lactose. Fat 5%. Keep refrigerated 0-6C. Barcode 4601122334455.",
+    "entities": [
+      {"name": "milk", "type": "allergen"},
+      {"name": "творог", "type": "product"},
+      {"name": "FarmSoft", "type": "brand"}
+    ],
+    "topics": ["dairy", "allergens", "breakfast"]
   }
 ]

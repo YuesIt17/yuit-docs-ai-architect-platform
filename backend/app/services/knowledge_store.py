@@ -2,12 +2,48 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
 from app.security.rbac import Principal, can_access
 from app.services.embeddings import EmbeddingService
+
+# MOCK embeddings are bag-of-hash — always return a top-k. Drop noise via lexical overlap + score floor.
+_MIN_VECTOR_SCORE = 0.18
+_STOP = {
+    "что",
+    "как",
+    "про",
+    "для",
+    "это",
+    "или",
+    "the",
+    "and",
+    "for",
+    "about",
+    "with",
+    "know",
+    "знаешь",
+    "расскажи",
+    "какие",
+}
+
+
+def _tokens(text: str) -> set[str]:
+    return {
+        t
+        for t in re.findall(r"[\wа-яё]+", text.lower(), flags=re.IGNORECASE)
+        if len(t) > 2 and t not in _STOP
+    }
+
+
+def _lexical_hits(query: str, text: str) -> int:
+    q = _tokens(query)
+    if not q:
+        return 0
+    return len(q & _tokens(text))
 
 
 @dataclass
@@ -149,8 +185,26 @@ class KnowledgeStore:
                         merged[h.chunk.chunk_id] = h
                     else:
                         merged[h.chunk.chunk_id].score = max(merged[h.chunk.chunk_id].score, h.score) + 0.05
-                return sorted(merged.values(), key=lambda x: x.score, reverse=True)[:top_k]
-        return self.vector_search(query, principal, top_k=top_k)
+                hits = sorted(merged.values(), key=lambda x: x.score, reverse=True)[: max(top_k * 3, 15)]
+                return self._rerank_and_filter(query, hits, top_k)
+        hits = self.vector_search(query, principal, top_k=max(top_k * 3, 15))
+        return self._rerank_and_filter(query, hits, top_k)
+
+    def _rerank_and_filter(self, query: str, hits: list[RetrievedChunk], top_k: int) -> list[RetrievedChunk]:
+        ranked: list[RetrievedChunk] = []
+        for h in hits:
+            lex = _lexical_hits(query, f"{h.document.title} {h.chunk.text}")
+            if lex:
+                h.score = h.score + 0.35 * min(lex, 3)
+                h.via = "hybrid" if h.via == "vector" else h.via
+            ranked.append(h)
+        ranked.sort(key=lambda x: x.score, reverse=True)
+        kept = [h for h in ranked if _lexical_hits(query, f"{h.document.title} {h.chunk.text}") > 0 or h.score >= _MIN_VECTOR_SCORE]
+        # Prefer lexical matches when present — avoids dumping unrelated policies into tiny LLMs
+        lexical = [h for h in kept if _lexical_hits(query, f"{h.document.title} {h.chunk.text}") > 0]
+        if lexical:
+            return lexical[:top_k]
+        return kept[:top_k]
 
     def add_label_asset(self, asset: LabelAssetNode) -> None:
         self.labels[asset.asset_id] = asset

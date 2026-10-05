@@ -37,3 +37,35 @@ async def test_chat_agent_returns_citations(seeded):
     )
     assert state.get("answer")
     assert state.get("citations")
+
+
+def test_retrieve_cottage_cheese_not_random_policies(seeded):
+    c = seeded
+    principal = Principal(user_id="u-assoc", role="store_associate")
+    hits = c.store.hybrid_retrieve("Что знаешь про творог?", principal, top_k=5)
+    assert hits
+    assert all(h.document.doc_id == "sku-cottage-003" or "творог" in h.chunk.text.lower() for h in hits)
+    assert not any(h.document.corpus == "policy" and "творог" not in h.chunk.text.lower() for h in hits)
+
+
+def test_retrieve_unrelated_query_empty(seeded):
+    c = seeded
+    principal = Principal(user_id="u-assoc", role="store_associate")
+    hits = c.store.hybrid_retrieve("квантовая физика чёрных дыр xyzzy", principal, top_k=5)
+    assert hits == []
+
+
+def test_retrieve_cottage_cheese_not_unrelated_policies(seeded):
+    c = seeded
+    principal = Principal(user_id="u-assoc", role="store_associate")
+    hits = c.store.hybrid_retrieve("Что знаешь про творог?", principal, top_k=5)
+    assert hits
+    assert any(h.document.doc_id == "sku-cottage-003" for h in hits)
+    assert all(h.document.corpus == "product" for h in hits)
+
+
+def test_retrieve_drops_noise_without_lexical_match(seeded):
+    c = seeded
+    principal = Principal(user_id="u-assoc", role="store_associate")
+    hits = c.store.hybrid_retrieve("квантовый телепорт бананов xyzzy", principal, top_k=5)
+    assert hits == []
