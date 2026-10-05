@@ -28,6 +28,7 @@ class ChatResponse(BaseModel):
     degraded: bool = False
     acl_decision: str = "allow"
     model_uri: str | None = None
+    llm_provider: str | None = None
     index_version: str | None = None
 
 
@@ -52,6 +53,8 @@ class LabelResponse(BaseModel):
     s3_uri_recognized: str | None = None
     request_id: str
     degraded: bool = False
+    model_uri: str | None = None
+    llm_provider: str | None = None
 
 
 class JobCreateRequest(BaseModel):
@@ -76,4 +79,22 @@ class HealthResponse(BaseModel):
     status: str
     store_backend: str
     llm_provider: str
+    llm_model: str | None = None
+    llm_reachable: bool | None = None
     index_version: str
+
+
+class LLMConfigUpdate(BaseModel):
+    provider: Literal["MOCK", "OLLAMA", "VLLM"]
+    base_url: str | None = None
+    model: str | None = None
+
+
+class LLMConfigResponse(BaseModel):
+    provider: str
+    base_url: str
+    model: str
+    model_uri: str
+    reachable: bool | None = None
+    detail: str | None = None
+    presets: dict[str, dict[str, str]] = Field(default_factory=dict)

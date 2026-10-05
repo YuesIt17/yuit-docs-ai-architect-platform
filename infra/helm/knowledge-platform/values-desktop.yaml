@@ -1,0 +1,17 @@
+# Docker Desktop Kubernetes overlay (lighter + local images)
+images:
+  pullPolicy: Never
+
+ingress:
+  enabled: true
+  host: kp.local
+  className: nginx
+
+# API already uses memory store; MinIO optional and often blocked/heavy.
+minio:
+  enabled: false
+
+llm:
+  provider: MOCK
+  ollama:
+    enabled: false

@@ -72,6 +72,29 @@ paths:
       responses:
         "202":
           description: Accepted
+  /v1/llm/config:
+    get:
+      summary: Current LLM runtime config
+      responses:
+        "200":
+          description: LLMConfigResponse
+    put:
+      summary: Switch MOCK/OLLAMA/VLLM at runtime (manager/compliance)
+      responses:
+        "200":
+          description: LLMConfigResponse
+  /v1/llm/health:
+    get:
+      summary: Probe active LLM endpoint
+      responses:
+        "200":
+          description: LLMConfigResponse
+  /v1/audit:
+    get:
+      summary: Recent audit decisions
+      responses:
+        "200":
+          description: audit list
 components:
   securitySchemes:
     bearerAuth:

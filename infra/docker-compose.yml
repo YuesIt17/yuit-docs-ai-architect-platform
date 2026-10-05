@@ -14,6 +14,7 @@ volumes:
   qdrant_data:
   redis_data:
   minio_data:
+  ollama_data:
 
 services:
   postgres:
@@ -72,36 +73,25 @@ services:
       - redis_data:/data
     networks: [data]
 
+  # Optional S3. With STORE_BACKEND=memory API uses local filesystem fallback.
+  # Official minio/minio is often geo-blocked; bitnami/minio moved to paid Secure Images.
+  # Use bitnamilegacy free tags (same entrypoint/env as former bitnami/minio).
   minio:
-    image: minio/minio:latest
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5
     profiles: ["core", "demo"]
-    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: knowledge-platform
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - minio_data:/data
-    networks: [data]
-  minio-init:
-    image: minio/mc:latest
-    profiles: ["core", "demo"]
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-      sleep 3;
-      mc alias set local http://minio:9000 minioadmin minioadmin;
-      mc mb -p local/knowledge-platform || true;
-      mc anonymous set download local/knowledge-platform/exports || true;
-      exit 0;
-      "
+      - minio_data:/bitnami/minio/data
     networks: [data]
 
   jaeger:
-    image: jaegertracing/all-in-one:1.64
+    image: jaegertracing/all-in-one:1.60.0
     profiles: ["core", "demo"]
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
@@ -159,7 +149,6 @@ services:
       - neo4j
       - qdrant
       - redis
-      - minio
       - jaeger
 
   seed:
@@ -177,19 +166,37 @@ services:
     networks: [data]
     depends_on:
       - api
-      - minio-init
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    profiles: ["core", "demo"]
+    ports:
+      - "5173:80"
+    networks: [edge]
+    depends_on:
+      - api
 
   ollama:
     image: ollama/ollama:latest
     profiles: ["llm"]
     ports:
       - "11434:11434"
+    # Explicit DNS reduces TLS handshake timeouts to registry.ollama.ai on flaky resolvers.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    volumes:
+      - ollama_data:/root/.ollama
     networks: [data]
 
-  # GPU host required; enable with --profile llm when hardware available
+  # GPU host required; enable with --profile llm-gpu (not pulled by --profile llm)
   vllm:
     image: vllm/vllm-openai:latest
-    profiles: ["llm"]
+    profiles: ["llm-gpu"]
     runtime: nvidia
     environment:
       HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}

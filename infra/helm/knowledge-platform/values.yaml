@@ -1,0 +1,70 @@
+namespace: kp
+
+images:
+  api: kp-api:dev
+  frontend: kp-frontend:dev
+  pullPolicy: IfNotPresent
+
+llm:
+  provider: MOCK # MOCK | OLLAMA | VLLM
+  baseUrl: ""
+  model: mock-graph-rag
+  ollama:
+    enabled: false
+    image: ollama/ollama:latest
+    modelPull: qwen2.5:7b-instruct
+
+api:
+  replicas: 1
+  port: 8080
+  env:
+    STORE_BACKEND: memory
+    EMBEDDING_PROVIDER: MOCK
+
+frontend:
+  replicas: 1
+  port: 80
+
+ingress:
+  enabled: true
+  host: kp.local
+  className: nginx
+
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  user: kp
+  password: kp
+  database: knowledge
+
+neo4j:
+  enabled: true
+  image: neo4j:5.26-community
+  password: retailpartnerx
+
+qdrant:
+  enabled: true
+  image: qdrant/qdrant:v1.13.2
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+
+minio:
+  enabled: true
+  # Official minio/minio often blocked; bitnami/minio is paid-only — use legacy tag.
+  image: bitnamilegacy/minio:2025.7.23-debian-12-r5
+  rootUser: minioadmin
+  rootPassword: minioadmin
+  # bitnami entrypoint; leave empty (do not pass minio server args)
+  args: []
+
+resources:
+  api:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  frontend:
+    requests:
+      cpu: 50m
+      memory: 64Mi

@@ -19,8 +19,11 @@ from app.models.schemas import (
     JobResponse,
     LabelExtract,
     LabelResponse,
+    LLMConfigResponse,
+    LLMConfigUpdate,
     PresignResponse,
 )
+from app.services.llm import PROVIDER_PRESETS
 from app.security.rbac import resolve_principal
 from app.security.guardrails import vision_input_guard
 from app.services.cache import CacheEntry
@@ -44,12 +47,82 @@ def container_dep() -> AppContainer:
 
 @router.get("/health", response_model=HealthResponse)
 async def health(settings: Settings = Depends(get_settings), c: AppContainer = Depends(container_dep)):
+    probe = await c.llm.probe()
+    cfg = c.llm.get_config()
     return HealthResponse(
         status="ok",
         store_backend=settings.store_backend,
-        llm_provider=settings.llm_provider,
+        llm_provider=cfg.provider,
+        llm_model=cfg.model,
+        llm_reachable=probe.get("reachable"),
         index_version=settings.index_version,
     )
+
+
+@router.get("/v1/llm/config", response_model=LLMConfigResponse)
+async def get_llm_config(c: AppContainer = Depends(container_dep)):
+    probe = await c.llm.probe()
+    cfg = c.llm.get_config()
+    return LLMConfigResponse(
+        provider=cfg.provider,
+        base_url=cfg.base_url,
+        model=cfg.model,
+        model_uri=cfg.model_uri,
+        reachable=probe.get("reachable"),
+        detail=probe.get("detail"),
+        presets=PROVIDER_PRESETS,
+    )
+
+
+@router.put("/v1/llm/config", response_model=LLMConfigResponse)
+async def put_llm_config(
+    body: LLMConfigUpdate,
+    principal=Depends(principal_dep),
+    c: AppContainer = Depends(container_dep),
+):
+    if principal.role not in {"category_manager", "compliance_officer"}:
+        raise HTTPException(status_code=403, detail="ACL deny: only manager/compliance can change LLM config")
+    try:
+        c.llm.apply_config(body.provider, body.base_url, body.model)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    probe = await c.llm.probe()
+    cfg = c.llm.get_config()
+    return LLMConfigResponse(
+        provider=cfg.provider,
+        base_url=cfg.base_url,
+        model=cfg.model,
+        model_uri=cfg.model_uri,
+        reachable=probe.get("reachable"),
+        detail=probe.get("detail"),
+        presets=PROVIDER_PRESETS,
+    )
+
+
+@router.get("/v1/llm/health", response_model=LLMConfigResponse)
+async def llm_health(c: AppContainer = Depends(container_dep)):
+    probe = await c.llm.probe()
+    return LLMConfigResponse(
+        provider=probe["provider"],
+        base_url=probe["base_url"],
+        model=probe["model"],
+        model_uri=probe["model_uri"],
+        reachable=probe.get("reachable"),
+        detail=probe.get("detail"),
+        presets=PROVIDER_PRESETS,
+    )
+
+
+@router.get("/v1/audit")
+async def audit_log(
+    limit: int = 50,
+    principal=Depends(principal_dep),
+    c: AppContainer = Depends(container_dep),
+):
+    if principal.role not in {"category_manager", "compliance_officer"}:
+        raise HTTPException(status_code=403, detail="ACL deny")
+    rows = c.store.audit[-max(1, min(limit, 200)) :]
+    return {"items": list(reversed(rows))}
 
 
 @router.get("/v1/graph/stats")
@@ -94,13 +167,26 @@ async def chat(
                     "errors": [],
                 }
             )
-            # SSE: meta then final
-            yield f"event: meta\ndata: {json.dumps({'request_id': request_id, 'session_id': session_id})}\n\n"
+            cfg = c.llm.get_config()
+            yield (
+                "event: meta\ndata: "
+                + json.dumps(
+                    {
+                        "request_id": request_id,
+                        "session_id": session_id,
+                        "model_uri": state.get("model_uri") or cfg.model_uri,
+                        "llm_provider": cfg.provider,
+                    }
+                )
+                + "\n\n"
+            )
             payload = {
                 "answer": state.get("answer", ""),
                 "citations": state.get("citations") or [],
                 "degraded": state.get("degraded", False),
                 "acl_decision": state.get("acl_decision", "allow"),
+                "model_uri": state.get("model_uri") or cfg.model_uri,
+                "llm_provider": cfg.provider,
             }
             yield f"event: final\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
             _audit(c, settings, request_id, principal, state, started, "chat")
@@ -132,6 +218,7 @@ async def chat(
         )
     metrics.CACHE_HIT_RATE.set(c.cache.hit_rate)
     metrics.REQUESTS.labels(endpoint="chat", status=state.get("acl_decision", "allow")).inc()
+    cfg = c.llm.get_config()
     return ChatResponse(
         answer=state.get("answer", ""),
         citations=citations,
@@ -139,7 +226,8 @@ async def chat(
         request_id=request_id,
         degraded=state.get("degraded", False),
         acl_decision=state.get("acl_decision", "allow"),
-        model_uri=state.get("model_uri"),
+        model_uri=state.get("model_uri") or cfg.model_uri,
+        llm_provider=cfg.provider,
         index_version=settings.index_version,
     )
 
@@ -240,6 +328,7 @@ async def vision_label(
     warnings = []
     if vision.allergens:
         warnings.append(f"Detected allergens: {', '.join(vision.allergens)}")
+    cfg = c.llm.get_config()
     return LabelResponse(
         asset_id=asset_id,
         extract=LabelExtract(**{**extract, "pages_processed": vision.page_count}),
@@ -250,6 +339,8 @@ async def vision_label(
         s3_uri_recognized=s3_rec,
         request_id=request_id,
         degraded=state.get("degraded", False),
+        model_uri=state.get("model_uri") or cfg.model_uri,
+        llm_provider=cfg.provider,
     )
 
 

@@ -1,67 +1,15 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>RetailPartnerX Knowledge Platform</title>
-  <style>
-    :root { --ink:#1a1f16; --paper:#f3efe4; --accent:#2f6f4e; --line:#c9c2b2; }
-    body { font-family: "Segoe UI", sans-serif; margin:0; background:linear-gradient(160deg,#e8f0ea,#f3efe4 40%,#f7f1e6); color:var(--ink); }
-    main { max-width:920px; margin:0 auto; padding:2rem; }
-    h1 { font-size:1.8rem; letter-spacing:-.02em; }
-    .row { display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0; }
-    select,button,textarea,input { font:inherit; }
-    textarea { width:100%; min-height:90px; }
-    .card { background:rgba(255,255,255,.7); border:1px solid var(--line); padding:1rem; border-radius:8px; }
-    pre { white-space:pre-wrap; background:#111; color:#d8f5e3; padding:1rem; border-radius:8px; }
-    button { background:var(--accent); color:#fff; border:0; padding:.6rem 1rem; border-radius:6px; cursor:pointer; }
-  </style>
-</head>
-<body>
-<main>
-  <h1>RetailPartnerX Knowledge Platform</h1>
-  <p>GraphRAG chat + label recognition (PDF/PNG). Demo roles for ACL.</p>
-  <div class="row card">
-    <label>Role
-      <select id="role">
-        <option value="guest">guest</option>
-        <option value="associate">associate</option>
-        <option value="manager" selected>manager</option>
-        <option value="compliance">compliance</option>
-      </select>
-    </label>
-    <label>API <input id="base" value="http://localhost:8080" size="28" /></label>
-  </div>
-  <div class="card">
-    <h2>Chat</h2>
-    <textarea id="msg">Какие аллергены у FreshFarm oats?</textarea>
-    <button id="ask">Ask</button>
-  </div>
-  <div class="card">
-    <h2>Label upload</h2>
-    <input type="file" id="file" accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,.pdf,.txt" />
-    <button id="upload">Recognize</button>
-  </div>
-  <pre id="out">Ready.</pre>
-</main>
-<script>
-const out = document.getElementById('out');
-const auth = () => ({ Authorization: 'Bearer ' + document.getElementById('role').value });
-document.getElementById('ask').onclick = async () => {
-  const base = document.getElementById('base').value;
-  const r = await fetch(base + '/v1/chat', {
-    method: 'POST', headers: { ...auth(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: document.getElementById('msg').value, stream: false })
-  });
-  out.textContent = JSON.stringify(await r.json(), null, 2);
-};
-document.getElementById('upload').onclick = async () => {
-  const base = document.getElementById('base').value;
-  const f = document.getElementById('file').files[0];
-  if (!f) { out.textContent = 'Choose a file'; return; }
-  const fd = new FormData(); fd.append('file', f, f.name);
-  const r = await fetch(base + '/v1/vision/label', { method: 'POST', headers: auth(), body: fd });
-  out.textContent = JSON.stringify(await r.json(), null, 2);
-};
-</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RetailPartnerX Knowledge Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

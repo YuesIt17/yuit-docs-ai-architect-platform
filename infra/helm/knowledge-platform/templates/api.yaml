@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: api
+    kp.retailpartnerx.io/plane: control
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+        kp.retailpartnerx.io/plane: control
+    spec:
+      containers:
+        - name: api
+          image: {{ .Values.images.api }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          env:
+            - name: LLM_PROVIDER
+              value: {{ .Values.llm.provider | quote }}
+            - name: LLM_MODEL
+              value: {{ .Values.llm.model | quote }}
+            - name: OPENAI_BASE_URL
+              value: {{ .Values.llm.baseUrl | quote }}
+            - name: STORE_BACKEND
+              value: {{ .Values.api.env.STORE_BACKEND | quote }}
+            - name: EMBEDDING_PROVIDER
+              value: {{ .Values.api.env.EMBEDDING_PROVIDER | quote }}
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: QDRANT_URL
+              value: http://qdrant:6333
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+            - name: MINIO_ENDPOINT
+              value: minio:9000
+            - name: POSTGRES_DSN
+              value: postgresql+asyncpg://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources.api | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: api
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: {{ .Values.api.port }}
