@@ -1,6 +1,12 @@
+# Optional: wire API to compose Ollama from outside the cluster is awkward.
+# Prefer: keep Ollama in compose (`make llm-ollama`) and point K8s API via
+# host.docker.internal — or leave MOCK in Desktop K8s.
+#
+# If you still enable in-cluster Ollama (needs RAM/GPU), use a tiny model:
 llm:
   provider: OLLAMA
   baseUrl: http://ollama:11434/v1
-  model: qwen2.5:7b-instruct
+  model: qwen2.5:0.5b
   ollama:
     enabled: true
+    modelPull: qwen2.5:0.5b

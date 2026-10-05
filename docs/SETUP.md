@@ -107,53 +107,63 @@ npm run dev
 
 > Если на 8080 уже крутится uvicorn, а вы поднимаете `make demo`, будет конфликт портов. Остановите локальный API или уберите сервис `api` из compose.
 
-### A3. Локальный LLM (Ollama / vLLM)
+### A3. Локальный LLM (Ollama в Compose) + observability / S3
+
+**Разделение:** Ollama — **только Docker Compose** (минимум RAM). Grafana / Prometheus / MinIO / Jaeger — тоже compose (`core` / `make obs`). Kubernetes Desktop держит API+UI+graph stores; LLM туда по умолчанию не кладём.
 
 По умолчанию `LLM_PROVIDER=MOCK` — модели не качаются.
 
-**Ollama (CPU / ноутбук):**
+**Ollama minimal (CPU / ноутбук):**
 
 ```powershell
 make llm-ollama
-# поднимает ollama (:11434) + api + frontend
+# только контейнер ollama (:11434) + pull qwen2.5:0.5b
+# mem_limit 3g, max 1 loaded model
 ```
 
-Скачать модель (с ретраями / DNS — чинит TLS timeout к registry.ollama.ai):
+Другие модели (тяжелее):
 
 ```powershell
-.\scripts\ollama-pull.ps1
-# или явно:
+.\scripts\ollama-pull.ps1 -Model qwen2.5:0.5b
 .\scripts\ollama-pull.ps1 -Model qwen2.5:1.5b-instruct
-.\scripts\ollama-pull.ps1 -Model qwen2.5:7b-instruct
+# 7B — только если много RAM/GPU, не вместе с Desktop K8s
 ```
 
-Вручную:
-
-```powershell
-docker exec -it (docker ps -qf "name=ollama") ollama pull qwen2.5:1.5b-instruct
-```
-
-В UI → **LLM**:
+В UI → **LLM** (API на хосте или в K8s с доступом к localhost:11434):
 
 | Поле | Значение |
 |------|----------|
 | Provider | `OLLAMA` |
-| Base URL (API в Docker) | `http://ollama:11434/v1` |
-| Base URL (API на хосте) | `http://localhost:11434/v1` |
-| Model | `qwen2.5:1.5b-instruct` или `qwen2.5:7b-instruct` |
+| Base URL | `http://localhost:11434/v1` (API на хосте) или `http://ollama:11434/v1` (API в том же compose) |
+| Model | `qwen2.5:0.5b` |
 
 **Apply** (роль manager или compliance) → Chat.
+
+**Prometheus + Grafana + MinIO (S3 для labels):**
+
+```powershell
+make obs
+# или полный стек: make demo / make up
+```
+
+| Сервис | URL |
+|--------|-----|
+| Grafana | http://localhost:3000 (anon / admin:admin) |
+| Prometheus | http://localhost:9090 |
+| MinIO API / Console | http://localhost:9000 / http://localhost:9001 (`minioadmin` / `minioadmin`) |
+| Jaeger | http://localhost:16686 |
+
+Compose API по умолчанию `STORE_BACKEND=live` → объекты labels в MinIO bucket `knowledge-platform`. Fallback: `STORE_BACKEND=memory`.
 
 **vLLM (NVIDIA GPU):**
 
 ```powershell
 make llm-vllm
-# эквивалент: docker compose -f infra/docker-compose.yml --profile llm-gpu up -d vllm
 ```
 
-UI: Provider `VLLM`, Base URL `http://vllm:8000/v1` (из compose) или `http://localhost:8000/v1` (с хоста), model `Qwen/Qwen2.5-7B-Instruct`.
+UI: Provider `VLLM`, Base URL `http://vllm:8000/v1` или `http://localhost:8000/v1`.
 
-> Profile `llm` поднимает только **Ollama**. vLLM вынесен в `llm-gpu`, чтобы случайно не тянуть multi-GB образ.
+> Profile `llm` = только минимальный Ollama. vLLM → `llm-gpu`.
 
 ### A4. Роли и ACL в UI
 
@@ -218,59 +228,37 @@ curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
 
 Если без hosts — тот же curl с заголовком Host.
 
-### B4. LLM в кластере
+### B4. LLM и side-stack
 
-**MOCK** — по умолчанию (`values-desktop.yaml`).
+**MOCK** в кластере по умолчанию (`values-desktop.yaml`).
 
-**Ollama в кластере:**
+**Ollama** — в Compose, не в Desktop K8s:
 
 ```powershell
-$env:KP_LLM = "ollama"
+make llm-ollama
+# в UI /llm: OLLAMA http://host.docker.internal:11434/v1 (если API в K8s на Docker Desktop)
+# или port-forward/host API → http://localhost:11434/v1
+# model: qwen2.5:0.5b
+```
+
+**MinIO** в K8s включён (`STORE_BACKEND=live`) для raw/normalized labels.
+
+**Grafana / Prometheus** — Compose (`make obs`), scrape `api:8080/metrics` когда API тоже в compose. Для API в K8s смотри Ops в UI или добавь scrape на NodePort вручную.
+
+In-cluster Ollama (не рекомендуется на ноутбуке): `$env:KP_LLM='ollama'; .\scripts\k8s-up.ps1` → tiny `qwen2.5:0.5b`.
+
+### B5. Операционные команды
+
+Все **curl / kubectl / Helm / Compose** команды — в **[docs/SRE.md](SRE.md)** (runbook для SRE).
+
+Кратко после подключения Compose-Ollama к API в K8s:
+
+```powershell
+$env:KP_LLM = "compose-ollama"
 .\scripts\k8s-up.ps1
-```
-
-Используется [values-ollama.yaml](../infra/helm/knowledge-platform/values-ollama.yaml).
-
-После старта:
-
-```powershell
-kubectl -n kp exec -it deploy/ollama -- ollama pull qwen2.5:1.5b-instruct
-```
-
-В UI `/llm`: Provider `OLLAMA`, Base URL `http://ollama:11434/v1`, Apply.
-
-**vLLM** — GPU; на Desktop обычно не включают.
-
-### B5. Основные команды
-
-```powershell
-# контекст Docker Desktop
-kubectl config use-context docker-desktop
-kubectl get nodes
-
-# поды / сервисы / ingress
-kubectl -n kp get pods
-kubectl -n kp get pods -o wide
-kubectl -n kp get pods -w                 # watch
-kubectl -n kp get all,ingress
-kubectl -n ingress-nginx get pods,svc
-
-# детали и логи
-kubectl -n kp describe pod <имя-пода>
-kubectl -n kp logs deploy/api -f
-kubectl -n kp logs deploy/frontend --tail=50
-kubectl -n kp logs deploy/neo4j --tail=100
-
-# exec в контейнер
-kubectl -n kp exec -it deploy/api -- sh
-
-# smoke через ingress (:8088; Host нужен если нет записи в hosts)
-curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
-
-# Helm
-helm -n kp status kp
-helm -n kp list
-.\scripts\k8s-down.ps1                    # helm uninstall kp
+# или только overlay + рестарт api:
+# helm upgrade kp ... -f values-desktop.yaml -f values-desktop-compose-ollama.yaml
+# kubectl -n kp rollout restart deploy/api
 ```
 
 Hosts (Windows, от администратора): `C:\Windows\System32\drivers\etc\hosts` → `127.0.0.1 kp.local`

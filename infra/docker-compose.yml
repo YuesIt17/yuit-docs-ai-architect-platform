@@ -137,10 +137,13 @@ services:
       QDRANT_URL: http://qdrant:6333
       REDIS_URL: redis://redis:6379/0
       MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
       LLM_PROVIDER: MOCK
       EMBEDDING_PROVIDER: MOCK
-      STORE_BACKEND: memory
+      # live = MinIO for label raw/normalized objects; memory = local FS fallback
+      STORE_BACKEND: ${STORE_BACKEND:-live}
     ports:
       - "8080:8080"
     networks: [edge, control, data]
@@ -150,6 +153,8 @@ services:
       - qdrant
       - redis
       - jaeger
+      - minio
+      - prometheus
 
   seed:
     build:
@@ -180,11 +185,19 @@ services:
     depends_on:
       - api
 
+  # Minimal local LLM (compose only — not in Desktop K8s by default).
+  # Default pull: qwen2.5:0.5b (~400MB–1GB RAM loaded). Do not use 7B on a laptop with K8s.
   ollama:
     image: ollama/ollama:latest
     profiles: ["llm"]
     ports:
       - "11434:11434"
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: "5m"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_FLASH_ATTENTION: "1"
     # Explicit DNS reduces TLS handshake timeouts to registry.ollama.ai on flaky resolvers.
     dns:
       - 8.8.8.8
@@ -192,6 +205,10 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     networks: [data]
+    mem_limit: 3g
+    cpus: 2.0
+    # Soft reserve so Desktop still has room for K8s / prometheus / minio
+    mem_reservation: 512m
 
   # GPU host required; enable with --profile llm-gpu (not pulled by --profile llm)
   vllm:

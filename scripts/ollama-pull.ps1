@@ -8,7 +8,7 @@
   .\scripts\ollama-pull.ps1 -Model qwen2.5:7b-instruct -Retries 15
 #>
 param(
-  [string]$Model = "qwen2.5:1.5b-instruct",
+  [string]$Model = "qwen2.5:0.5b",
   [int]$Retries = 12,
   [string]$ComposeFile = "infra/docker-compose.yml"
 )

@@ -96,7 +96,7 @@ export function LlmSettingsPage() {
         </label>
         <label className="field">
           Model
-          <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="qwen2.5:7b-instruct" />
+          <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="qwen2.5:0.5b" />
         </label>
         <div className="row">
           <button type="button" className="secondary" disabled={busy} onClick={() => void onProbe()}>
@@ -116,11 +116,18 @@ export function LlmSettingsPage() {
         ) : (
           <p>Loading…</p>
         )}
-        <h3>Compose tips</h3>
+        <h3>Ollama base URL (куда ходит API, не браузер)</h3>
         <p className="mono">
           make llm-ollama{"\n"}
-          API base (from host): http://localhost:11434/v1{"\n"}
-          API base (in compose network): http://ollama:11434/v1
+          Compose API on host: http://localhost:11434/v1{"\n"}
+          Compose API in network: http://ollama:11434/v1{"\n"}
+          K8s API (Desktop) + Ollama in Compose: http://host.docker.internal:11434/v1
+        </p>
+        <p>
+          Поле Base URL — endpoint <strong>изнутри пода/контейнера API</strong>. Для Helm{" "}
+          <code>values-desktop-compose-ollama.yaml</code> значение{" "}
+          <code>host.docker.internal</code> нормальное; менять на localhost в UI нельзя — в поде localhost это не
+          ваш Ollama.
         </p>
       </aside>
     </div>

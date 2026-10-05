@@ -23,7 +23,7 @@ async def test_probe_mock(seeded):
 @pytest.mark.asyncio
 async def test_switch_provider_runtime(seeded):
     c = seeded
-    c.llm.apply_config("OLLAMA", "http://localhost:11434/v1", "qwen2.5:7b-instruct")
+    c.llm.apply_config("OLLAMA", "http://localhost:11434/v1", "qwen2.5:0.5b")
     cfg = c.llm.get_config()
     assert cfg.provider == "OLLAMA"
     assert "11434" in cfg.base_url

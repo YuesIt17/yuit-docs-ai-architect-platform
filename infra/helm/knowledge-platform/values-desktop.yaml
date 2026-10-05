@@ -7,10 +7,20 @@ ingress:
   host: kp.local
   className: nginx
 
-# API already uses memory store; MinIO optional and often blocked/heavy.
-minio:
-  enabled: false
+api:
+  env:
+    # MinIO in-cluster for label raw/normalized objects
+    STORE_BACKEND: live
+    EMBEDDING_PROVIDER: MOCK
 
+minio:
+  enabled: true
+  image: bitnamilegacy/minio:2025.7.23-debian-12-r5
+  rootUser: minioadmin
+  rootPassword: minioadmin
+  args: []
+
+# Ollama stays in Docker Compose (profile llm, qwen2.5:0.5b) — not in Desktop K8s.
 llm:
   provider: MOCK
   ollama:

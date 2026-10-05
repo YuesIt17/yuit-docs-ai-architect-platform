@@ -12,9 +12,13 @@
 
 | Mode | How |
 |------|-----|
-| MOCK (default) | API only; UI `/llm` shows MOCK |
-| OLLAMA | Compose: `.\scripts\ollama-pull.ps1` then UI Apply; or `KP_LLM=ollama` + k8s-up |
-| VLLM | Compose profile `llm-gpu` (not default on kind) |
+| MOCK (default) | API in K8s; UI `/llm` shows MOCK |
+| OLLAMA | **Compose only:** `make llm-ollama` → `qwen2.5:0.5b`; API в K8s: `host.docker.internal:11434/v1` — см. [SRE.md](../SRE.md) |
+| VLLM | Compose profile `llm-gpu` (NVIDIA) |
+
+Observability + S3 (compose): `make obs` → Grafana :3000, Prometheus :9090, MinIO :9000/:9001.
+
+MinIO also enabled in Desktop Helm (`STORE_BACKEND=live`) for label objects.
 
 Frontend never talks to Ollama directly — only via API `/v1/chat` and `/v1/llm/*`.
 
@@ -32,29 +36,17 @@ UI: http://kp.local:8088 · API: http://kp.local:8088/api/health
 
 Teardown: `.\scripts\k8s-down.ps1`
 
-## Useful kubectl
+## Ops commands
 
-```powershell
-kubectl config use-context docker-desktop
-kubectl -n kp get pods
-kubectl -n kp get pods -o wide
-kubectl -n kp get all,ingress
-kubectl -n kp describe pod <name>
-kubectl -n kp logs deploy/api -f
-kubectl -n kp exec -it deploy/api -- sh
-kubectl -n ingress-nginx get pods,svc
-curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
-helm -n kp status kp
-```
-
-Windows hosts (admin): `C:\Windows\System32\drivers\etc\hosts` → `127.0.0.1 kp.local`
+kubectl, curl, Helm, rollout — **[docs/SRE.md](../SRE.md)**.
 
 ## Docker Compose (local without K8s)
 
 ```bash
-make demo          # api + frontend + data plane
-make llm-ollama    # + ollama (profile llm) + ollama-pull.ps1
-.\scripts\ollama-pull.ps1   # model with retries
+make demo          # api + frontend + data plane + grafana/prometheus/minio
+make obs           # prometheus + grafana + minio + jaeger only
+make llm-ollama    # minimal ollama qwen2.5:0.5b (mem_limit 3g)
+.\scripts\ollama-pull.ps1
 make llm-vllm      # + vLLM (profile llm-gpu, needs NVIDIA)
 ```
 

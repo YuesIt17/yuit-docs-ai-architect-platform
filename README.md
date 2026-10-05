@@ -8,7 +8,8 @@ FAANG-style **GraphRAG + multimodal** knowledge platform for **RetailPartnerX** 
 
 ## Setup guide (Compose + Kubernetes)
 
-Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)** — настройка **без K8s** и **с kind/Helm**, LLM (Ollama/vLLM), ACL, troubleshooting.
+Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)** — настройка **без K8s** и **с kind/Helm**, LLM (Ollama/vLLM), ACL, troubleshooting.  
+Runbook (curl / kubectl / Helm): **[docs/SRE.md](docs/SRE.md)**.
 
 ## Quick start (dev)
 
@@ -48,7 +49,8 @@ make llm-ollama
 
 ```powershell
 make demo          # data plane + api + frontend (:5173)
-make llm-ollama    # + ollama (:11434)
+make llm-ollama    # minimal Ollama qwen2.5:0.5b (:11434)
+make obs           # Prometheus :9090 + Grafana :3000 + MinIO :9000/:9001 + Jaeger
 make down
 ```
 
@@ -59,7 +61,11 @@ make down
 | Neo4j | 7474 |
 | MinIO console | 9001 |
 | Jaeger | 16686 |
-| Ollama (profile llm) | 11434 |
+| Ollama (profile llm, 0.5b) | 11434 |
+| Prometheus | 9090 |
+| Grafana | 3000 |
+| MinIO | 9000 / 9001 |
+| Jaeger | 16686 |
 
 ## Kubernetes (kind + Helm)
 

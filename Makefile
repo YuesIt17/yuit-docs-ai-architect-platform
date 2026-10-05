@@ -1,4 +1,4 @@
-.PHONY: up down demo seed test api frontend llm-ollama llm-vllm k8s-up k8s-down load-smoke
+.PHONY: up down demo seed test api frontend llm-ollama llm-vllm obs k8s-up k8s-down load-smoke
 
 up:
 	docker compose -f infra/docker-compose.yml --profile core up -d --build
@@ -9,6 +9,10 @@ down:
 demo:
 	docker compose -f infra/docker-compose.yml --profile demo up -d --build
 
+# Prometheus + Grafana + MinIO (+ Jaeger) without API rebuild — side stack for K8s or host API
+obs:
+	docker compose -f infra/docker-compose.yml --profile core up -d prometheus grafana minio jaeger
+
 seed:
 	cd backend && python -m pipelines.seed_all
 
@@ -18,10 +22,12 @@ api:
 frontend:
 	cd frontend && npm run dev
 
+# Minimal Ollama only (compose). Default model qwen2.5:0.5b — keep under ~3Gi with mem_limit.
 llm-ollama:
-	docker compose -f infra/docker-compose.yml --profile demo --profile llm up -d --build ollama api frontend
-	powershell -ExecutionPolicy Bypass -File scripts/ollama-pull.ps1 -Model qwen2.5:1.5b-instruct
-	@echo "Set in UI /llm: OLLAMA base_url=http://ollama:11434/v1 (from api container) or http://localhost:11434/v1"
+	docker compose -f infra/docker-compose.yml --profile llm up -d ollama
+	powershell -ExecutionPolicy Bypass -File scripts/ollama-pull.ps1 -Model qwen2.5:0.5b
+	@echo "UI /llm: OLLAMA base_url=http://localhost:11434/v1 model=qwen2.5:0.5b"
+	@echo "From API in compose network: http://ollama:11434/v1"
 
 # Profile llm-gpu (not llm) so plain --profile llm does not pull multi-GB vLLM.
 llm-vllm:

@@ -10,7 +10,7 @@ from app.config import Settings
 
 PROVIDER_PRESETS: dict[str, dict[str, str]] = {
     "MOCK": {"base_url": "", "model": "mock-graph-rag"},
-    "OLLAMA": {"base_url": "http://localhost:11434/v1", "model": "qwen2.5:7b-instruct"},
+    "OLLAMA": {"base_url": "http://localhost:11434/v1", "model": "qwen2.5:0.5b"},
     "VLLM": {"base_url": "http://localhost:8000/v1", "model": "Qwen/Qwen2.5-7B-Instruct"},
 }
 
