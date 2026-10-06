@@ -1,27 +1,39 @@
-# RetailPartnerX Knowledge Platform — Executive Summary
+# Резюме для защиты — RetailPartnerX Knowledge Platform
 
-**Customer:** RetailPartnerX — large global FMCG retailer (Tesco / Carrefour class).  
-**Role:** Platform Engineer building an Internal Developer Platform (Google PE / SRE style) for AI knowledge workloads.
+**Заказчик:** RetailPartnerX — крупный FMCG-ритейлер.  
+**Роль:** Platform Engineer / AI Architect — Internal Developer Platform для AI knowledge workloads.
 
-## Problem
+## Проблема
 
-Unstructured retail knowledge (policies, NPA abstracts, packaging labels as PDF/PNG scans) causes hallucinations and context loss in assistants. Sensitive promo/margin docs must not leak across roles.
+Неструктурированные знания (политики, выдержки НПА, сканы этикеток) приводят к галлюцинациям и потере контекста. Чувствительные promo/margin документы не должны утекать между ролями.
 
-## Solution
+## Решение
 
 On-premise **GraphRAG Knowledge Platform**:
 
-- **Control Plane:** API Gateway path, AuthZ/RBAC, Input/Output Guardrails, LangGraph orchestrator, ACL policy on retrieval
-- **Data Plane:** Neo4j (graph), Qdrant-compatible vector index (in-memory MVP + compose service), MinIO (S3) for raw/recognized objects, Postgres audit, vLLM/Ollama/Mock LLM
-- **Modalities:** text chat + label recognition (PDF/PNG/JPEG/WEBP/TIFF)
-- **Handoff:** recognized JSON in MinIO `exports/` + outbox event `label.recognized` for PIM/ERP
+- **Control Plane:** AuthZ/RBAC, Input/Output Guardrails, LangGraph, ACL на retrieval
+- **Data Plane:** Neo4j, Qdrant (compose + in-memory MVP), MinIO, Postgres, vLLM/Ollama/MOCK
+- **Модальности:** text chat + распознавание этикеток (PDF/PNG/…)
+- **Handoff:** JSON в MinIO `exports/` + outbox `label.recognized` → PIM/ERP
 
 ## Continuity
 
-Evolves the RetailPartnerX case study from `yuit-docs-ai-architect` (hw-1…hw-10): dual KB, LangGraph, security layer, vLLM sizing, sync/async, FinOps/Model Card.
+Развитие кейса из `yuit-docs-ai-architect` (hw-1…hw-10) и pointer [hw-11](../../yuit-docs-ai-architect/hw-11/): dual KB, LangGraph, security layer, vLLM sizing, sync/async, FinOps/Model Card. **Инверсия hw-4:** self-hosted LLM вместо SaaS.
 
-## Demo proofs
+## Доказательства на демо
 
-1. `category_manager` cannot retrieve secret promo margin doc; `compliance_officer` can  
-2. Label upload → OCR extract → policy citations  
-3. Jaeger/OTel + Prometheus metrics + Neo4j Browser (compose profile)
+1. `category_manager` не получает secret promo; `compliance_officer` — получает  
+2. Upload этикетки → OCR extract → policy citations  
+3. Jaeger/OTel + Prometheus + Neo4j Browser  
+
+## Карта артефактов
+
+| Раздел | Путь |
+| ------ | ---- |
+| Задание / критерии | [README](../README.md) |
+| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](architecture/) · [diagrams/](../diagrams/) |
+| ADR | [adr/](adr/) |
+| Демо / нагрузка | [demo-script.md](demo-script.md) · [load-report.md](load-report.md) |
+| Model Card | [model-card.md](model-card.md) |
+
+Учебный MVP: runtime GraphRAG — in-memory mirror онтологии; Neo4j/Qdrant в compose для Browser и sync.

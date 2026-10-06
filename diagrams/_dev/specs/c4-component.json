@@ -1,0 +1,109 @@
+{
+  "title": "C4 L3 — Компоненты агента",
+  "pageWidth": 1200,
+  "pageHeight": 640,
+  "nodes": [
+    {
+      "id": "note",
+      "label": "LangGraph state machine (не линейный скрипт).\nMemory · Planner · Tools · Synthesizer · Guards",
+      "style": "note",
+      "x": 40,
+      "y": 20,
+      "w": 420,
+      "h": 70
+    },
+    {
+      "id": "gi",
+      "label": "guard_input\nPII / injection",
+      "style": "component",
+      "x": 40,
+      "y": 160,
+      "w": 150,
+      "h": 80
+    },
+    {
+      "id": "rt",
+      "label": "Planner / route\nchat | label | blocked",
+      "style": "component",
+      "x": 240,
+      "y": 160,
+      "w": 170,
+      "h": 80
+    },
+    {
+      "id": "mem",
+      "label": "Memory\nsession + audit",
+      "style": "component",
+      "x": 240,
+      "y": 300,
+      "w": 170,
+      "h": 80
+    },
+    {
+      "id": "gr",
+      "label": "Tool:\ngraph_retrieve",
+      "style": "component",
+      "x": 480,
+      "y": 80,
+      "w": 150,
+      "h": 70
+    },
+    {
+      "id": "vr",
+      "label": "Tool:\nvector_retrieve\n+ ACL",
+      "style": "component",
+      "x": 480,
+      "y": 180,
+      "w": 150,
+      "h": 80
+    },
+    {
+      "id": "lr",
+      "label": "Tool:\nlabel_recognize",
+      "style": "component",
+      "x": 480,
+      "y": 300,
+      "w": 150,
+      "h": 70
+    },
+    {
+      "id": "pc",
+      "label": "Tool:\npolicy_check",
+      "style": "component",
+      "x": 480,
+      "y": 400,
+      "w": 150,
+      "h": 70
+    },
+    {
+      "id": "syn",
+      "label": "Synthesizer\nLLMClient",
+      "style": "container",
+      "x": 720,
+      "y": 200,
+      "w": 160,
+      "h": 90
+    },
+    {
+      "id": "go",
+      "label": "guard_output\nACL leak check",
+      "style": "component",
+      "x": 960,
+      "y": 210,
+      "w": 160,
+      "h": 80
+    }
+  ],
+  "edges": [
+    { "from": "gi", "to": "rt", "label": "ok", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "rt", "to": "mem", "label": "state", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "rt", "to": "gr", "label": "chat", "exitX": 1, "exitY": 0.25, "entryX": 0, "entryY": 0.5 },
+    { "from": "gr", "to": "vr", "label": "", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "vr", "to": "syn", "label": "context", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.35 },
+    { "from": "rt", "to": "lr", "label": "label", "exitX": 1, "exitY": 0.75, "entryX": 0, "entryY": 0.5 },
+    { "from": "lr", "to": "pc", "label": "", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "pc", "to": "syn", "label": "policies", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.75 },
+    { "from": "syn", "to": "go", "label": "draft", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "rt", "to": "go", "label": "blocked", "dashed": true, "exitX": 1, "exitY": 0.5, "entryX": 0.5, "entryY": 0, "waypoints": [{ "x": 1040, "y": 120 }] }
+  ]
+}

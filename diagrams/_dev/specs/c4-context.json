@@ -1,0 +1,119 @@
+{
+  "title": "C4 L1 — Контекст Knowledge Platform",
+  "pageWidth": 1280,
+  "pageHeight": 720,
+  "nodes": [
+    {
+      "id": "note",
+      "label": "Trust boundary: BFF ↔ KP только OpenAPI.\nКаналы не видят LLM / Graph / Vectors.",
+      "style": "note",
+      "x": 40,
+      "y": 20,
+      "w": 360,
+      "h": 70
+    },
+    {
+      "id": "app",
+      "label": "Mobile / Web\nприложение",
+      "style": "person",
+      "x": 40,
+      "y": 160,
+      "w": 120,
+      "h": 90
+    },
+    {
+      "id": "tablet",
+      "label": "Планшет\nсотрудника магазина",
+      "style": "person",
+      "x": 40,
+      "y": 280,
+      "w": 120,
+      "h": 90
+    },
+    {
+      "id": "bo",
+      "label": "Category\nBackoffice",
+      "style": "person",
+      "x": 40,
+      "y": 400,
+      "w": 120,
+      "h": 90
+    },
+    {
+      "id": "bff",
+      "label": "Backend BFF\nканалы RetailPartnerX",
+      "style": "container",
+      "x": 240,
+      "y": 280,
+      "w": 180,
+      "h": 100
+    },
+    {
+      "id": "kp",
+      "label": "Knowledge Platform\nGraphRAG + Labels\nACL + on-prem LLM",
+      "style": "system",
+      "x": 520,
+      "y": 260,
+      "w": 220,
+      "h": 120
+    },
+    {
+      "id": "recsys",
+      "label": "AI Recsys\nрекомендации SKU",
+      "style": "external",
+      "x": 520,
+      "y": 120,
+      "w": 180,
+      "h": 80
+    },
+    {
+      "id": "idp",
+      "label": "Corporate IdP",
+      "style": "external",
+      "x": 520,
+      "y": 460,
+      "w": 160,
+      "h": 70
+    },
+    {
+      "id": "pim",
+      "label": "PIM\nкаталог SKU",
+      "style": "external",
+      "x": 860,
+      "y": 160,
+      "w": 160,
+      "h": 70
+    },
+    {
+      "id": "erp",
+      "label": "ERP\nоперации",
+      "style": "external",
+      "x": 860,
+      "y": 280,
+      "w": 160,
+      "h": 70
+    },
+    {
+      "id": "cdp",
+      "label": "CDP / CRM\nпрофиль",
+      "style": "external",
+      "x": 860,
+      "y": 400,
+      "w": 160,
+      "h": 70
+    }
+  ],
+  "edges": [
+    { "from": "app", "to": "bff", "label": "HTTPS", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.25 },
+    { "from": "tablet", "to": "bff", "label": "HTTPS", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "bo", "to": "bff", "label": "HTTPS", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.75 },
+    { "from": "bff", "to": "kp", "label": "OpenAPI /v1/*", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "bff", "to": "recsys", "label": "recsys API", "exitX": 0.5, "exitY": 0, "entryX": 0, "entryY": 0.5 },
+    { "from": "bff", "to": "idp", "label": "OIDC", "exitX": 0.5, "exitY": 1, "entryX": 0, "entryY": 0.5 },
+    { "from": "kp", "to": "idp", "label": "AuthZ", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "kp", "to": "pim", "label": "handoff / catalog", "exitX": 1, "exitY": 0.35, "entryX": 0, "entryY": 0.5 },
+    { "from": "kp", "to": "erp", "label": "outbox events", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "bff", "to": "cdp", "label": "events", "exitX": 1, "exitY": 0.85, "entryX": 0, "entryY": 0.5, "waypoints": [{ "x": 780, "y": 435 }] },
+    { "from": "recsys", "to": "pim", "label": "каталог", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.35 }
+  ]
+}

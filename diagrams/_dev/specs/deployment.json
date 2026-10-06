@@ -1,0 +1,185 @@
+{
+  "title": "Deployment — сегментация и GPU",
+  "pageWidth": 1320,
+  "pageHeight": 760,
+  "nodes": [
+    {
+      "id": "note",
+      "label": "Secrets: Vault stub / env — не в образах.\nGPU optional: AWQ/GGUF (ADR-001).",
+      "style": "note",
+      "x": 40,
+      "y": 20,
+      "w": 360,
+      "h": 70
+    },
+    {
+      "id": "dmz",
+      "label": "DMZ",
+      "style": "boundary",
+      "x": 40,
+      "y": 120,
+      "w": 240,
+      "h": 280
+    },
+    {
+      "id": "lb",
+      "label": "Load Balancer",
+      "style": "external",
+      "x": 40,
+      "y": 50,
+      "w": 160,
+      "h": 60,
+      "parent": "dmz"
+    },
+    {
+      "id": "api",
+      "label": "kp-api\nFastAPI",
+      "style": "container",
+      "x": 40,
+      "y": 140,
+      "w": 160,
+      "h": 80,
+      "parent": "dmz"
+    },
+    {
+      "id": "ctrl",
+      "label": "Internal Control",
+      "style": "boundary",
+      "x": 340,
+      "y": 120,
+      "w": 280,
+      "h": 400
+    },
+    {
+      "id": "prom",
+      "label": "Prometheus",
+      "style": "container",
+      "x": 40,
+      "y": 50,
+      "w": 120,
+      "h": 60,
+      "parent": "ctrl"
+    },
+    {
+      "id": "graf",
+      "label": "Grafana",
+      "style": "container",
+      "x": 40,
+      "y": 140,
+      "w": 120,
+      "h": 60,
+      "parent": "ctrl"
+    },
+    {
+      "id": "jaeger",
+      "label": "Jaeger\nOTel traces",
+      "style": "container",
+      "x": 40,
+      "y": 230,
+      "w": 120,
+      "h": 70,
+      "parent": "ctrl"
+    },
+    {
+      "id": "vault",
+      "label": "Vault\n(stub)",
+      "style": "external",
+      "x": 40,
+      "y": 330,
+      "w": 120,
+      "h": 50,
+      "parent": "ctrl"
+    },
+    {
+      "id": "data",
+      "label": "Data Segment",
+      "style": "boundary",
+      "x": 680,
+      "y": 120,
+      "w": 360,
+      "h": 400
+    },
+    {
+      "id": "pg",
+      "label": "Postgres",
+      "style": "db",
+      "x": 30,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "neo",
+      "label": "Neo4j",
+      "style": "db",
+      "x": 180,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "qd",
+      "label": "Qdrant",
+      "style": "db",
+      "x": 30,
+      "y": 150,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "rd",
+      "label": "Redis",
+      "style": "db",
+      "x": 180,
+      "y": 150,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "s3",
+      "label": "MinIO",
+      "style": "db",
+      "x": 100,
+      "y": 260,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "gpu",
+      "label": "GPU Pool",
+      "style": "boundary",
+      "x": 1100,
+      "y": 200,
+      "w": 180,
+      "h": 200
+    },
+    {
+      "id": "vllm",
+      "label": "vLLM\nQwen Instruct",
+      "style": "container",
+      "x": 20,
+      "y": 50,
+      "w": 140,
+      "h": 100,
+      "parent": "gpu"
+    }
+  ],
+  "edges": [
+    { "from": "lb", "to": "api", "label": "", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "pg", "label": "", "exitX": 1, "exitY": 0.3, "entryX": 0, "entryY": 0.5 },
+    { "from": "api", "to": "neo", "label": "", "exitX": 1, "exitY": 0.4, "entryX": 0, "entryY": 0.5 },
+    { "from": "api", "to": "qd", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "api", "to": "rd", "label": "", "exitX": 1, "exitY": 0.6, "entryX": 0, "entryY": 0.5 },
+    { "from": "api", "to": "s3", "label": "", "exitX": 1, "exitY": 0.7, "entryX": 0, "entryY": 0.5 },
+    { "from": "api", "to": "vllm", "label": "infer", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "api", "to": "jaeger", "label": "traces", "exitX": 1, "exitY": 0.2, "entryX": 0, "entryY": 0.5 },
+    { "from": "prom", "to": "api", "label": "scrape", "dashed": true, "exitX": 0, "exitY": 0.5, "entryX": 1, "entryY": 0.2 },
+    { "from": "graf", "to": "prom", "label": "", "exitX": 0.5, "exitY": 0, "entryX": 0.5, "entryY": 1 },
+    { "from": "api", "to": "vault", "label": "secrets", "dashed": true, "exitX": 1, "exitY": 0.85, "entryX": 0, "entryY": 0.5 }
+  ]
+}

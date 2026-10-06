@@ -1,0 +1,128 @@
+{
+  "title": "Data Flow — ingest и handoff",
+  "pageWidth": 1400,
+  "pageHeight": 700,
+  "nodes": [
+    {
+      "id": "note",
+      "label": "Обязательный Data Flow (анти-reject курса).\nВерх: text KB. Низ: labels → PIM/ERP.",
+      "style": "note",
+      "x": 40,
+      "y": 20,
+      "w": 380,
+      "h": 70
+    },
+    {
+      "id": "seed",
+      "label": "Seed JSON\nполитики / НПА",
+      "style": "external",
+      "x": 40,
+      "y": 140,
+      "w": 150,
+      "h": 80
+    },
+    {
+      "id": "chunk",
+      "label": "Chunk",
+      "style": "component",
+      "x": 240,
+      "y": 140,
+      "w": 120,
+      "h": 70
+    },
+    {
+      "id": "embed",
+      "label": "Embed",
+      "style": "component",
+      "x": 420,
+      "y": 140,
+      "w": 120,
+      "h": 70
+    },
+    {
+      "id": "vec",
+      "label": "Vector Index\nQdrant / memory",
+      "style": "db",
+      "x": 600,
+      "y": 120,
+      "w": 160,
+      "h": 80
+    },
+    {
+      "id": "graph",
+      "label": "Neo4j\nузлы / рёбра",
+      "style": "db",
+      "x": 600,
+      "y": 240,
+      "w": 160,
+      "h": 80
+    },
+    {
+      "id": "upload",
+      "label": "Upload\nPDF / PNG",
+      "style": "person",
+      "x": 40,
+      "y": 400,
+      "w": 120,
+      "h": 90
+    },
+    {
+      "id": "raw",
+      "label": "MinIO raw/",
+      "style": "db",
+      "x": 220,
+      "y": 410,
+      "w": 130,
+      "h": 70
+    },
+    {
+      "id": "ocr",
+      "label": "OCR / VLM\nextract JSON",
+      "style": "component",
+      "x": 400,
+      "y": 410,
+      "w": 150,
+      "h": 80
+    },
+    {
+      "id": "rec",
+      "label": "MinIO\nrecognized/\nexports/",
+      "style": "db",
+      "x": 600,
+      "y": 400,
+      "w": 150,
+      "h": 90
+    },
+    {
+      "id": "pim",
+      "label": "PIM / ERP\npresign + outbox",
+      "style": "external",
+      "x": 860,
+      "y": 410,
+      "w": 180,
+      "h": 80
+    },
+    {
+      "id": "chat",
+      "label": "Chat path:\nGuard → Graph → Vector+ACL → LLM → Guard",
+      "style": "container",
+      "x": 860,
+      "y": 140,
+      "w": 280,
+      "h": 100
+    }
+  ],
+  "edges": [
+    { "from": "seed", "to": "chunk", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "chunk", "to": "embed", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "embed", "to": "vec", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "chunk", "to": "graph", "label": "ontology", "exitX": 0.5, "exitY": 1, "entryX": 0, "entryY": 0.5, "waypoints": [{ "x": 300, "y": 280 }] },
+    { "from": "upload", "to": "raw", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "raw", "to": "ocr", "label": "normalize", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "ocr", "to": "rec", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "ocr", "to": "graph", "label": "link", "exitX": 0.5, "exitY": 0, "entryX": 0.5, "entryY": 1 },
+    { "from": "rec", "to": "pim", "label": "label.recognized", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "vec", "to": "chat", "label": "retrieve", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.35 },
+    { "from": "graph", "to": "chat", "label": "resolve", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.65 }
+  ]
+}

@@ -1,23 +1,37 @@
 # Model Card — RetailPartnerX Knowledge Platform
 
+Стыковка с [hw-10](../../yuit-docs-ai-architect/hw-10/) (Governance / FinOps). Учебный артефакт, не карточка модели на Hugging Face Hub.
+
 ## Intended use
-Grounded answers for store associates, category managers, compliance officers over Product/Policy/Regulatory KB and packaging labels.
 
-## Out of scope
-Medical advice, legal counsel, training foundation models.
+Обоснованные (grounded) ответы для сотрудников магазина, category managers и compliance по Product / Policy / Regulatory KB и этикеткам упаковки.
 
-## Models
-| Component | Default MVP |
+## Вне scope
+
+Медицинские советы, юридические заключения, обучение foundation-моделей с нуля.
+
+## Модели
+
+| Компонент | Default MVP |
 |-----------|-------------|
-| Chat LLM | MOCK or Qwen2.5-Instruct via vLLM/Ollama |
+| Chat LLM | MOCK или Qwen2.5/3-Instruct via vLLM/Ollama |
 | Embeddings | Deterministic mock / multilingual-e5-base |
-| Vision | Mock OCR extract; optional Qwen-VL |
+| Vision | Mock OCR; опционально Qwen-VL |
 
 ## Safety
-RBAC on retrieval; input injection guard; output ACL; PII redaction in prompts/traces.
+
+RBAC на retrieval; input injection guard; output ACL; редакция PII в промптах/трейсах. Air-gapped: без OpenAI/Anthropic SaaS.
 
 ## Evaluation
-Gold set in `/evals`; Faithfulness-style checks planned (hw-6 thresholds).
 
-## Cost
-Audit `cost_est` per request; prefer cache + mock in CI.
+Gold set в `/evals`; Faithfulness-style checks (пороги hw-6) — planned / stub LLM-as-Judge.
+
+## Cost / FinOps
+
+Audit `cost_est` на запрос; в CI предпочитать cache + MOCK. См. hw-10 Cost Optimization patterns (routing, TTL, distillation).
+
+## Limitations
+
+- Runtime GraphRAG MVP — in-memory mirror; Neo4j/Qdrant для демо/sync
+- Demo tokens ≠ корпоративный IdP
+- Качество OCR/VLM зависит от железа и не заявлено как prod accuracy

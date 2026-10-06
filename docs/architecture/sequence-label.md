@@ -1,4 +1,8 @@
-# Sequence — Label Recognition (PDF/PNG)
+# Sequence — распознавание этикетки (PDF/PNG)
+
+## Назначение
+
+Мультимодальный путь: upload → MIME guard → MinIO raw → OCR/VLM → recognized/exports → GraphRAG policy_check → outbox для PIM/ERP.
 
 ```mermaid
 sequenceDiagram
@@ -23,3 +27,5 @@ sequenceDiagram
   GW->>PIM: outbox label.recognized
   GW-->>A: LabelResponse + s3 URIs
 ```
+
+См. [ADR-007](../adr/ADR-007-multimodal-labels.md), [data-flow.md](data-flow.md).

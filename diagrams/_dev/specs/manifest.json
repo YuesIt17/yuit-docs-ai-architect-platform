@@ -1,0 +1,15 @@
+{
+  "hwId": "platform",
+  "description": "RetailPartnerX Knowledge Platform — C4, Deployment, Sequence, ER, Data Flow",
+  "defaultOutputDir": "../yuit-docs-ai-architect-platform/diagrams",
+  "frozen": [],
+  "diagrams": [
+    { "spec": "c4-context.json", "output": "c4-context.drawio" },
+    { "spec": "c4-container.json", "output": "c4-container.drawio" },
+    { "spec": "c4-component.json", "output": "c4-component.drawio" },
+    { "spec": "deployment.json", "output": "deployment.drawio" },
+    { "spec": "sequence-chat.json", "output": "sequence-chat.drawio" },
+    { "spec": "er-diagram.json", "output": "er-diagram.drawio" },
+    { "spec": "data-flow.json", "output": "data-flow.drawio" }
+  ]
+}

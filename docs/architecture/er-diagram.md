@@ -1,4 +1,23 @@
-# ER / Data Model
+# ER / модель данных
+
+**Схема (Draw.io):** [er-diagram.png](../../diagrams/er-diagram.png) · [er-diagram.drawio](../../diagrams/er-diagram.drawio)
+
+## Назначение
+
+Хранение документов, чанков (векторы), этикеток, сессий, audit и outbox; RBAC через `classification` + `allowed_roles`.
+
+## Сущности
+
+| Сущность | Ключевые поля |
+| -------- | ------------- |
+| Document | corpus, classification, allowed_roles, index_version |
+| Chunk | embedding, modality, doc_id |
+| LabelAsset | s3_uri_raw / recognized, classification |
+| Session / ChatMessage | история диалога |
+| AuditDecision | request_id, role, acl_decision, cost_est |
+| Outbox | event_type (`label.recognized`), payload |
+
+Онтология графа (узлы/рёбра): [ADR-003](../adr/ADR-003-graph-db.md).
 
 ```mermaid
 erDiagram

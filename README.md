@@ -1,102 +1,106 @@
-# RetailPartnerX Knowledge Platform
+# Итоговый проект — RetailPartnerX Knowledge Platform
 
-FAANG-style **GraphRAG + multimodal** knowledge platform for **RetailPartnerX** (global FMCG retail).
+**Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)**
 
-- **Control Plane:** FastAPI + LangGraph + Guardrails + LLM runtime API  
-- **Data Plane:** Neo4j / Qdrant / MinIO / Postgres / Redis + **Ollama/vLLM**  
-- **UI:** React + TypeScript (Chat, Labels, **LLM Settings**, Graph, Ops)
+> **Сокращения:** [Глоссарий](docs/Glossary.md) · **Артефакты:** [docs/](docs/) · [diagrams/](diagrams/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md)
 
-## Setup guide (Compose + Kubernetes)
+## Цель
 
-Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)** — настройка **без K8s** и **с kind/Helm**, LLM (Ollama/vLLM), ACL, troubleshooting.  
-Runbook (curl / kubectl / Helm): **[docs/SRE.md](docs/SRE.md)**.
+Спроектировать и реализовать **MVP производственного конвейера (End-to-End Pipeline)** для извлечения знаний из неструктурированных данных (сканы этикеток, PDF, политики) в **закрытом контуре** (On-premise / Air-gapped), без внешних API OpenAI/Anthropic.
 
-## Quick start (dev)
+Роль: **Platform Engineer & AI Architect**. Снижение «галлюцинаций» и потери контекста через **GraphRAG** (нейро-символический подход) и **Security-by-Design** (разграничение прав на уровне чанков / узлов графа). Кейс демонстрирует готовность к внедрению AI в enterprise-ритейле РФ (паттерны применимы к банковскому / промышленному контуру).
 
-### API
+## Контекст и преемственность
 
-```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1   # or: python -m venv .venv && pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8080
-```
+Единый кейс **RetailPartnerX** (FMCG-ритейлер). Этот репозиторий — отдельный итоговый MVP; ниже — преемственность с ДЗ курса (hw-1…hw-10).
 
-### Frontend
+### Домашние задания (курс)
 
-```powershell
-cd frontend
-npm install
-npm run dev
-```
+| ДЗ | Артефакт | Связь с проектом |
+| -- | -------- | ---------------- |
+| [hw-1](../yuit-docs-ai-architect/hw-1/) | Риски, 152-ФЗ, roadmap | Контур безопасности и residency |
+| [hw-2](../yuit-docs-ai-architect/hw-2/) | C4, Sequence, API | Паттерн границ BFF ↔ AI Service |
+| [hw-3](../yuit-docs-ai-architect/hw-3/) | Multi-agent + LangGraph | SRP агентов → оркестратор Knowledge Platform |
+| [hw-4](../yuit-docs-ai-architect/hw-4/) | ADR SaaS LLM | **Инверсия:** self-hosted vLLM/Ollama для closed loop |
+| [hw-5](../yuit-docs-ai-architect/hw-5/) | Data pipeline | Ingest → chunk → embed → index |
+| [hw-6](../yuit-docs-ai-architect/hw-6/) | Guardrails, eval, obs | Input/Output guards + OTel/Prometheus |
+| [hw-7](../yuit-docs-ai-architect/hw-7/) | Inference sizing | GPU / квантование AWQ/GGUF |
+| [hw-8](../yuit-docs-ai-architect/hw-8/) | CI/CD + K8s | Helm / kind deployment |
+| [hw-9](../yuit-docs-ai-architect/hw-9/) | High-load, cache | Semantic cache, sync/async |
+| [hw-10](../yuit-docs-ai-architect/hw-10/) | Model Card / FinOps | [docs/model-card.md](docs/model-card.md) |
 
-Open http://localhost:5173 — Vite proxies `/api` → `:8080`.
+### Финальный проект
 
-Demo tokens (Role switcher): `guest` | `associate` | `manager` | `compliance`
+**Задача:** для RetailPartnerX закрыть контур **корпоративной базы знаний** (политики, НПА-выдержки, этикетки, секретные promo) с GraphRAG, ACL и on-prem LLM.
 
-### LLM UI
+Тема курса сохранена; формулировки «банк / пром» адаптированы под RetailPartnerX (FMCG, policies / labels / promo, 152-ФЗ).
 
-1. Open **LLM** page  
-2. Choose `MOCK` / `OLLAMA` / `VLLM`, Probe, Apply (manager/compliance)  
-3. Chat/Labels use the active provider; answers show `model_uri`
+## Шаги выполнения (артефакты решения)
 
-```powershell
-# local Ollama (Docker)
-make llm-ollama
-# then in UI: provider=OLLAMA, base_url=http://localhost:11434/v1
-```
+| Шаг | Артефакт |
+| --- | -------- |
+| 1. Architecture & Design (C4 L1–L3, Deployment, Sequence, ER, Data Flow) | [docs/architecture/](docs/architecture/) · [diagrams/](diagrams/) |
+| 2. ADR со trade-off (LLM, Vector, Graph, Orchestration, Security, Obs, …) | [docs/adr/](docs/adr/) |
+| 3. MVP: GraphRAG + LangGraph + Guardrails + multimodal labels | [backend/](backend/) · [frontend/](frontend/) |
+| 4. Infra: Compose + Helm (Data Plane + Control Plane) | [infra/](infra/) |
+| 5. Демо-скрипт 5–7 мин | [docs/demo-script.md](docs/demo-script.md) |
+| 6. Нагрузочный отчёт | [docs/load-report.md](docs/load-report.md) |
 
-## Docker Compose
+## Формат сдачи
+
+| Артефакт | Путь |
+| -------- | ---- |
+| Monorepo `/infra` + `/backend` + `/docs` (+ frontend) | корень репозитория |
+| Архитектурная документация (ADD) | [docs/](docs/) |
+| Диаграммы Draw.io + PNG | [diagrams/](diagrams/) |
+| Видео-демо (Deep Dive) | запись по [demo-script](docs/demo-script.md) (вручную) |
+| Нагрузочный отчёт | [docs/load-report.md](docs/load-report.md) |
+
+GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/yuit-docs-ai-architect-platform)
+
+## Критерии самопроверки
+
+| Критерий | Как закрыто |
+| -------- | ----------- |
+| Нет облачных API (OpenAI/Anthropic) | [ADR-001](docs/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama / vLLM |
+| Есть Deployment и Data Flow | [deployment](docs/architecture/deployment.md) · [data-flow](docs/architecture/data-flow.md) · [diagrams/](diagrams/) |
+| GraphRAG (не только векторный поиск) | [ADR-003](docs/adr/ADR-003-graph-db.md) · `backend/app/services/knowledge_store.py` · `backend/app/agent/graph.py` |
+| ACL: User B не видит секретный документ | [ADR-005](docs/adr/ADR-005-security.md) · demo: manager vs compliance |
+| Control Plane / Data Plane | [c4-container](docs/architecture/c4-container.md) |
+| LangGraph (state machine), не линейный скрипт | [ADR-004](docs/adr/ADR-004-orchestration.md) · `backend/app/agent/graph.py` |
+| Observability | [ADR-006](docs/adr/ADR-006-observability.md) · Jaeger / Prometheus / Grafana |
+| Желательно: streaming | SSE в chat API (см. sequence) |
+| Желательно: тесты | `cd backend; pytest -q` |
+
+Статус «Принято», если критичные критерии выполнены с evidence выше.
+
+## Быстрый старт
+
+Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Runbook: **[docs/SRE.md](docs/SRE.md)**.
 
 ```powershell
 make demo          # data plane + api + frontend (:5173)
-make llm-ollama    # minimal Ollama qwen2.5:0.5b (:11434)
-make obs           # Prometheus :9090 + Grafana :3000 + MinIO :9000/:9001 + Jaeger
-make down
+make llm-ollama    # Ollama qwen2.5:0.5b (:11434)
+make obs           # Prometheus / Grafana / Jaeger / MinIO
 ```
 
-| Service | Port |
-|---------|------|
+| Сервис | Порт |
+|--------|------|
 | Frontend | 5173 |
 | API | 8080 |
-| Neo4j | 7474 |
-| MinIO console | 9001 |
+| Neo4j Browser | 7474 |
+| MinIO Console | 9001 |
 | Jaeger | 16686 |
-| Ollama (profile llm, 0.5b) | 11434 |
+| Ollama | 11434 |
 | Prometheus | 9090 |
 | Grafana | 3000 |
-| MinIO | 9000 / 9001 |
-| Jaeger | 16686 |
 
-## Kubernetes (kind + Helm)
-
-```powershell
-.\scripts\k8s-up.ps1
-# hosts: 127.0.0.1 kp.local
-# UI: http://kp.local:8088
-```
-
-With in-cluster Ollama:
-
-```powershell
-$env:KP_LLM = "ollama"
-.\scripts\k8s-up.ps1
-```
-
-See [docs/architecture/k8s-deployment.md](docs/architecture/k8s-deployment.md).
-
-## Docs
-
-- [Executive summary](docs/00-executive-summary.md)
-- [C4 / Deployment / ADRs](docs/)
-- [Demo script](docs/demo-script.md)
-- [Load report](docs/load-report.md)
-
-## Tests
+Демо-токены (Role switcher): `guest` | `associate` | `manager` | `compliance`
 
 ```powershell
 cd backend; pytest -q
 ```
 
-## Author
+## Автор
 
-Evgeny Yulov — Platform Engineer / AI Architect case study.
+**Евгений Юлов** — Platform Engineer / AI Architect (учебный case study).

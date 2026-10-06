@@ -1,0 +1,87 @@
+{
+  "title": "ER — модель данных Knowledge Platform",
+  "pageWidth": 1280,
+  "pageHeight": 720,
+  "nodes": [
+    {
+      "id": "note",
+      "label": "RBAC: classification + allowed_roles на Document/Chunk.\nВекторы — в Chunk / Qdrant payload.",
+      "style": "note",
+      "x": 40,
+      "y": 20,
+      "w": 400,
+      "h": 70
+    },
+    {
+      "id": "doc",
+      "label": "Document\ndoc_id, corpus\nclassification\nallowed_roles\nindex_version",
+      "style": "db",
+      "x": 80,
+      "y": 140,
+      "w": 200,
+      "h": 130
+    },
+    {
+      "id": "chunk",
+      "label": "Chunk\nchunk_id, doc_id\nmodality\nembedding",
+      "style": "db",
+      "x": 380,
+      "y": 140,
+      "w": 180,
+      "h": 120
+    },
+    {
+      "id": "label",
+      "label": "LabelAsset\nid, format\ns3_uri_raw\ns3_uri_recognized\nclassification",
+      "style": "db",
+      "x": 80,
+      "y": 340,
+      "w": 200,
+      "h": 140
+    },
+    {
+      "id": "session",
+      "label": "Session\n+ ChatMessage",
+      "style": "db",
+      "x": 640,
+      "y": 140,
+      "w": 180,
+      "h": 100
+    },
+    {
+      "id": "audit",
+      "label": "AuditDecision\nrequest_id, role\nacl_decision\ncost_est",
+      "style": "db",
+      "x": 640,
+      "y": 300,
+      "w": 180,
+      "h": 120
+    },
+    {
+      "id": "outbox",
+      "label": "Outbox\nevent_type\npayload JSON",
+      "style": "db",
+      "x": 380,
+      "y": 380,
+      "w": 180,
+      "h": 100
+    },
+    {
+      "id": "entity",
+      "label": "Entity / Topic\n(граф Neo4j)",
+      "style": "db",
+      "x": 900,
+      "y": 200,
+      "w": 180,
+      "h": 90
+    }
+  ],
+  "edges": [
+    { "from": "doc", "to": "chunk", "label": "CONTAINS", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "doc", "to": "entity", "label": "ABOUT", "exitX": 1, "exitY": 0.3, "entryX": 0, "entryY": 0.5 },
+    { "from": "label", "to": "doc", "label": "EXTRACTED_TO", "exitX": 0.5, "exitY": 0, "entryX": 0.5, "entryY": 1 },
+    { "from": "label", "to": "outbox", "label": "emits", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "session", "to": "audit", "label": "optional", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "chunk", "to": "entity", "label": "REFERENCES", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.7 }
+  ]
+}

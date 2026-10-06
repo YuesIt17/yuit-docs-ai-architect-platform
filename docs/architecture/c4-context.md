@@ -1,10 +1,28 @@
-# C4 Level 1 — System Context
+# C4 Level 1 — Контекст системы
 
-RetailPartnerX Knowledge Platform sits inside the retail enterprise landscape.
+**Схема (Draw.io):** [c4-context.png](../../diagrams/c4-context.png) · [c4-context.drawio](../../diagrams/c4-context.drawio)
+
+## Назначение
+
+Knowledge Platform RetailPartnerX встраивается в enterprise-ландшафт ритейлера: каналы магазинов и backoffice обращаются через BFF; платформа интегрируется с PIM, ERP, CDP/CRM и корпоративным IdP. Отдельно существует сервис рекомендаций (hw-2), границы с которым сохраняются через OpenAPI.
+
+## Акторы и внешние системы
+
+| Участник | Роль |
+| -------- | ---- |
+| Mobile/Web App, Store Tablet, Category Backoffice | Каналы пользователей |
+| Backend BFF | Единая точка входа каналов; не знает ML-деталей |
+| Knowledge Platform | GraphRAG, labels, ACL, on-prem LLM |
+| AI Recsys Service | Персональные рекомендации (внешняя к KP) |
+| PIM / ERP / CDP / IdP | Каталог, операции, профиль, аутентификация |
+
+## Trust boundary
+
+BFF вызывает Knowledge Platform только по OpenAPI (`/v1/chat`, `/v1/vision/label`). Внутренности LLM / графа / векторов каналам не экспонируются.
 
 ```mermaid
 flowchart LR
-  subgraph channels [RetailPartnerX_Channels]
+  subgraph channels [Каналы_RetailPartnerX]
     App[Mobile_Web_App]
     Tablet[Store_Associate_Tablet]
     Backoffice[Category_Backoffice]
@@ -29,5 +47,3 @@ flowchart LR
   BFF --> IdP
   KP --> IdP
 ```
-
-**Trust boundary:** BFF calls Knowledge Platform via OpenAPI only (`/v1/chat`, `/v1/vision/label`). ML internals are not exposed to channels.

@@ -1,0 +1,156 @@
+{
+  "title": "C4 L2 — Контейнеры (Control / Data Plane)",
+  "pageWidth": 1400,
+  "pageHeight": 780,
+  "nodes": [
+    {
+      "id": "edge_b",
+      "label": "DMZ / Edge",
+      "style": "boundary",
+      "x": 40,
+      "y": 40,
+      "w": 220,
+      "h": 200
+    },
+    {
+      "id": "gw",
+      "label": "API Edge\nFastAPI / OpenAPI\nSSE",
+      "style": "container",
+      "x": 30,
+      "y": 50,
+      "w": 160,
+      "h": 100,
+      "parent": "edge_b"
+    },
+    {
+      "id": "ctrl_b",
+      "label": "Control Plane",
+      "style": "boundary",
+      "x": 300,
+      "y": 40,
+      "w": 520,
+      "h": 420
+    },
+    {
+      "id": "auth",
+      "label": "AuthN / RBAC",
+      "style": "component",
+      "x": 30,
+      "y": 50,
+      "w": 140,
+      "h": 70,
+      "parent": "ctrl_b"
+    },
+    {
+      "id": "ig",
+      "label": "Input\nGuardrails",
+      "style": "component",
+      "x": 200,
+      "y": 50,
+      "w": 140,
+      "h": 70,
+      "parent": "ctrl_b"
+    },
+    {
+      "id": "orch",
+      "label": "LangGraph\nOrchestrator",
+      "style": "container",
+      "x": 160,
+      "y": 160,
+      "w": 180,
+      "h": 90,
+      "parent": "ctrl_b"
+    },
+    {
+      "id": "og",
+      "label": "Output\nGuardrails",
+      "style": "component",
+      "x": 360,
+      "y": 160,
+      "w": 130,
+      "h": 70,
+      "parent": "ctrl_b"
+    },
+    {
+      "id": "cache",
+      "label": "Semantic Cache\nRedis",
+      "style": "db",
+      "x": 30,
+      "y": 280,
+      "w": 150,
+      "h": 80,
+      "parent": "ctrl_b"
+    },
+    {
+      "id": "data_b",
+      "label": "Data Plane",
+      "style": "boundary",
+      "x": 880,
+      "y": 40,
+      "w": 480,
+      "h": 520
+    },
+    {
+      "id": "neo",
+      "label": "Neo4j\nграф знаний",
+      "style": "db",
+      "x": 30,
+      "y": 50,
+      "w": 140,
+      "h": 80,
+      "parent": "data_b"
+    },
+    {
+      "id": "qd",
+      "label": "Qdrant\nвекторы + ACL",
+      "style": "db",
+      "x": 200,
+      "y": 50,
+      "w": 150,
+      "h": 80,
+      "parent": "data_b"
+    },
+    {
+      "id": "pg",
+      "label": "Postgres\naudit / sessions",
+      "style": "db",
+      "x": 30,
+      "y": 170,
+      "w": 150,
+      "h": 80,
+      "parent": "data_b"
+    },
+    {
+      "id": "s3",
+      "label": "MinIO\nraw / recognized",
+      "style": "db",
+      "x": 200,
+      "y": 170,
+      "w": 150,
+      "h": 80,
+      "parent": "data_b"
+    },
+    {
+      "id": "llm",
+      "label": "LLM Serving\nvLLM / Ollama / MOCK",
+      "style": "container",
+      "x": 100,
+      "y": 300,
+      "w": 200,
+      "h": 90,
+      "parent": "data_b"
+    }
+  ],
+  "edges": [
+    { "from": "gw", "to": "auth", "label": "HTTPS", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "auth", "to": "ig", "label": "", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "ig", "to": "orch", "label": "", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "orch", "to": "og", "label": "draft", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "orch", "to": "cache", "label": "lookup", "exitX": 0, "exitY": 0.75, "entryX": 1, "entryY": 0.5 },
+    { "from": "orch", "to": "neo", "label": "graph resolve", "exitX": 1, "exitY": 0.3, "entryX": 0, "entryY": 0.5 },
+    { "from": "orch", "to": "qd", "label": "vector+ACL", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "orch", "to": "llm", "label": "synthesize", "exitX": 1, "exitY": 0.8, "entryX": 0, "entryY": 0.5 },
+    { "from": "orch", "to": "pg", "label": "audit", "exitX": 1, "exitY": 0.65, "entryX": 0, "entryY": 0.5 },
+    { "from": "orch", "to": "s3", "label": "labels", "exitX": 1, "exitY": 0.45, "entryX": 0, "entryY": 0.5 }
+  ]
+}

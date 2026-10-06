@@ -1,0 +1,22 @@
+# Диаграммы Knowledge Platform
+
+Схемы сдачи (Draw.io + PNG). Specs для перегенерации: [`_dev/specs/`](_dev/specs/).
+
+| Диаграмма | PNG | Draw.io |
+| --------- | --- | ------- |
+| C4 L1 Контекст | [c4-context.png](c4-context.png) | [c4-context.drawio](c4-context.drawio) |
+| C4 L2 Контейнеры | [c4-container.png](c4-container.png) | [c4-container.drawio](c4-container.drawio) |
+| C4 L3 Компоненты агента | [c4-component.png](c4-component.png) | [c4-component.drawio](c4-component.drawio) |
+| Deployment | [deployment.png](deployment.png) | [deployment.drawio](deployment.drawio) |
+| Sequence (chat) | [sequence-chat.png](sequence-chat.png) | [sequence-chat.drawio](sequence-chat.drawio) |
+| ER | [er-diagram.png](er-diagram.png) | [er-diagram.drawio](er-diagram.drawio) |
+| Data Flow | [data-flow.png](data-flow.png) | [data-flow.drawio](data-flow.drawio) |
+
+Markdown + Mermaid: [`docs/architecture/`](../docs/architecture/).
+
+Перегенерация (из `yuit-docs-ai-architect/tools/drawio-mcp`):
+
+```powershell
+node src/cli.mjs --spec <platform>/diagrams/_dev/specs/c4-context.json --output <platform>/diagrams/c4-context.drawio
+node src/cli.mjs --export-png <platform>/diagrams/c4-context.drawio --spec-path <platform>/diagrams/_dev/specs/c4-context.json
+```

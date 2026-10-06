@@ -1,0 +1,52 @@
+{
+  "title": "Sequence — сложный chat (GraphRAG + ACL)",
+  "pageWidth": 1600,
+  "pageHeight": 900,
+  "sequence": {
+    "colWidth": 140,
+    "boxWidth": 120,
+    "startX": 40,
+    "headerY": 30,
+    "headerH": 50,
+    "msgY0": 140,
+    "msgStep": 48,
+    "lifelineHeight": 680,
+    "participants": [
+      { "id": "u", "label": "Category\nManager", "type": "person" },
+      { "id": "gw", "label": "API", "type": "lifeline" },
+      { "id": "ig", "label": "Input\nGuard", "type": "lifeline" },
+      { "id": "cache", "label": "Semantic\nCache", "type": "lifeline" },
+      { "id": "orch", "label": "LangGraph", "type": "lifeline" },
+      { "id": "g", "label": "Graph\nresolve", "type": "lifeline" },
+      { "id": "v", "label": "Vector\n+ ACL", "type": "lifeline" },
+      { "id": "llm", "label": "LLM\nServing", "type": "lifeline" },
+      { "id": "og", "label": "Output\nGuard", "type": "lifeline" },
+      { "id": "a", "label": "Audit", "type": "lifeline" }
+    ],
+    "messages": [
+      { "from": "u", "to": "gw", "label": "POST /v1/chat Bearer manager" },
+      { "from": "gw", "to": "ig", "label": "sanitize + injection check" },
+      { "from": "ig", "to": "cache", "label": "lookup" },
+      { "from": "cache", "to": "gw", "label": "miss", "return": true },
+      { "from": "gw", "to": "orch", "label": "invoke graph" },
+      { "from": "orch", "to": "g", "label": "entity / topic resolve" },
+      { "from": "g", "to": "orch", "label": "nodes / edges", "return": true },
+      { "from": "orch", "to": "v", "label": "dense search + ACL filter" },
+      { "from": "v", "to": "orch", "label": "chunks (без secret)", "return": true },
+      { "from": "orch", "to": "llm", "label": "synthesize + context" },
+      { "from": "llm", "to": "orch", "label": "draft", "return": true },
+      { "from": "orch", "to": "og", "label": "citations + ACL check" },
+      { "from": "og", "to": "a", "label": "decision row" },
+      { "from": "og", "to": "gw", "label": "answer + citations", "return": true },
+      { "from": "gw", "to": "u", "label": "SSE / JSON", "return": true }
+    ],
+    "notes": [
+      {
+        "afterMessage": 8,
+        "label": "ACL: manager не видит secret promo.\ncompliance — видит.",
+        "w": 240,
+        "h": 60
+      }
+    ]
+  }
+}
