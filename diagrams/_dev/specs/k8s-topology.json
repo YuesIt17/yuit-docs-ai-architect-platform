@@ -1,0 +1,174 @@
+{
+  "title": "K8s — Docker Desktop + namespace kp",
+  "pageWidth": 1480,
+  "pageHeight": 860,
+  "nodes": [
+    {
+      "id": "note",
+      "label": "Context: docker-desktop (1 node).\nIngress LB :8088. Ollama по умолчанию в Compose.",
+      "style": "note",
+      "x": 40,
+      "y": 20,
+      "w": 400,
+      "h": 70
+    },
+    {
+      "id": "browser",
+      "label": "Browser",
+      "style": "external",
+      "x": 40,
+      "y": 200,
+      "w": 120,
+      "h": 50
+    },
+    {
+      "id": "node",
+      "label": "Docker Desktop Node",
+      "style": "boundary",
+      "x": 220,
+      "y": 110,
+      "w": 1000,
+      "h": 620
+    },
+    {
+      "id": "ing",
+      "label": "ingress-nginx\nLB :8088",
+      "style": "external",
+      "x": 40,
+      "y": 50,
+      "w": 160,
+      "h": 70,
+      "parent": "node"
+    },
+    {
+      "id": "ns",
+      "label": "namespace kp",
+      "style": "boundary",
+      "x": 40,
+      "y": 150,
+      "w": 920,
+      "h": 430,
+      "parent": "node"
+    },
+    {
+      "id": "edge",
+      "label": "plane=edge",
+      "style": "boundary",
+      "x": 30,
+      "y": 40,
+      "w": 200,
+      "h": 160,
+      "parent": "ns"
+    },
+    {
+      "id": "fe",
+      "label": "deploy/frontend\nsvc :80",
+      "style": "container",
+      "x": 20,
+      "y": 50,
+      "w": 160,
+      "h": 80,
+      "parent": "edge"
+    },
+    {
+      "id": "ctrl",
+      "label": "plane=control",
+      "style": "boundary",
+      "x": 260,
+      "y": 40,
+      "w": 220,
+      "h": 160,
+      "parent": "ns"
+    },
+    {
+      "id": "api",
+      "label": "deploy/api\nsvc :8080",
+      "style": "container",
+      "x": 30,
+      "y": 50,
+      "w": 160,
+      "h": 80,
+      "parent": "ctrl"
+    },
+    {
+      "id": "data",
+      "label": "plane=data",
+      "style": "boundary",
+      "x": 30,
+      "y": 230,
+      "w": 860,
+      "h": 170,
+      "parent": "ns"
+    },
+    {
+      "id": "pg",
+      "label": "postgres",
+      "style": "db",
+      "x": 20,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "neo",
+      "label": "neo4j",
+      "style": "db",
+      "x": 170,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "qd",
+      "label": "qdrant",
+      "style": "db",
+      "x": 320,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "rd",
+      "label": "redis",
+      "style": "db",
+      "x": 470,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "s3",
+      "label": "minio",
+      "style": "db",
+      "x": 620,
+      "y": 50,
+      "w": 120,
+      "h": 70,
+      "parent": "data"
+    },
+    {
+      "id": "hostoll",
+      "label": "Compose ollama\n:11434 host",
+      "style": "external",
+      "x": 1280,
+      "y": 280,
+      "w": 160,
+      "h": 70
+    }
+  ],
+  "edges": [
+    { "from": "browser", "to": "ing", "label": "kp.local", "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 },
+    { "from": "ing", "to": "fe", "label": "/", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "ing", "to": "api", "label": "/api", "exitX": 1, "exitY": 0.5, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "pg", "label": "", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "neo", "label": "", "exitX": 0.6, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "qd", "label": "", "exitX": 0.7, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "rd", "label": "", "exitX": 0.8, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "s3", "label": "", "exitX": 0.9, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "api", "to": "hostoll", "label": "host.docker.internal", "dashed": true, "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 }
+  ]
+}

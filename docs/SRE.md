@@ -1,6 +1,6 @@
 # SRE / ops runbook (curl, kubectl, Helm, Compose)
 
-Шпаргалка для эксплуатации **RetailPartnerX Knowledge Platform** на Windows (Docker Desktop + Helm). Подробный setup: [SETUP.md](SETUP.md).
+Шпаргалка для эксплуатации **RetailPartnerX Knowledge Platform** на Windows (Docker Desktop + Helm). Подробный setup: [SETUP.md](SETUP.md). Архитектура инфры (Compose / K8s, схемы): [infra/](infra/).
 
 ## Контекст и URL
 

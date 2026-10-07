@@ -1,6 +1,6 @@
 {
   "hwId": "platform",
-  "description": "RetailPartnerX Knowledge Platform — C4, Deployment, Sequence, ER, Data Flow",
+  "description": "RetailPartnerX Knowledge Platform — C4, Deployment, Sequence, ER, Data Flow, Infra topology",
   "defaultOutputDir": "../yuit-docs-ai-architect-platform/diagrams",
   "frozen": [],
   "diagrams": [
@@ -10,6 +10,8 @@
     { "spec": "deployment.json", "output": "deployment.drawio" },
     { "spec": "sequence-chat.json", "output": "sequence-chat.drawio" },
     { "spec": "er-diagram.json", "output": "er-diagram.drawio" },
-    { "spec": "data-flow.json", "output": "data-flow.drawio" }
+    { "spec": "data-flow.json", "output": "data-flow.drawio" },
+    { "spec": "compose-topology.json", "output": "compose-topology.drawio" },
+    { "spec": "k8s-topology.json", "output": "k8s-topology.drawio" }
   ]
 }

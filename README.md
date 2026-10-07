@@ -2,7 +2,7 @@
 
 **Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)**
 
-> **Сокращения:** [Глоссарий](docs/Glossary.md) · **Артефакты:** [docs/](docs/) · [diagrams/](diagrams/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md)
+> **Сокращения:** [Глоссарий](docs/Glossary.md) · **Артефакты:** [docs/](docs/) · [diagrams/](diagrams/) · **Infra:** [docs/infra/](docs/infra/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md)
 
 ## Цель
 
@@ -40,6 +40,7 @@
 | Шаг | Артефакт |
 | --- | -------- |
 | 1. Architecture & Design (C4 L1–L3, Deployment, Sequence, ER, Data Flow) | [docs/architecture/](docs/architecture/) · [diagrams/](diagrams/) |
+| 1b. Infra topology (Compose / K8s) | [docs/infra/](docs/infra/) · [compose-topology](diagrams/compose-topology.png) · [k8s-topology](diagrams/k8s-topology.png) |
 | 2. ADR со trade-off (LLM, Vector, Graph, Orchestration, Security, Obs, …) | [docs/adr/](docs/adr/) |
 | 3. MVP: GraphRAG + LangGraph + Guardrails + multimodal labels | [backend/](backend/) · [frontend/](frontend/) |
 | 4. Infra: Compose + Helm (Data Plane + Control Plane) | [infra/](infra/) |
@@ -63,7 +64,7 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 | Критерий | Как закрыто |
 | -------- | ----------- |
 | Нет облачных API (OpenAI/Anthropic) | [ADR-001](docs/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama / vLLM |
-| Есть Deployment и Data Flow | [deployment](docs/architecture/deployment.md) · [data-flow](docs/architecture/data-flow.md) · [diagrams/](diagrams/) |
+| Есть Deployment и Data Flow | [deployment](docs/architecture/deployment.md) · [data-flow](docs/architecture/data-flow.md) · [docs/infra/](docs/infra/) · [diagrams/](diagrams/) |
 | GraphRAG (не только векторный поиск) | [ADR-003](docs/adr/ADR-003-graph-db.md) · `backend/app/services/knowledge_store.py` · `backend/app/agent/graph.py` |
 | ACL: User B не видит секретный документ | [ADR-005](docs/adr/ADR-005-security.md) · demo: manager vs compliance |
 | Control Plane / Data Plane | [c4-container](docs/architecture/c4-container.md) |
@@ -76,7 +77,7 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 
 ## Быстрый старт
 
-Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Runbook: **[docs/SRE.md](docs/SRE.md)**.
+Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Инфра: **[docs/infra/](docs/infra/)**. Runbook: **[docs/SRE.md](docs/SRE.md)**.
 
 ```powershell
 make demo          # data plane + api + frontend (:5173)

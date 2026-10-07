@@ -55,4 +55,4 @@ flowchart TB
   API --> Vault
 ```
 
-K8s (kind / Docker Desktop): [k8s-deployment.md](k8s-deployment.md).
+K8s (Docker Desktop / kind): [../infra/k8s-architecture.md](../infra/k8s-architecture.md).

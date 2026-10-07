@@ -9,6 +9,9 @@
 
 Оба пути поднимают Control Plane (API + Frontend) и Data Plane (Neo4j, Qdrant, MinIO, Postgres, Redis). LLM — отдельно (MOCK по умолчанию).
 
+**Архитектура инфры** (сети, pods, planes, схемы): **[docs/infra/](infra/)** · Compose: [compose-dev.md](infra/compose-dev.md) · K8s: [k8s-architecture.md](infra/k8s-architecture.md).  
+**Ops-команды** (curl / kubectl / Helm): **[SRE.md](SRE.md)**.
+
 ---
 
 ## Предварительные требования
@@ -22,15 +25,14 @@
 
 ### Только для Kubernetes
 
-- [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - [Helm 3](https://helm.sh/docs/intro/install/)
 - kubectl
+- (опционально legacy) [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 
 Проверка:
 
 ```powershell
 docker version
-kind version
 helm version
 kubectl version --client
 ```
@@ -41,16 +43,10 @@ kubectl version --client
 
 ### A1. Полный стек (рекомендуется для демо)
 
-Из корня репозитория:
-
 ```powershell
 cd yuit-docs-ai-architect-platform
 make demo
-# эквивалент:
-# docker compose -f infra/docker-compose.yml --profile demo up -d --build
 ```
-
-Поднимается:
 
 | Сервис | URL / порт |
 |--------|------------|
@@ -58,45 +54,32 @@ make demo
 | API | http://localhost:8080 |
 | Neo4j Browser | http://localhost:7474 (neo4j / retailpartnerx) |
 | Qdrant | http://localhost:6333 |
-| MinIO API / Console | http://localhost:9000 / http://localhost:9001 (minioadmin / minioadmin); image `bitnamilegacy/minio` (`minio/minio` often blocked; `bitnami/minio` is paid-only) |
+| MinIO API / Console | http://localhost:9000 / http://localhost:9001 (minioadmin / minioadmin) |
 | Jaeger | http://localhost:16686 |
 | Grafana | http://localhost:3000 |
 | Prometheus | http://localhost:9090 |
 | Postgres | localhost:5432 (kp / kp) |
 | Redis | localhost:6379 |
 
-Проверка:
-
 ```powershell
 curl http://localhost:8080/health
-# UI: http://localhost:5173
-```
-
-Остановка:
-
-```powershell
 make down
 ```
 
-### A2. Локальная разработка (API + UI на хосте, БД в Docker)
+Топы сервисов / networks / profiles: [infra/compose-dev.md](infra/compose-dev.md).
 
-1. Поднять только data plane:
+### A2. Локальная разработка (API + UI на хосте, БД в Docker)
 
 ```powershell
 docker compose -f infra/docker-compose.yml --profile core up -d postgres neo4j qdrant redis minio minio-init jaeger prometheus grafana
 ```
 
-2. API на хосте (порт 8080 должен быть свободен):
-
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
-# при необходимости: pip install -e ".[dev]"
 $env:LLM_PROVIDER = "MOCK"
 uvicorn app.main:app --reload --port 8080
 ```
-
-3. Frontend:
 
 ```powershell
 cd frontend
@@ -105,69 +88,21 @@ npm run dev
 # http://localhost:5173  (proxy /api → :8080)
 ```
 
-> Если на 8080 уже крутится uvicorn, а вы поднимаете `make demo`, будет конфликт портов. Остановите локальный API или уберите сервис `api` из compose.
+> Если на 8080 уже крутится uvicorn, а вы поднимаете `make demo`, будет конфликт портов.
 
-### A3. Локальный LLM (Ollama в Compose) + observability / S3
-
-**Разделение:** Ollama — **только Docker Compose** (минимум RAM). Grafana / Prometheus / MinIO / Jaeger — тоже compose (`core` / `make obs`). Kubernetes Desktop держит API+UI+graph stores; LLM туда по умолчанию не кладём.
-
-По умолчанию `LLM_PROVIDER=MOCK` — модели не качаются.
-
-**Ollama minimal (CPU / ноутбук):**
+### A3. Локальный LLM + observability
 
 ```powershell
-make llm-ollama
-# только контейнер ollama (:11434) + pull qwen2.5:0.5b
-# mem_limit 3g, max 1 loaded model
+make llm-ollama    # Ollama :11434, qwen2.5:0.5b
+make obs           # Prometheus / Grafana / MinIO / Jaeger
+make llm-vllm      # NVIDIA GPU profile
 ```
 
-Другие модели (тяжелее):
+В UI → **LLM**: Provider `OLLAMA`, Base URL `http://localhost:11434/v1` (API на хосте) или `http://ollama:11434/v1` (API в том же compose), model `qwen2.5:0.5b`. Роль manager/compliance → Apply.
 
-```powershell
-.\scripts\ollama-pull.ps1 -Model qwen2.5:0.5b
-.\scripts\ollama-pull.ps1 -Model qwen2.5:1.5b-instruct
-# 7B — только если много RAM/GPU, не вместе с Desktop K8s
-```
-
-В UI → **LLM** (API на хосте или в K8s с доступом к localhost:11434):
-
-| Поле | Значение |
-|------|----------|
-| Provider | `OLLAMA` |
-| Base URL | `http://localhost:11434/v1` (API на хосте) или `http://ollama:11434/v1` (API в том же compose) |
-| Model | `qwen2.5:0.5b` |
-
-**Apply** (роль manager или compliance) → Chat.
-
-**Prometheus + Grafana + MinIO (S3 для labels):**
-
-```powershell
-make obs
-# или полный стек: make demo / make up
-```
-
-| Сервис | URL |
-|--------|-----|
-| Grafana | http://localhost:3000 (anon / admin:admin) |
-| Prometheus | http://localhost:9090 |
-| MinIO API / Console | http://localhost:9000 / http://localhost:9001 (`minioadmin` / `minioadmin`) |
-| Jaeger | http://localhost:16686 |
-
-Compose API по умолчанию `STORE_BACKEND=live` → объекты labels в MinIO bucket `knowledge-platform`. Fallback: `STORE_BACKEND=memory`.
-
-**vLLM (NVIDIA GPU):**
-
-```powershell
-make llm-vllm
-```
-
-UI: Provider `VLLM`, Base URL `http://vllm:8000/v1` или `http://localhost:8000/v1`.
-
-> Profile `llm` = только минимальный Ollama. vLLM → `llm-gpu`.
+По умолчанию `LLM_PROVIDER=MOCK`, `STORE_BACKEND=live` (MinIO). Hybrid с K8s: см. [infra/k8s-architecture.md](infra/k8s-architecture.md).
 
 ### A4. Роли и ACL в UI
-
-В шапке Role:
 
 | Role | Clearance |
 |------|-----------|
@@ -182,40 +117,27 @@ UI: Provider `VLLM`, Base URL `http://vllm:8000/v1` или `http://localhost:800
 
 ## B. С Kubernetes (Docker Desktop + Helm)
 
-### B1. Установка инструментов (Windows)
+### B1. Инструменты
 
 - Docker Desktop с **Enable Kubernetes**
 - Helm 3, kubectl
 
 ```powershell
-docker version
 kubectl config use-context docker-desktop
 kubectl get nodes
-helm version
 ```
 
-Legacy kind (опционально): `$env:KP_K8S='kind'` + [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation).
+Legacy kind: `$env:KP_K8S='kind'`.
 
-### B2. Подъём приложения
+### B2. Подъём
 
 ```powershell
-cd yuit-docs-ai-architect-platform
 .\scripts\k8s-up.ps1
 ```
 
-Скрипт (режим `desktop` по умолчанию):
+Скрипт: build `kp-api:dev` / `kp-frontend:dev` → ingress-nginx на **:8088** → Helm + [`values-desktop.yaml`](../infra/helm/knowledge-platform/values-desktop.yaml).
 
-1. Собирает `kp-api:dev`, `kp-frontend:dev`
-2. Ставит ingress-nginx (LoadBalancer на **:8088** — `:80` часто занят IIS)
-3. `helm upgrade --install kp` с [values-desktop.yaml](../infra/helm/knowledge-platform/values-desktop.yaml)
-
-### B3. Hosts и доступ
-
-В `C:\Windows\System32\drivers\etc\hosts` (от администратора):
-
-```
-127.0.0.1 kp.local
-```
+Hosts (admin): `127.0.0.1 kp.local`
 
 | Что | URL |
 |-----|-----|
@@ -226,52 +148,20 @@ cd yuit-docs-ai-architect-platform
 curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
 ```
 
-Если без hosts — тот же curl с заголовком Host.
+Снос: `.\scripts\k8s-down.ps1`
 
-### B4. LLM и side-stack
+### B3. LLM side-stack
 
-**MOCK** в кластере по умолчанию (`values-desktop.yaml`).
-
-**Ollama** — в Compose, не в Desktop K8s:
-
-```powershell
-make llm-ollama
-# в UI /llm: OLLAMA http://host.docker.internal:11434/v1 (если API в K8s на Docker Desktop)
-# или port-forward/host API → http://localhost:11434/v1
-# model: qwen2.5:0.5b
-```
-
-**MinIO** в K8s включён (`STORE_BACKEND=live`) для raw/normalized labels.
-
-**Grafana / Prometheus** — Compose (`make obs`), scrape `api:8080/metrics` когда API тоже в compose. Для API в K8s смотри Ops в UI или добавь scrape на NodePort вручную.
-
-In-cluster Ollama (не рекомендуется на ноутбуке): `$env:KP_LLM='ollama'; .\scripts\k8s-up.ps1` → tiny `qwen2.5:0.5b`.
-
-### B5. Операционные команды
-
-Все **curl / kubectl / Helm / Compose** команды — в **[docs/SRE.md](SRE.md)** (runbook для SRE).
-
-Кратко после подключения Compose-Ollama к API в K8s:
+MOCK в кластере по умолчанию. Ollama — в Compose (`make llm-ollama`); API в K8s → `http://host.docker.internal:11434/v1`.
 
 ```powershell
 $env:KP_LLM = "compose-ollama"
 .\scripts\k8s-up.ps1
-# или только overlay + рестарт api:
-# helm upgrade kp ... -f values-desktop.yaml -f values-desktop-compose-ollama.yaml
-# kubectl -n kp rollout restart deploy/api
 ```
 
-Hosts (Windows, от администратора): `C:\Windows\System32\drivers\etc\hosts` → `127.0.0.1 kp.local`
+In-cluster Ollama (тяжело для ноутбука): `$env:KP_LLM='ollama'; .\scripts\k8s-up.ps1`
 
-### B6. Связка UI ↔ LLM в K8s
-
-```
-Browser → Ingress :8088 → Frontend
-Browser → Ingress /api → API → Ollama/vLLM (Data Plane)
-```
-
-Фронт **не** ходит в Ollama напрямую; только `PUT /v1/llm/config` и Chat/Labels через API.
-
+Ноды, pods, planes, ingress: **[infra/k8s-architecture.md](infra/k8s-architecture.md)**. Команды: **[SRE.md](SRE.md)**.
 
 ---
 

@@ -11,12 +11,20 @@
 | Sequence (chat) | [sequence-chat.png](sequence-chat.png) | [sequence-chat.drawio](sequence-chat.drawio) |
 | ER | [er-diagram.png](er-diagram.png) | [er-diagram.drawio](er-diagram.drawio) |
 | Data Flow | [data-flow.png](data-flow.png) | [data-flow.drawio](data-flow.drawio) |
+| Compose topology | [compose-topology.png](compose-topology.png) | [compose-topology.drawio](compose-topology.drawio) |
+| K8s topology | [k8s-topology.png](k8s-topology.png) | [k8s-topology.drawio](k8s-topology.drawio) |
 
-Markdown + Mermaid: [`docs/architecture/`](../docs/architecture/).
+Markdown + Mermaid: [`docs/architecture/`](../docs/architecture/) · infra: [`docs/infra/`](../docs/infra/).
 
 Перегенерация (из `yuit-docs-ai-architect/tools/drawio-mcp`):
 
 ```powershell
 node src/cli.mjs --spec <platform>/diagrams/_dev/specs/c4-context.json --output <platform>/diagrams/c4-context.drawio
 node src/cli.mjs --export-png <platform>/diagrams/c4-context.drawio --spec-path <platform>/diagrams/_dev/specs/c4-context.json
+```
+
+Fallback PNG для compose/k8s topology (если drawio CLI / Docker недоступны):
+
+```powershell
+python diagrams/_dev/render_topology_png.py
 ```
