@@ -1,8 +1,13 @@
+# Hybrid: scrape K8s API via Docker Desktop NodePort (no Host header — Prometheus forbids it)
 global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: kp-api
+  - job_name: prometheus
     static_configs:
-      - targets: ["api:8080"]
+      - targets: ["localhost:9090"]
+
+  - job_name: kp-api-k8s
     metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:30080"]

@@ -27,8 +27,8 @@ if docker image inspect bitnamilegacy/minio:2025.7.23-debian-12-r5 >/dev/null 2>
 fi
 
 EXTRA=()
-if [[ "${KP_LLM:-}" == "ollama" ]]; then
-  EXTRA+=(-f infra/helm/knowledge-platform/values-ollama.yaml)
+if [[ "${KP_LLM:-}" == "compose-ollama" || "${KP_LLM:-}" == "ollama" ]]; then
+  EXTRA+=(-f infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml)
 fi
 
 helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace "${EXTRA[@]}"
@@ -36,3 +36,5 @@ helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace
 echo "Add hosts: 127.0.0.1 kp.local"
 echo "Open http://kp.local:8088"
 echo "API: http://kp.local:8088/api/health"
+echo "Hybrid LLM: make llm-ollama + KP_LLM=compose-ollama"
+echo "Obs: make obs (Compose)"

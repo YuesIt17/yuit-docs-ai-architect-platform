@@ -1,0 +1,155 @@
+# Optional full stack WITHOUT Kubernetes (CI / laptop without K8s).
+# Do NOT run together with `.\scripts\k8s-up.ps1` — port/store clash.
+# Hybrid Desktop: use docker-compose.yml (side-stack) + Helm instead.
+name: retailpartnerx-kp-standalone
+
+networks:
+  edge:
+    driver: bridge
+  control:
+    driver: bridge
+  data:
+    driver: bridge
+
+volumes:
+  pg_data:
+  neo4j_data:
+  qdrant_data:
+  redis_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kp
+      POSTGRES_PASSWORD: kp
+      POSTGRES_DB: knowledge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kp -d knowledge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  neo4j:
+    image: neo4j:5.26-community
+    environment:
+      NEO4J_AUTH: neo4j/retailpartnerx
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks: [data]
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks: [data]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks: [control]
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./prometheus/prometheus.standalone.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks: [control]
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks: [control]
+    depends_on:
+      - prometheus
+
+  api:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ../.env.example
+    environment:
+      POSTGRES_DSN: postgresql+asyncpg://kp:kp@postgres:5432/knowledge
+      NEO4J_URI: bolt://neo4j:7687
+      QDRANT_URL: http://qdrant:6333
+      REDIS_URL: redis://redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      LLM_PROVIDER: MOCK
+      EMBEDDING_PROVIDER: MOCK
+      STORE_BACKEND: ${STORE_BACKEND:-memory}
+    ports:
+      - "8080:8080"
+    networks: [edge, control, data]
+    depends_on:
+      - postgres
+      - neo4j
+      - qdrant
+      - redis
+      - jaeger
+      - prometheus
+
+  seed:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "pipelines.seed_all"]
+    env_file:
+      - ../.env.example
+    environment:
+      LLM_PROVIDER: MOCK
+      EMBEDDING_PROVIDER: MOCK
+      STORE_BACKEND: memory
+    networks: [data]
+    depends_on:
+      - api
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    ports:
+      - "5173:80"
+    networks: [edge]
+    depends_on:
+      - api

@@ -68,9 +68,10 @@ if ($mode -eq "kind") {
 }
 
 $extra = @()
-if ($env:KP_LLM -eq "ollama") {
-  $extra += @("-f", "infra/helm/knowledge-platform/values-ollama.yaml")
-} elseif ($env:KP_LLM -eq "compose-ollama") {
+if ($env:KP_LLM -eq "compose-ollama") {
+  $extra += @("-f", "infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml")
+} elseif ($env:KP_LLM -eq "ollama") {
+  Write-Warning "KP_LLM=ollama (in-cluster) removed. Use compose-ollama + make llm-ollama."
   $extra += @("-f", "infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml")
 }
 
@@ -94,6 +95,6 @@ Docker Desktop:
 kind (legacy):
   .\scripts\k8s-expose.ps1   -> http://kp.local:8088
 
-For Compose Ollama on host: `$env:KP_LLM='compose-ollama'; .\scripts\k8s-up.ps1
-For in-cluster Ollama: `$env:KP_LLM='ollama'; .\scripts\k8s-up.ps1
+Hybrid LLM: make llm-ollama; then `$env:KP_LLM='compose-ollama'; .\scripts\k8s-up.ps1
+Observability: make obs  (Prometheus / Grafana / Jaeger — Compose only)
 "@

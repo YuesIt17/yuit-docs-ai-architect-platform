@@ -162,6 +162,7 @@ def center(box, side):
         "r45": (x + w, y + int(h * 0.45)),
         "r55": (x + w, y + int(h * 0.55)),
         "r65": (x + w, y + int(h * 0.65)),
+        "r70": (x + w, y + int(h * 0.70)),
         "r75": (x + w, y + int(h * 0.75)),
         "r85": (x + w, y + int(h * 0.85)),
         "r20": (x + w, y + int(h * 0.2)),
@@ -170,59 +171,39 @@ def center(box, side):
 
 
 def render_compose():
-    img = Image.new("RGB", (1400, 820), BG)
+    img = Image.new("RGB", (1100, 640), BG)
     d = ImageDraw.Draw(img)
     draw_note(
         d,
-        (40, 20, 340, 70),
-        "Project: retailpartnerx-kp\nProfiles: core/demo + llm / llm-gpu.\nAPI на edge+control+data.",
+        (40, 20, 360, 70),
+        "Compose = side-stack only.\nK8s owns api/frontend/stores/minio.\nZero overlap.",
     )
 
-    edge = (40, 120, 280, 280)
-    ctrl = (380, 120, 260, 340)
-    data = (700, 120, 420, 520)
-    for box, title in ((edge, "edge"), (ctrl, "control"), (data, "data")):
+    ctrl = (40, 120, 280, 340)
+    data = (400, 120, 320, 280)
+    for box, title in ((ctrl, "control (obs)"), (data, "data (llm)")):
         dashed_rect(d, box)
         d.text((box[0] + 8, box[1] + 6), title, font=font_b, fill=DARK)
 
-    fe = (edge[0] + 40, edge[1] + 50, 180, 70)
-    api = (edge[0] + 40, edge[1] + 150, 180, 80)
-    draw_container(d, fe, "frontend\n:5173→80")
-    draw_container(d, api, "api\n:8080 FastAPI")
-
-    prom = (ctrl[0] + 40, ctrl[1] + 50, 160, 60)
-    graf = (ctrl[0] + 40, ctrl[1] + 140, 160, 60)
-    jaeger = (ctrl[0] + 40, ctrl[1] + 230, 160, 60)
+    prom = (ctrl[0] + 40, ctrl[1] + 50, 180, 60)
+    graf = (ctrl[0] + 40, ctrl[1] + 140, 180, 60)
+    jaeger = (ctrl[0] + 40, ctrl[1] + 230, 180, 60)
     draw_container(d, prom, "prometheus\n:9090")
     draw_container(d, graf, "grafana\n:3000")
     draw_container(d, jaeger, "jaeger\n:16686")
 
-    pg = (data[0] + 30, data[1] + 50, 130, 70)
-    neo = (data[0] + 200, data[1] + 50, 150, 70)
-    qd = (data[0] + 30, data[1] + 150, 130, 70)
-    rd = (data[0] + 200, data[1] + 150, 150, 70)
-    s3 = (data[0] + 100, data[1] + 260, 160, 70)
-    oll = (data[0] + 30, data[1] + 370, 160, 70)
-    vllm = (data[0] + 220, data[1] + 370, 160, 70)
-    draw_db(d, pg, "postgres\n:5432")
-    draw_db(d, neo, "neo4j\n:7474/:7687")
-    draw_db(d, qd, "qdrant\n:6333")
-    draw_db(d, rd, "redis\n:6379")
-    draw_db(d, s3, "minio\n:9000/:9001")
-    draw_container(d, oll, "ollama (llm)\n:11434 mem 3g")
-    draw_container(d, vllm, "vllm (llm-gpu)\n:8000")
-    seed = (1160, 280, 140, 50)
-    draw_container(d, seed, "seed (demo)", external=True)
+    oll = (data[0] + 40, data[1] + 50, 200, 70)
+    vllm = (data[0] + 40, data[1] + 150, 200, 70)
+    draw_container(d, oll, "ollama\n:11434 mem 3g")
+    draw_container(d, vllm, "vllm (opt)\n:8000")
 
-    arrow(d, center(fe, "b"), center(api, "t"), label="HTTP")
-    for db, side in ((pg, "r25"), (neo, "r35"), (qd, "r45"), (rd, "r55"), (s3, "r65")):
-        arrow(d, center(api, side), center(db, "l"))
-    arrow(d, center(api, "r75"), center(oll, "l"), dashed=True, label="LLM")
-    arrow(d, center(api, "r85"), center(vllm, "l"), dashed=True, label="GPU")
-    arrow(d, center(api, "r20"), center(jaeger, "l"), label="traces")
-    arrow(d, center(prom, "l"), (api[0] + api[2], api[1] + int(api[3] * 0.3)), dashed=True, label="scrape")
+    k8s = (800, 200, 200, 80)
+    draw_container(d, k8s, "K8s kp\napi+stores+minio", external=True)
+
     arrow(d, center(graf, "t"), center(prom, "b"))
-    arrow(d, center(seed, "l"), center(pg, "r"), dashed=True, label="seed")
+    arrow(d, center(k8s, "l"), center(oll, "r"), dashed=True, label="LLM")
+    arrow(d, center(k8s, "l"), center(jaeger, "r"), dashed=True, label="OTLP")
+    arrow(d, center(prom, "r"), center(k8s, "l"), dashed=True, label="scrape")
 
     path = OUT / "compose-topology.png"
     img.save(path, "PNG")
@@ -235,7 +216,7 @@ def render_k8s():
     draw_note(
         d,
         (40, 20, 400, 70),
-        "Context: docker-desktop (1 node).\nIngress LB :8088. Ollama по умолчанию в Compose.",
+        "Hybrid: platform in K8s.\nCompose side: ollama + obs.\nIngress LB :8088.",
     )
     browser = (40, 200, 120, 50)
     draw_container(d, browser, "Browser", external=True)

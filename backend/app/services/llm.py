@@ -10,7 +10,9 @@ from app.config import Settings
 
 PROVIDER_PRESETS: dict[str, dict[str, str]] = {
     "MOCK": {"base_url": "", "model": "mock-graph-rag"},
-    "OLLAMA": {"base_url": "http://localhost:11434/v1", "model": "qwen2.5:0.5b"},
+    # Desktop default: API in K8s / Docker → Ollama published on host :11434 (make llm-ollama).
+    # Same-compose network: use http://ollama:11434/v1; API on host: http://localhost:11434/v1.
+    "OLLAMA": {"base_url": "http://host.docker.internal:11434/v1", "model": "qwen2.5:0.5b"},
     "VLLM": {"base_url": "http://localhost:8000/v1", "model": "Qwen/Qwen2.5-7B-Instruct"},
 }
 
@@ -121,7 +123,7 @@ class LLMClient:
 
             base = self.runtime.base_url
             if provider == "OLLAMA" and base and "11434" not in base and "ollama" not in base:
-                base = "http://localhost:11434/v1"
+                base = "http://host.docker.internal:11434/v1"
             llm = ChatOpenAI(
                 model=self.runtime.model,
                 api_key=self.runtime.api_key or "not-needed",

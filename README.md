@@ -80,21 +80,16 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Инфра: **[docs/infra/](docs/infra/)**. Runbook: **[docs/SRE.md](docs/SRE.md)**.
 
 ```powershell
-make demo          # data plane + api + frontend (:5173)
-make llm-ollama    # Ollama qwen2.5:0.5b (:11434)
-make obs           # Prometheus / Grafana / Jaeger / MinIO
+.\scripts\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s — без дублей
+# без K8s: docker compose -f infra/docker-compose.standalone.yml up -d --build
 ```
 
-| Сервис | Порт |
-|--------|------|
-| Frontend | 5173 |
-| API | 8080 |
-| Neo4j Browser | 7474 |
-| MinIO Console | 9001 |
-| Jaeger | 16686 |
-| Ollama | 11434 |
-| Prometheus | 9090 |
-| Grafana | 3000 |
+| Сервис | Где | URL / порт |
+|--------|-----|------------|
+| UI / API | K8s | http://kp.local:8088 |
+| MinIO / stores | K8s | port-forward при необходимости |
+| Ollama | Compose | :11434 |
+| Jaeger / Prom / Grafana | Compose | :16686 / :9090 / :3000 |
 
 Демо-токены (Role switcher): `guest` | `associate` | `manager` | `compliance`
 

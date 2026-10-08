@@ -23,9 +23,10 @@ async def test_probe_mock(seeded):
 @pytest.mark.asyncio
 async def test_switch_provider_runtime(seeded):
     c = seeded
-    c.llm.apply_config("OLLAMA", "http://localhost:11434/v1", "qwen2.5:0.5b")
+    c.llm.apply_config("OLLAMA", "http://host.docker.internal:11434/v1", "qwen2.5:0.5b")
     cfg = c.llm.get_config()
     assert cfg.provider == "OLLAMA"
     assert "11434" in cfg.base_url
+    assert "host.docker.internal" in cfg.base_url
     c.llm.apply_config("MOCK")
     assert c.llm.get_config().provider == "MOCK"

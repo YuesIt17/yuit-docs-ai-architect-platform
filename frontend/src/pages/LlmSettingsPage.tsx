@@ -92,7 +92,11 @@ export function LlmSettingsPage() {
         </label>
         <label className="field">
           Base URL (OpenAI-compatible)
-          <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="http://localhost:11434/v1" />
+          <input
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder="http://host.docker.internal:11434/v1"
+          />
         </label>
         <label className="field">
           Model
@@ -118,16 +122,12 @@ export function LlmSettingsPage() {
         )}
         <h3>Ollama base URL (куда ходит API, не браузер)</h3>
         <p className="mono">
-          make llm-ollama{"\n"}
-          Compose API on host: http://localhost:11434/v1{"\n"}
-          Compose API in network: http://ollama:11434/v1{"\n"}
-          K8s API (Desktop) + Ollama in Compose: http://host.docker.internal:11434/v1
+          Hybrid (make demo): http://host.docker.internal:11434/v1{"\n"}
+          API on host + make llm-ollama: http://localhost:11434/v1
         </p>
         <p>
-          Поле Base URL — endpoint <strong>изнутри пода/контейнера API</strong>. Для Helm{" "}
-          <code>values-desktop-compose-ollama.yaml</code> значение{" "}
-          <code>host.docker.internal</code> нормальное; менять на localhost в UI нельзя — в поде localhost это не
-          ваш Ollama.
+          Platform в K8s, Ollama только в Compose — без дублей. Base URL — endpoint{" "}
+          <strong>изнутри пода API</strong>. Preset: <code>host.docker.internal</code>.
         </p>
       </aside>
     </div>

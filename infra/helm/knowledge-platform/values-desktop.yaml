@@ -8,10 +8,14 @@ ingress:
   className: nginx
 
 api:
+  # NodePort for Compose Prometheus scrape (host.docker.internal:30080/metrics)
+  serviceType: NodePort
+  nodePort: 30080
   env:
     # MinIO in-cluster for label raw/normalized objects
     STORE_BACKEND: live
     EMBEDDING_PROVIDER: MOCK
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4317
 
 minio:
   enabled: true
@@ -20,8 +24,7 @@ minio:
   rootPassword: minioadmin
   args: []
 
-# Ollama stays in Docker Compose (profile llm, qwen2.5:0.5b) — not in Desktop K8s.
+# Ollama stays in Docker Compose (make llm-ollama) — not in Desktop K8s.
+# Hybrid: $env:KP_LLM='compose-ollama' → values-desktop-compose-ollama.yaml
 llm:
   provider: MOCK
-  ollama:
-    enabled: false

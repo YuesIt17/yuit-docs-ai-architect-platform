@@ -1,98 +1,23 @@
+# Hybrid side-stack only — no overlap with Helm/K8s platform.
+# K8s owns: api, frontend, postgres, neo4j, qdrant, redis, minio
+# Compose owns: ollama (+ optional vllm), prometheus, grafana, jaeger
+#
+# Full no-K8s stack: infra/docker-compose.standalone.yml (`make demo-standalone`)
 name: retailpartnerx-kp
 
 networks:
-  edge:
-    driver: bridge
   control:
     driver: bridge
   data:
     driver: bridge
 
 volumes:
-  pg_data:
-  neo4j_data:
-  qdrant_data:
-  redis_data:
-  minio_data:
   ollama_data:
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    profiles: ["core", "demo"]
-    environment:
-      POSTGRES_USER: kp
-      POSTGRES_PASSWORD: kp
-      POSTGRES_DB: knowledge
-    ports:
-      - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks: [data]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kp -d knowledge"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  neo4j:
-    image: neo4j:5.26-community
-    profiles: ["core", "demo"]
-    environment:
-      NEO4J_AUTH: neo4j/retailpartnerx
-      NEO4J_PLUGINS: '["apoc"]'
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - neo4j_data:/data
-    networks: [data]
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-
-  qdrant:
-    image: qdrant/qdrant:v1.13.2
-    profiles: ["core", "demo"]
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    networks: [data]
-
-  redis:
-    image: redis:7-alpine
-    profiles: ["core", "demo"]
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks: [data]
-
-  # Optional S3. With STORE_BACKEND=memory API uses local filesystem fallback.
-  # Official minio/minio is often geo-blocked; bitnami/minio moved to paid Secure Images.
-  # Use bitnamilegacy free tags (same entrypoint/env as former bitnami/minio).
-  minio:
-    image: bitnamilegacy/minio:2025.7.23-debian-12-r5
-    profiles: ["core", "demo"]
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_DEFAULT_BUCKETS: knowledge-platform
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/bitnami/minio/data
-    networks: [data]
-
   jaeger:
     image: jaegertracing/all-in-one:1.60.0
-    profiles: ["core", "demo"]
+    profiles: ["obs"]
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
@@ -103,7 +28,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.55.1
-    profiles: ["core", "demo"]
+    profiles: ["obs"]
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
@@ -112,7 +37,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.3.0
-    profiles: ["core", "demo"]
+    profiles: ["obs"]
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_AUTH_ANONYMOUS_ENABLED: "true"
@@ -124,69 +49,7 @@ services:
     depends_on:
       - prometheus
 
-  api:
-    build:
-      context: ..
-      dockerfile: backend/Dockerfile
-    profiles: ["core", "demo"]
-    env_file:
-      - ../.env.example
-    environment:
-      POSTGRES_DSN: postgresql+asyncpg://kp:kp@postgres:5432/knowledge
-      NEO4J_URI: bolt://neo4j:7687
-      QDRANT_URL: http://qdrant:6333
-      REDIS_URL: redis://redis:6379/0
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
-      LLM_PROVIDER: MOCK
-      EMBEDDING_PROVIDER: MOCK
-      # live = MinIO for label raw/normalized objects; memory = local FS fallback
-      STORE_BACKEND: ${STORE_BACKEND:-live}
-    ports:
-      - "8080:8080"
-    networks: [edge, control, data]
-    depends_on:
-      - postgres
-      - neo4j
-      - qdrant
-      - redis
-      - jaeger
-      - minio
-      - prometheus
-
-  seed:
-    build:
-      context: ..
-      dockerfile: backend/Dockerfile
-    profiles: ["demo"]
-    command: ["python", "-m", "pipelines.seed_all"]
-    env_file:
-      - ../.env.example
-    environment:
-      LLM_PROVIDER: MOCK
-      EMBEDDING_PROVIDER: MOCK
-      STORE_BACKEND: memory
-    networks: [data]
-    depends_on:
-      - api
-
-  frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
-    profiles: ["core", "demo"]
-    ports:
-      - "5173:80"
-    networks: [edge]
-    depends_on:
-      - api
-
-  # Minimal local LLM (compose only — not in Desktop K8s by default).
-  # Default pull: qwen2.5:0.5b (~400MB–1GB RAM loaded). Do not use 7B on a laptop with K8s.
+  # Default pull: qwen2.5:0.5b. Do not use 7B on a laptop with K8s.
   ollama:
     image: ollama/ollama:latest
     profiles: ["llm"]
@@ -198,7 +61,6 @@ services:
       OLLAMA_MAX_LOADED_MODELS: "1"
       OLLAMA_NUM_PARALLEL: "1"
       OLLAMA_FLASH_ATTENTION: "1"
-    # Explicit DNS reduces TLS handshake timeouts to registry.ollama.ai on flaky resolvers.
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -207,10 +69,9 @@ services:
     networks: [data]
     mem_limit: 3g
     cpus: 2.0
-    # Soft reserve so Desktop still has room for K8s / prometheus / minio
     mem_reservation: 512m
 
-  # GPU host required; enable with --profile llm-gpu (not pulled by --profile llm)
+  # GPU host required; --profile llm-gpu
   vllm:
     image: vllm/vllm-openai:latest
     profiles: ["llm-gpu"]

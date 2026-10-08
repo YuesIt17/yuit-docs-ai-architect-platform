@@ -1,83 +1,95 @@
 # Настройка и запуск инфраструктуры
 
-Два пути:
+| Режим | Когда | Команда (PowerShell) |
+|-------|-------|----------------------|
+| **Hybrid (рекомендуется)** | Desktop / защита — **без дублей** | `.\scripts\hybrid-up.ps1` |
+| **Standalone Compose** | Без K8s / CI | см. ниже |
+| **Только K8s** | MOCK, без Ollama/obs | `.\scripts\k8s-up.ps1` |
 
-| Режим | Когда использовать | Команда |
-|-------|--------------------|---------|
-| **A. Без Kubernetes** (Docker Compose) | Ноутбук, быстрый демо, CI | `make demo` |
-| **B. С Kubernetes** (Docker Desktop + Helm) | «Прод-like» деплой | `.\scripts\k8s-up.ps1` |
+> На Windows **`make` не нужен** — в SETUP везде PowerShell. (`make demo` = обёртка над `hybrid-up.ps1`, если установлен GNU Make / chocolatey `make`.)
 
-Оба пути поднимают Control Plane (API + Frontend) и Data Plane (Neo4j, Qdrant, MinIO, Postgres, Redis). LLM — отдельно (MOCK по умолчанию).
+**Hybrid zero-overlap:** K8s = api/frontend/stores/**minio**; Compose = **ollama** + prometheus/grafana/jaeger.
 
-**Архитектура инфры** (сети, pods, planes, схемы): **[docs/infra/](infra/)** · Compose: [compose-dev.md](infra/compose-dev.md) · K8s: [k8s-architecture.md](infra/k8s-architecture.md).  
-**Ops-команды** (curl / kubectl / Helm): **[SRE.md](SRE.md)**.
+Архитектура: **[docs/infra/](infra/)** · ops: **[SRE.md](SRE.md)**.
 
 ---
 
 ## Предварительные требования
 
-### Общее
-
-- Docker Desktop (Windows, WSL2 backend рекомендуется)
-- Git
-- Python 3.11+ (для локального API без compose)
-- Node.js 20+ (для `npm run dev`)
-
-### Только для Kubernetes
-
-- [Helm 3](https://helm.sh/docs/intro/install/)
-- kubectl
-- (опционально legacy) [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
-
-Проверка:
+- Docker Desktop (WSL2), Git, Helm 3, kubectl
+- Python 3.11+ / Node 20+ — только для локальной разработки API/UI на хосте
 
 ```powershell
 docker version
 helm version
 kubectl version --client
+kubectl config use-context docker-desktop
+```
+
+Hosts (admin): `127.0.0.1 kp.local`
+
+---
+
+## A. Hybrid (рекомендуется)
+
+```powershell
+cd yuit-docs-ai-architect-platform
+.\scripts\hybrid-up.ps1
+# side-stack (ollama + obs) + k8s-up с KP_LLM=compose-ollama
+```
+
+| Что | URL |
+|-----|-----|
+| UI | http://kp.local:8088 |
+| API health | http://kp.local:8088/api/health |
+| Ollama | http://127.0.0.1:11434/v1/models |
+| Jaeger | http://127.0.0.1:16686 |
+| Prometheus | http://127.0.0.1:9090 |
+| Grafana | http://127.0.0.1:3000 (admin) |
+| MinIO | `kubectl -n kp port-forward svc/minio 9000:9000 9001:9001` |
+| Neo4j (in-cluster) | `kubectl -n kp port-forward svc/neo4j 7474:7474 7687:7687` |
+
+Side-stack отдельно:
+
+```powershell
+docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d
+.\scripts\ollama-pull.ps1 -Model qwen2.5:0.5b
+```
+
+LLM в UI: Provider `OLLAMA`, Base URL `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b` (preset по умолчанию).
+
+Снос:
+
+```powershell
+.\scripts\k8s-down.ps1
+docker compose -f infra/docker-compose.yml --profile obs --profile llm --profile llm-gpu down -v
 ```
 
 ---
 
-## A. Без Kubernetes (Docker Compose)
+## B. Standalone Compose (без K8s)
 
-### A1. Полный стек (рекомендуется для демо)
-
-```powershell
-cd yuit-docs-ai-architect-platform
-make demo
-```
-
-| Сервис | URL / порт |
-|--------|------------|
-| Frontend (UI) | http://localhost:5173 |
-| API | http://localhost:8080 |
-| Neo4j Browser | http://localhost:7474 (neo4j / retailpartnerx) |
-| Qdrant | http://localhost:6333 |
-| MinIO API / Console | http://localhost:9000 / http://localhost:9001 (minioadmin / minioadmin) |
-| Jaeger | http://localhost:16686 |
-| Grafana | http://localhost:3000 |
-| Prometheus | http://localhost:9090 |
-| Postgres | localhost:5432 (kp / kp) |
-| Redis | localhost:6379 |
+**Не** сочетать с `k8s-up` — конфликт портов/stores.
 
 ```powershell
-curl http://localhost:8080/health
-make down
+docker compose -f infra/docker-compose.standalone.yml up -d --build
+# UI http://localhost:5173  API http://localhost:8080
 ```
 
-Топы сервисов / networks / profiles: [infra/compose-dev.md](infra/compose-dev.md).
+Файл: [`infra/docker-compose.standalone.yml`](../infra/docker-compose.standalone.yml).  
+`STORE_BACKEND=memory` (MinIO нет). Ollama: side-stack `--profile llm` или MOCK.
 
-### A2. Локальная разработка (API + UI на хосте, БД в Docker)
+---
 
-```powershell
-docker compose -f infra/docker-compose.yml --profile core up -d postgres neo4j qdrant redis minio minio-init jaeger prometheus grafana
-```
+## C. Локальная разработка API/UI на хосте
+
+Нужны stores — либо K8s port-forward, либо `demo-standalone` без api/frontend контейнеров.
 
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
 $env:LLM_PROVIDER = "MOCK"
+$env:STORE_BACKEND = "memory"
 uvicorn app.main:app --reload --port 8080
 ```
 
@@ -85,98 +97,32 @@ uvicorn app.main:app --reload --port 8080
 cd frontend
 npm install
 npm run dev
-# http://localhost:5173  (proxy /api → :8080)
 ```
 
-> Если на 8080 уже крутится uvicorn, а вы поднимаете `make demo`, будет конфликт портов.
+---
 
-### A3. Локальный LLM + observability
-
-```powershell
-make llm-ollama    # Ollama :11434, qwen2.5:0.5b
-make obs           # Prometheus / Grafana / MinIO / Jaeger
-make llm-vllm      # NVIDIA GPU profile
-```
-
-В UI → **LLM**: Provider `OLLAMA`, Base URL `http://localhost:11434/v1` (API на хосте) или `http://ollama:11434/v1` (API в том же compose), model `qwen2.5:0.5b`. Роль manager/compliance → Apply.
-
-По умолчанию `LLM_PROVIDER=MOCK`, `STORE_BACKEND=live` (MinIO). Hybrid с K8s: см. [infra/k8s-architecture.md](infra/k8s-architecture.md).
-
-### A4. Роли и ACL в UI
+## Роли и ACL
 
 | Role | Clearance |
 |------|-----------|
 | guest | public |
-| associate | public + internal |
-| manager | public + internal |
+| associate / manager | public + internal |
 | compliance | + secret |
 
-Проверка: manager не видит secret promo (`42%`); compliance видит.
+manager не видит secret promo (`42%`); compliance видит.
 
 ---
 
-## B. С Kubernetes (Docker Desktop + Helm)
-
-### B1. Инструменты
-
-- Docker Desktop с **Enable Kubernetes**
-- Helm 3, kubectl
-
-```powershell
-kubectl config use-context docker-desktop
-kubectl get nodes
-```
-
-Legacy kind: `$env:KP_K8S='kind'`.
-
-### B2. Подъём
-
-```powershell
-.\scripts\k8s-up.ps1
-```
-
-Скрипт: build `kp-api:dev` / `kp-frontend:dev` → ingress-nginx на **:8088** → Helm + [`values-desktop.yaml`](../infra/helm/knowledge-platform/values-desktop.yaml).
-
-Hosts (admin): `127.0.0.1 kp.local`
-
-| Что | URL |
-|-----|-----|
-| UI | http://kp.local:8088 |
-| API health | http://kp.local:8088/api/health |
-
-```powershell
-curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
-```
-
-Снос: `.\scripts\k8s-down.ps1`
-
-### B3. LLM side-stack
-
-MOCK в кластере по умолчанию. Ollama — в Compose (`make llm-ollama`); API в K8s → `http://host.docker.internal:11434/v1`.
-
-```powershell
-$env:KP_LLM = "compose-ollama"
-.\scripts\k8s-up.ps1
-```
-
-In-cluster Ollama (тяжело для ноутбука): `$env:KP_LLM='ollama'; .\scripts\k8s-up.ps1`
-
-Ноды, pods, planes, ingress: **[infra/k8s-architecture.md](infra/k8s-architecture.md)**. Команды: **[SRE.md](SRE.md)**.
-
----
-
-## Переменные окружения (кратко)
+## Переменные
 
 См. [.env.example](../.env.example).
 
-| Переменная | Смысл | Пример |
-|------------|--------|--------|
-| `LLM_PROVIDER` | стартовый provider | `MOCK` / `OLLAMA` / `VLLM` |
-| `OPENAI_BASE_URL` | OpenAI-compatible endpoint | `http://ollama:11434/v1` |
-| `LLM_MODEL` | имя модели | `qwen2.5:7b-instruct` |
-| `STORE_BACKEND` | `memory` или `live` | `memory` для MVP |
-
-Runtime-смена без рестарта: UI **LLM** → Apply (manager/compliance).
+| Переменная | Смысл | Hybrid |
+|------------|-------|--------|
+| `LLM_PROVIDER` | MOCK / OLLAMA / VLLM | overlay / UI Apply |
+| `OPENAI_BASE_URL` | endpoint из **пода API** | `http://host.docker.internal:11434/v1` |
+| `STORE_BACKEND` | memory / live | `live` в K8s desktop |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | traces | `http://host.docker.internal:4317` |
 
 ---
 
@@ -184,25 +130,19 @@ Runtime-смена без рестарта: UI **LLM** → Apply (manager/compli
 
 | Симптом | Что сделать |
 |---------|-------------|
-| Ingress `:8088` / `:80` 404 от IIS | На Windows `:80` часто IIS. Ingress LB на **:8088**. Hosts: `127.0.0.1 kp.local` |
-| `ollama pull` TLS handshake timeout | `.\scripts\ollama-pull.ps1` (DNS 8.8.8.8 + retries). Или MOCK без модели |
-| Docker Desktop `pipe ... not found` / EOF | Engine упал. Не гоняйте kind+compose+ollama сразу. `wsl --shutdown`, рестарт Desktop, диск ≥32GB, RAM ≥6–8GB |
-| Port 8080 already in use | Остановить локальный uvicorn или compose `api` |
-| OTel errors `localhost:4317` | Нормально, если Jaeger ещё не поднят; `make demo` поднимает Jaeger |
-| OLLAMA unreachable | `docker ps`, `.\scripts\ollama-pull.ps1`, проверить base URL (host vs `ollama` hostname) |
-| kind/helm not found | Установить инструменты (см. B1); пока использовать путь A |
-| Ingress 404 на /api | Проверить rewrite в Helm ingress и hosts `kp.local` |
-| `minio/minio` / `bitnami/minio` pull denied | В compose/Helm — `bitnamilegacy/minio:2025.7.23-debian-12-r5`; при `STORE_BACKEND=memory` API пишет объекты на локальный FS |
-| Neo4j CrashLoop `PORT.7687.TCP.PORT` | В chart уже `enableServiceLinks: false` + `NEO4J_server_config_strict__validation_enabled=false` |
-| `jaeger ... manifest unknown` | Использовать тег `1.60.0` или `latest` (зафиксировано в compose) |
+| OLLAMA unreachable | Base URL `host.docker.internal`, не `localhost` из пода |
+| Port clash / два postgres | Не гонять `demo-standalone` + K8s |
+| Ingress `:8088` 404 IIS | Hosts `kp.local`, LB на 8088 |
+| `ollama pull` TLS timeout | `.\scripts\ollama-pull.ps1` |
+| MinIO 9000 на хосте пусто | MinIO только в K8s → port-forward |
 
 ---
 
-## Быстрый чеклист сдачи
+## Чеклист сдачи
 
-1. `make demo` → UI открывается  
-2. Chat MOCK → есть citations  
-3. ACL manager vs compliance  
-4. Labels upload  
-5. (Опционально) `make llm-ollama` + Apply OLLAMA  
-6. (Опционально) `.\scripts\k8s-up.ps1` → `http://kp.local:8088`
+1. `.\scripts\hybrid-up.ps1` → http://kp.local:8088
+2. Chat MOCK/OLLAMA → citations
+3. ACL manager vs compliance
+4. Labels upload (MinIO in-cluster)
+5. Jaeger / Prometheus / Grafana с Compose
+6. (Опционально) Graph Neo4j port-forward

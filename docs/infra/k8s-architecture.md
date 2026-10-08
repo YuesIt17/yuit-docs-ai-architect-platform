@@ -28,12 +28,12 @@
 |-------|-------------|
 | `edge` | `frontend` |
 | `control` | `api` |
-| `data` | `postgres`, `neo4j`, `qdrant`, `redis`, `minio`, optional `ollama` |
+| `data` | `postgres`, `neo4j`, `qdrant`, `redis`, `minio` |
 | `mixed` | label на Namespace `kp` |
 
 ## Pods и Services (desktop default)
 
-По умолчанию **7 подов** (Ollama выключен в [`values-desktop.yaml`](../../infra/helm/knowledge-platform/values-desktop.yaml)):
+По умолчанию **7 подов**. Ollama **не** в Helm — только Compose (`make llm-ollama`).
 
 | Deployment | Service | Port(s) | Replicas | Plane | Resources (requests) |
 |------------|---------|---------|----------|-------|----------------------|
@@ -44,7 +44,6 @@
 | `qdrant` | `qdrant` | 6333 | 1 | data | — |
 | `redis` | `redis` | 6379 | 1 | data | — |
 | `minio` | `minio` | 9000, 9001 | 1 | data | — |
-| `ollama` *(opt)* | `ollama` | 11434 | 1 | data | cpu 500m, mem 2Gi |
 
 Другие ресурсы chart:
 
@@ -52,7 +51,7 @@
 - Ingress `kp-api`, `kp-ui`
 - Images: `kp-api:dev`, `kp-frontend:dev` (`pullPolicy: Never` на desktop)
 
-Desktop overlay: `STORE_BACKEND=live`, MinIO on, `LLM_PROVIDER=MOCK`, `llm.ollama.enabled=false`.
+Desktop overlay: `STORE_BACKEND=live`, MinIO on, `LLM_PROVIDER=MOCK`.
 
 ## Ingress
 
@@ -78,10 +77,9 @@ Browser → ingress-nginx :8088
 
 | File | Роль |
 |------|------|
-| [`values.yaml`](../../infra/helm/knowledge-platform/values.yaml) | База: MOCK LLM, все stores on, replicas=1 |
-| [`values-desktop.yaml`](../../infra/helm/knowledge-platform/values-desktop.yaml) | Desktop: `pullPolicy: Never`, live MinIO, Ollama **off** |
+| [`values.yaml`](../../infra/helm/knowledge-platform/values.yaml) | База: MOCK LLM, все stores on (вкл. MinIO), replicas=1 |
+| [`values-desktop.yaml`](../../infra/helm/knowledge-platform/values-desktop.yaml) | Desktop: `pullPolicy: Never`, live MinIO, MOCK LLM |
 | [`values-desktop-compose-ollama.yaml`](../../infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml) | Hybrid: `OLLAMA` → `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b` |
-| [`values-ollama.yaml`](../../infra/helm/knowledge-platform/values-ollama.yaml) | In-cluster Ollama (`ollama.enabled: true`) |
 
 `k8s-up.ps1` + `$env:KP_LLM`:
 
@@ -89,18 +87,20 @@ Browser → ingress-nginx :8088
 |----------|---------|
 | unset | desktop + MOCK |
 | `compose-ollama` | + compose-ollama overlay |
-| `ollama` | + in-cluster Ollama |
 
 Скрипт: build images → install ingress-nginx (desktop) → `helm upgrade --install kp ... -n kp --create-namespace --wait`.  
 Снос: `.\scripts\k8s-down.ps1` (desktop оставляет shared ingress-nginx).
 
-## Что не в Helm
+## Что не в Helm (Compose side-stack)
 
 | Компонент | Где |
 |-----------|-----|
-| Prometheus / Grafana / Jaeger | Compose (`make obs` / `make demo`) |
-| Ollama (рекомендуется) | Compose profile `llm` |
+| Prometheus / Grafana / Jaeger | Compose (`make obs`) |
+| Ollama | Compose (`make llm-ollama`) |
 | vLLM | Compose profile `llm-gpu` |
+
+**Zero-overlap:** MinIO/stores/api/frontend — только Helm. Ollama + obs — только Compose (`make side`).  
+Не запускать `make demo-standalone` параллельно с этим кластером.
 
 Frontend **никогда** не ходит в Ollama напрямую — только через API (`/v1/chat`, `/v1/llm/*`).
 
@@ -146,6 +146,5 @@ flowchart TB
 | `namespace.yaml` | Namespace `kp` |
 | `api.yaml` / `frontend.yaml` | Control / edge Deployments + Services |
 | `data-plane.yaml` | postgres, neo4j, qdrant, redis, minio |
-| `ollama.yaml` | optional LLM pod |
 | `ingress.yaml` | `kp-api`, `kp-ui` |
 | `secret.yaml` | `kp-secrets` |

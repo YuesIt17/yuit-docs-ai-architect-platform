@@ -5,21 +5,22 @@ images:
   frontend: kp-frontend:dev
   pullPolicy: IfNotPresent
 
+# Ollama is Compose-only (`make llm-ollama`); use values-desktop-compose-ollama.yaml for hybrid.
 llm:
   provider: MOCK # MOCK | OLLAMA | VLLM
   baseUrl: ""
   model: mock-graph-rag
-  ollama:
-    enabled: false
-    image: ollama/ollama:latest
-    modelPull: qwen2.5:0.5b
 
 api:
   replicas: 1
   port: 8080
+  serviceType: ClusterIP
+  nodePort: null
   env:
     STORE_BACKEND: memory
     EMBEDDING_PROVIDER: MOCK
+    # Compose Jaeger (make obs) via Docker Desktop host gateway
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4317
 
 frontend:
   replicas: 1

@@ -1,53 +1,24 @@
 {
-  "title": "Compose — networks и сервисы",
-  "pageWidth": 1400,
-  "pageHeight": 820,
+  "title": "Compose — hybrid side-stack (no platform)",
+  "pageWidth": 1100,
+  "pageHeight": 640,
   "nodes": [
     {
       "id": "note",
-      "label": "Project: retailpartnerx-kp\nProfiles: core/demo + llm / llm-gpu.\nAPI на edge+control+data.",
+      "label": "Compose = side-stack only.\nK8s owns api/frontend/stores/minio.\nZero overlap.",
       "style": "note",
       "x": 40,
       "y": 20,
-      "w": 340,
+      "w": 360,
       "h": 70
     },
     {
-      "id": "edge",
-      "label": "edge",
+      "id": "ctrl",
+      "label": "control (obs)",
       "style": "boundary",
       "x": 40,
       "y": 120,
       "w": 280,
-      "h": 280
-    },
-    {
-      "id": "fe",
-      "label": "frontend\n:5173→80",
-      "style": "container",
-      "x": 40,
-      "y": 50,
-      "w": 180,
-      "h": 70,
-      "parent": "edge"
-    },
-    {
-      "id": "api",
-      "label": "api\n:8080 FastAPI",
-      "style": "container",
-      "x": 40,
-      "y": 150,
-      "w": 180,
-      "h": 80,
-      "parent": "edge"
-    },
-    {
-      "id": "ctrl",
-      "label": "control",
-      "style": "boundary",
-      "x": 380,
-      "y": 120,
-      "w": 260,
       "h": 340
     },
     {
@@ -56,7 +27,7 @@
       "style": "container",
       "x": 40,
       "y": 50,
-      "w": 160,
+      "w": 180,
       "h": 60,
       "parent": "ctrl"
     },
@@ -66,7 +37,7 @@
       "style": "container",
       "x": 40,
       "y": 140,
-      "w": 160,
+      "w": 180,
       "h": 60,
       "parent": "ctrl"
     },
@@ -76,111 +47,53 @@
       "style": "container",
       "x": 40,
       "y": 230,
-      "w": 160,
+      "w": 180,
       "h": 60,
       "parent": "ctrl"
     },
     {
       "id": "data",
-      "label": "data",
+      "label": "data (llm)",
       "style": "boundary",
-      "x": 700,
+      "x": 400,
       "y": 120,
-      "w": 420,
-      "h": 520
-    },
-    {
-      "id": "pg",
-      "label": "postgres\n:5432",
-      "style": "db",
-      "x": 30,
-      "y": 50,
-      "w": 130,
-      "h": 70,
-      "parent": "data"
-    },
-    {
-      "id": "neo",
-      "label": "neo4j\n:7474/:7687",
-      "style": "db",
-      "x": 200,
-      "y": 50,
-      "w": 150,
-      "h": 70,
-      "parent": "data"
-    },
-    {
-      "id": "qd",
-      "label": "qdrant\n:6333",
-      "style": "db",
-      "x": 30,
-      "y": 150,
-      "w": 130,
-      "h": 70,
-      "parent": "data"
-    },
-    {
-      "id": "rd",
-      "label": "redis\n:6379",
-      "style": "db",
-      "x": 200,
-      "y": 150,
-      "w": 150,
-      "h": 70,
-      "parent": "data"
-    },
-    {
-      "id": "s3",
-      "label": "minio\n:9000/:9001",
-      "style": "db",
-      "x": 100,
-      "y": 260,
-      "w": 160,
-      "h": 70,
-      "parent": "data"
+      "w": 320,
+      "h": 280
     },
     {
       "id": "ollama",
-      "label": "ollama (llm)\n:11434 mem 3g",
+      "label": "ollama\n:11434 mem 3g",
       "style": "container",
-      "x": 30,
-      "y": 370,
-      "w": 160,
+      "x": 40,
+      "y": 50,
+      "w": 200,
       "h": 70,
       "parent": "data"
     },
     {
       "id": "vllm",
-      "label": "vllm (llm-gpu)\n:8000",
+      "label": "vllm (opt)\n:8000",
       "style": "container",
-      "x": 220,
-      "y": 370,
-      "w": 160,
+      "x": 40,
+      "y": 150,
+      "w": 200,
       "h": 70,
       "parent": "data"
     },
     {
-      "id": "seed",
-      "label": "seed (demo)",
+      "id": "k8s",
+      "label": "K8s kp\napi+stores+minio",
       "style": "external",
-      "x": 1160,
-      "y": 280,
-      "w": 140,
-      "h": 50
+      "x": 800,
+      "y": 200,
+      "w": 200,
+      "h": 80
     }
   ],
   "edges": [
-    { "from": "fe", "to": "api", "label": "HTTP", "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
-    { "from": "api", "to": "pg", "label": "", "exitX": 1, "exitY": 0.25, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "neo", "label": "", "exitX": 1, "exitY": 0.35, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "qd", "label": "", "exitX": 1, "exitY": 0.45, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "rd", "label": "", "exitX": 1, "exitY": 0.55, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "s3", "label": "", "exitX": 1, "exitY": 0.65, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "ollama", "label": "LLM", "dashed": true, "exitX": 1, "exitY": 0.75, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "vllm", "label": "GPU", "dashed": true, "exitX": 1, "exitY": 0.85, "entryX": 0, "entryY": 0.5 },
-    { "from": "api", "to": "jaeger", "label": "traces", "exitX": 1, "exitY": 0.2, "entryX": 0, "entryY": 0.5 },
-    { "from": "prom", "to": "api", "label": "scrape", "dashed": true, "exitX": 0, "exitY": 0.5, "entryX": 1, "entryY": 0.3 },
     { "from": "graf", "to": "prom", "label": "", "exitX": 0.5, "exitY": 0, "entryX": 0.5, "entryY": 1 },
-    { "from": "seed", "to": "pg", "label": "seed", "dashed": true, "exitX": 0, "exitY": 0.5, "entryX": 1, "entryY": 0.5 }
+    { "from": "k8s", "to": "ollama", "label": "LLM host.docker.internal", "dashed": true, "exitX": 0, "exitY": 0.35, "entryX": 1, "entryY": 0.5 },
+    { "from": "k8s", "to": "jaeger", "label": "OTLP :4317", "dashed": true, "exitX": 0, "exitY": 0.65, "entryX": 1, "entryY": 0.5 },
+    { "from": "prom", "to": "k8s", "label": "scrape /api/metrics", "dashed": true, "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 }
   ]
 }

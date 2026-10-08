@@ -6,8 +6,8 @@
 
 | Режим | UI | API (health) |
 |-------|-----|----------------|
-| Compose | http://localhost:5173 | http://localhost:8080/health |
-| K8s (ingress) | http://kp.local:8088 | http://kp.local:8088/api/health |
+| **Hybrid** (рекомендуется) | http://kp.local:8088 | http://kp.local:8088/api/health |
+| Standalone Compose | http://localhost:5173 | http://localhost:8080/health |
 
 Hosts (admin): `C:\Windows\System32\drivers\etc\hosts` → `127.0.0.1 kp.local`
 
@@ -19,9 +19,8 @@ Ingress слушает **:8088** (на Windows `:80` часто занят IIS).
 
 | Где API | Где Ollama | Base URL для API |
 |---------|------------|------------------|
-| Compose (`api` service) | Compose `ollama` | `http://ollama:11434/v1` |
-| Compose API на хосте | Compose на хосте | `http://localhost:11434/v1` |
-| K8s `deploy/api` | Compose на хосте | `http://host.docker.internal:11434/v1` |
+| K8s `deploy/api` (hybrid) | Compose | `http://host.docker.internal:11434/v1` |
+| API на хосте + Compose ollama | Compose | `http://localhost:11434/v1` |
 
 В UI на странице LLM отображается тот же URL — это **не** адрес для браузера, а то, куда **API** стучится в Ollama. Для Docker Desktop K8s + Compose-Ollama `host.docker.internal` — правильный хост; `localhost` в Apply сломает probe (localhost внутри пода ≠ Ollama на хосте).
 
@@ -46,9 +45,14 @@ kubectl -n kp rollout restart deploy/api
 kubectl -n kp rollout status deploy/api --timeout=120s
 ```
 
-Или при полном подъёме: `$env:KP_LLM='compose-ollama'; .\scripts\k8s-up.ps1`
+Полный hybrid (без дублей Compose↔K8s):
 
-In-cluster Ollama (тяжело для ноутбука): `$env:KP_LLM='ollama'; .\scripts\k8s-up.ps1`
+```powershell
+make demo
+# или: .\scripts\hybrid-up.ps1
+```
+
+In-cluster Ollama убран из Helm — только Compose.
 
 ---
 
@@ -106,13 +110,17 @@ curl.exe -s -X PUT http://127.0.0.1:8088/api/v1/llm/config `
 
 > Apply в рантайме не меняет env пода — после `helm upgrade` с новым `LLM_*` перезапуск `deploy/api` подхватит values.
 
-### MinIO / observability (Compose)
+### Observability (Compose) + MinIO (K8s)
 
 ```powershell
-curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:9000/minio/health/live
+make obs
 curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:9090/-/healthy
 curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:3000/api/health
 curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:16686
+
+# MinIO только в кластере
+kubectl -n kp port-forward svc/minio 9000:9000 9001:9001
+curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:9000/minio/health/live
 ```
 
 ---
@@ -169,13 +177,12 @@ helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace
 ## Docker Compose
 
 ```powershell
-make demo
-make llm-ollama
-make obs
+make demo              # hybrid
+make side              # ollama + obs only
+make demo-standalone   # full stack WITHOUT k8s — mutually exclusive
 make down
 
-docker compose -f infra/docker-compose.yml --profile demo ps
-docker compose -f infra/docker-compose.yml logs api -f
+docker compose -f infra/docker-compose.yml --profile obs --profile llm ps
 docker compose -f infra/docker-compose.yml logs ollama --tail=50
 
 .\scripts\ollama-pull.ps1 -Model qwen2.5:0.5b

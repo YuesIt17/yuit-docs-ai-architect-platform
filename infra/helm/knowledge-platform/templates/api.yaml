@@ -45,6 +45,9 @@ spec:
               value: minio:9000
             - name: POSTGRES_DSN
               value: postgresql+asyncpg://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}
+            # Compose Jaeger on host (make obs); empty/unset skips export noise if obs down
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.api.env.OTEL_EXPORTER_OTLP_ENDPOINT | default "http://host.docker.internal:4317" | quote }}
           readinessProbe:
             httpGet:
               path: /health
@@ -63,8 +66,12 @@ metadata:
     {{- include "kp.labels" . | nindent 4 }}
     app: api
 spec:
+  type: {{ .Values.api.serviceType | default "ClusterIP" }}
   selector:
     app: api
   ports:
     - port: 8080
       targetPort: {{ .Values.api.port }}
+      {{- if and (eq (.Values.api.serviceType | default "ClusterIP") "NodePort") .Values.api.nodePort }}
+      nodePort: {{ .Values.api.nodePort }}
+      {{- end }}
