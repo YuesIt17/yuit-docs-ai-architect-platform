@@ -27,3 +27,5 @@ backend/.cache/
 datasets/ruslaw_raw/
 !datasets/fixtures/
 !datasets/seed/
+tasks/
+tmp/sec-ops/

@@ -1,0 +1,32 @@
+# Ephemeral DevSecOps scanners — no overlap with platform / side-stack.
+# From repo root (Windows PowerShell / macOS bash — same compose lines):
+#   docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image kp-api:dev
+#   docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep semgrep --config=auto /src/backend
+# Or one-shot: make sec-scan
+#   Windows → scripts/sec-scan.ps1
+#   macOS   → scripts/sec-scan.sh
+# Docs: docs/infra/sec-ops.md
+# Reports: tmp/sec-ops/ (mounted as /out)
+name: retailpartnerx-kp-sec
+
+services:
+  trivy:
+    # 0.61+ fixes AWS rego noise (specify_ami_owners / requestedamis) with older images
+    image: aquasec/trivy:0.61.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ..:/src:ro
+      - ../tmp/sec-ops:/out
+    working_dir: /src
+    entrypoint: ["trivy"]
+    # default args overridden by `compose run … trivy <subcommand>`
+    command: ["--help"]
+
+  semgrep:
+    image: semgrep/semgrep:1.101.0
+    volumes:
+      - ..:/src:ro
+      - ../tmp/sec-ops:/out
+    working_dir: /src
+    entrypoint: []
+    command: ["semgrep", "--help"]

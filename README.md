@@ -2,7 +2,7 @@
 
 **Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)**
 
-> **Сокращения:** [Глоссарий](docs/Glossary.md) · **Артефакты:** [docs/](docs/) · [diagrams/](diagrams/) · **Infra:** [docs/infra/](docs/infra/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md)
+> **Сокращения:** [Глоссарий](docs/Glossary.md) · **Артефакты:** [docs/](docs/) · [diagrams/](diagrams/) · **Infra:** [docs/infra/](docs/infra/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md) · **DevSecOps lab:** [docs/infra/sec-ops.md](docs/infra/sec-ops.md)
 
 ## Цель
 
@@ -77,10 +77,19 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 
 ## Быстрый старт
 
-Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Инфра: **[docs/infra/](docs/infra/)**. Runbook: **[docs/SRE.md](docs/SRE.md)**.
+Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Инфра: **[docs/infra/](docs/infra/)**. Runbook: **[docs/SRE.md](docs/SRE.md)**. Аудит K8s / сканеры: **[docs/infra/sec-ops.md](docs/infra/sec-ops.md)** (`make sec-scan`).
+
+**Windows**
 
 ```powershell
-.\scripts\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s — без дублей
+.\scripts\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
+# без K8s: docker compose -f infra/docker-compose.standalone.yml up -d --build
+```
+
+**macOS**
+
+```bash
+bash scripts/hybrid-up.sh   # или: make demo
 # без K8s: docker compose -f infra/docker-compose.standalone.yml up -d --build
 ```
 
@@ -93,8 +102,8 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 
 Демо-токены (Role switcher): `guest` | `associate` | `manager` | `compliance`
 
-```powershell
-cd backend; pytest -q
+```bash
+cd backend && pytest -q
 ```
 
 ## Автор

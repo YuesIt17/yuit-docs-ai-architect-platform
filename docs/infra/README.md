@@ -4,6 +4,7 @@
 |------|-------|----------|-------|
 | **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology.png](../../diagrams/k8s-topology.png) |
 | **Standalone Compose** | Без K8s / CI | [docker-compose.standalone.yml](../../infra/docker-compose.standalone.yml) | [compose-topology.png](../../diagrams/compose-topology.png) |
+| **DevSecOps lab** | Аудит `kp` (Trivy / Semgrep / kubectl) | [sec-ops.md](sec-ops.md) | — |
 
 ## Zero-overlap (hybrid)
 
@@ -13,18 +14,35 @@
 | postgres, neo4j, qdrant, redis, **minio** | — |
 | — | **ollama** (`make llm-ollama`) |
 | — | prometheus, grafana, jaeger (`make obs`) |
+| — | Trivy, Semgrep (ephemeral, `make sec-scan`) |
+
+**Windows**
 
 ```powershell
-make demo
-# = scripts/hybrid-up.ps1 → side-stack + k8s-up (KP_LLM=compose-ollama)
+.\scripts\hybrid-up.ps1
+# или: make demo
+
+.\scripts\sec-scan.ps1
+# или: make sec-scan  → tmp/sec-ops/
+```
+
+**macOS**
+
+```bash
+bash scripts/hybrid-up.sh
+# или: make demo
+
+bash scripts/sec-scan.sh
+# или: make sec-scan  → tmp/sec-ops/
 ```
 
 ## Запуск и ops
 
 | Что | Где |
 |-----|-----|
-| How-to | [SETUP.md](../SETUP.md) |
+| How-to (Win + Mac) | [SETUP.md](../SETUP.md) |
 | curl / kubectl / Helm | [SRE.md](../SRE.md) |
+| DevSecOps / K8s audit lab | [sec-ops.md](sec-ops.md) |
 | Chart / compose | [`infra/`](../../infra/) |
 
 Логические DMZ / Control / Data / GPU: [architecture/deployment.md](../architecture/deployment.md).

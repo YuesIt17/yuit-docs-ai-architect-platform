@@ -24,11 +24,14 @@ Project: `retailpartnerx-kp`.
 | `obs` | jaeger, prometheus, grafana |
 | `llm` | ollama |
 
-| Target | Действие |
-|--------|----------|
-| `.\scripts\hybrid-up.ps1` | side-stack + K8s + OLLAMA overlay |
-| `llm` + `obs` profiles | ollama + prometheus/grafana/jaeger |
-| `docker-compose.standalone.yml` | полный стек **без** K8s |
+Сканеры безопасности (отдельный файл, ephemeral): [sec-ops.md](sec-ops.md) · `make sec-scan` · [`docker-compose.sec-ops.yml`](../../infra/docker-compose.sec-ops.yml).
+
+| Target | Windows | macOS |
+|--------|---------|-------|
+| Hybrid up | `.\scripts\hybrid-up.ps1` | `bash scripts/hybrid-up.sh` |
+| `llm` + `obs` | `docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d` | то же |
+| Standalone | `docker compose -f infra/docker-compose.standalone.yml up -d --build` | то же |
+| Sec scanners | `.\scripts\sec-scan.ps1` | `bash scripts/sec-scan.sh` |
 
 ## Порты (Compose)
 
@@ -45,8 +48,18 @@ Grafana provisioning: `infra/grafana/provisioning/` → datasource Prometheus + 
 
 ## Hybrid flow
 
+**Windows**
+
 ```powershell
 .\scripts\hybrid-up.ps1
+# или: make demo
+```
+
+**macOS**
+
+```bash
+bash scripts/hybrid-up.sh
+# или: make demo
 ```
 
 API в K8s → Ollama: `http://host.docker.internal:11434/v1`  
