@@ -1,4 +1,4 @@
-# DevSecOps lab: kubectl audit + Trivy images + Semgrep on backend.
+# DevSecOps lab: kubectl + Trivy + Semgrep + Checkov + Nmap + Nuclei (+ ZAP if SEC_SCAN_DEEP=1).
 # Requires: docker, kubectl. Prefer after `make demo` / `make k8s-up`.
 # Docs: docs/infra/sec-ops.md
 
@@ -9,6 +9,7 @@ Set-Location $Root
 $Compose = "infra/docker-compose.sec-ops.yml"
 $OutDir = Join-Path $Root "tmp\sec-ops"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+$Deep = $env:SEC_SCAN_DEEP
 
 Write-Host "==> kubectl audit (namespace kp)"
 $audit = Join-Path $OutDir "kubectl-audit.txt"
@@ -98,6 +99,78 @@ if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
       Write-Host "    wrote $sg"
     }
   }
+}
+
+Write-Host "==> Checkov (Helm chart)"
+docker compose -f $Compose run --rm checkov `
+  -d /src/infra/helm/knowledge-platform `
+  --framework kubernetes helm --soft-fail `
+  -o json --output-file-path /out
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
+  Write-Host "WARN: checkov exit $LASTEXITCODE" -ForegroundColor Yellow
+}
+$resultsJson = Join-Path $OutDir "results_json.json"
+$checkovJson = Join-Path $OutDir "checkov.json"
+if ((Test-Path $resultsJson) -and -not (Test-Path $checkovJson)) {
+  Move-Item -Force $resultsJson $checkovJson
+  Write-Host "    wrote $checkovJson"
+} elseif (Test-Path $resultsJson) {
+  Copy-Item -Force $resultsJson $checkovJson
+  Write-Host "    wrote $checkovJson"
+} elseif (Test-Path $checkovJson) {
+  Write-Host "    wrote $checkovJson"
+}
+
+Write-Host "==> Nmap (host.docker.internal — local Ingress only)"
+docker compose -f $Compose run --rm nmap `
+  -sV -p 8088,80,443,11434 -oN /out/nmap.txt host.docker.internal
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
+  Write-Host "WARN: nmap exit $LASTEXITCODE" -ForegroundColor Yellow
+} else {
+  Write-Host "    wrote $(Join-Path $OutDir 'nmap.txt')"
+}
+
+Write-Host "==> Nuclei (http://host.docker.internal:8088)"
+docker compose -f $Compose run --rm nuclei `
+  -u http://host.docker.internal:8088 -silent -o /out/nuclei.txt
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1 -and $LASTEXITCODE -ne 2) {
+  Write-Host "WARN: nuclei exit $LASTEXITCODE (is Ingress up on :8088?)" -ForegroundColor Yellow
+} else {
+  Write-Host "    wrote $(Join-Path $OutDir 'nuclei.txt')"
+}
+
+Write-Host "==> kube-bench (best-effort)"
+$kbOut = Join-Path $OutDir "kube-bench.txt"
+try {
+  docker compose -f $Compose run --rm kube-bench run --targets policies 2>&1 | Out-File -FilePath $kbOut -Encoding utf8
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "WARN: kube-bench exit $LASTEXITCODE — often unsupported on Docker Desktop; see tmp/sec-ops/kube-bench.txt" -ForegroundColor Yellow
+  } else {
+    Write-Host "    wrote $kbOut"
+  }
+} catch {
+  "kube-bench failed: $($_.Exception.Message)" | Set-Content -Path $kbOut -Encoding utf8
+  Write-Host "WARN: kube-bench failed — see tmp/sec-ops/kube-bench.txt" -ForegroundColor Yellow
+}
+
+if ($Deep -eq "1" -or $Deep -eq "true" -or $Deep -eq "yes") {
+  Write-Host "==> ZAP baseline (SEC_SCAN_DEEP=$Deep)"
+  docker compose -f $Compose run --rm zap `
+    zap-baseline.py -t http://host.docker.internal:8088 -J /out/zap-baseline.json -I
+  if ($LASTEXITCODE -gt 3) {
+    Write-Host "WARN: zap exit $LASTEXITCODE" -ForegroundColor Yellow
+  } else {
+    Write-Host "    wrote $(Join-Path $OutDir 'zap-baseline.json') (zap exit $LASTEXITCODE; 0-3 often OK with findings)"
+  }
+} else {
+  Write-Host "==> ZAP skipped (set SEC_SCAN_DEEP=1 for baseline)"
+}
+
+Write-Host "==> Summary"
+try {
+  python (Join-Path $Root "scripts\sec-parse-summary.py") $OutDir
+} catch {
+  Write-Host "WARN: sec-parse-summary.py failed" -ForegroundColor Yellow
 }
 
 Write-Host ""

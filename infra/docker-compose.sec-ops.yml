@@ -2,11 +2,18 @@
 # From repo root (Windows PowerShell / macOS bash — same compose lines):
 #   docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image kp-api:dev
 #   docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep semgrep --config=auto /src/backend
-# Or one-shot: make sec-scan
+#   docker compose -f infra/docker-compose.sec-ops.yml run --rm nmap -p 8088 host.docker.internal
+#   docker compose -f infra/docker-compose.sec-ops.yml run --rm checkov -d /src/infra/helm/knowledge-platform --soft-fail
+#   docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei -u http://host.docker.internal:8088
+#   docker compose -f infra/docker-compose.sec-ops.yml run --rm zap zap-baseline.py -t http://host.docker.internal:8088 -I
+# Or one-shot: make sec-scan  (SEC_SCAN_DEEP=1 for ZAP)
 #   Windows → scripts/sec-scan.ps1
 #   macOS   → scripts/sec-scan.sh
 # Docs: docs/infra/sec-ops.md
 # Reports: tmp/sec-ops/ (mounted as /out)
+#
+# Targets from containers: use host.docker.internal (not kp.local) for host-published Ingress.
+# Scope: only your local Docker Desktop / kind — never foreign networks.
 name: retailpartnerx-kp-sec
 
 services:
@@ -19,7 +26,6 @@ services:
       - ../tmp/sec-ops:/out
     working_dir: /src
     entrypoint: ["trivy"]
-    # default args overridden by `compose run … trivy <subcommand>`
     command: ["--help"]
 
   semgrep:
@@ -30,3 +36,47 @@ services:
     working_dir: /src
     entrypoint: []
     command: ["semgrep", "--help"]
+
+  nmap:
+    image: instrumentisto/nmap:7.95
+    volumes:
+      - ../tmp/sec-ops:/out
+    entrypoint: ["nmap"]
+    command: ["--help"]
+
+  zap:
+    # FOSS stand-in for Burp Suite baseline / passive Web+API checks
+    image: ghcr.io/zaproxy/zaproxy:2.16.0
+    volumes:
+      - ../tmp/sec-ops:/out
+    entrypoint: []
+    command: ["zap.sh", "-help"]
+
+  nuclei:
+    image: projectdiscovery/nuclei:v3.3.7
+    volumes:
+      - ../tmp/sec-ops:/out
+    entrypoint: ["nuclei"]
+    command: ["-version"]
+
+  kube-bench:
+    # CIS Kubernetes checks — best-effort on Docker Desktop (often skip if no node FS)
+    # Override mount: SEC_KUBECONFIG_DIR=/path/to/.kube docker compose ...
+    image: aquasec/kube-bench:v0.9.4
+    volumes:
+      - ../tmp/sec-ops:/out
+      - ${SEC_KUBECONFIG_DIR:-~/.kube}:/root/.kube:ro
+    environment:
+      KUBECONFIG: /root/.kube/config
+    entrypoint: ["kube-bench"]
+    command: ["version"]
+
+  checkov:
+    # IaC / Helm / K8s policy-as-code (complements Trivy config)
+    image: bridgecrew/checkov:3.2.334
+    volumes:
+      - ..:/src:ro
+      - ../tmp/sec-ops:/out
+    working_dir: /src
+    entrypoint: ["checkov"]
+    command: ["--help"]

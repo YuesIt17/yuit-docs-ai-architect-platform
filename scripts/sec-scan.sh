@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DevSecOps lab: kubectl audit + Trivy images + Semgrep on backend.
+# DevSecOps lab: kubectl + Trivy + Semgrep + Checkov + Nmap + Nuclei (+ ZAP if SEC_SCAN_DEEP=1).
 # Docs: docs/infra/sec-ops.md
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -8,6 +8,7 @@ cd "$ROOT"
 COMPOSE="infra/docker-compose.sec-ops.yml"
 OUT_DIR="$ROOT/tmp/sec-ops"
 mkdir -p "$OUT_DIR"
+DEEP="${SEC_SCAN_DEEP:-0}"
 
 echo "==> kubectl audit (namespace kp)"
 AUDIT="$OUT_DIR/kubectl-audit.txt"
@@ -86,6 +87,85 @@ elif [[ -f "$OUT_DIR/semgrep.json" ]]; then
   python3 -c "import json; d=json.load(open('$OUT_DIR/semgrep.json')); print(f\"    semgrep findings: {len(d.get('results',[]))}  ($OUT_DIR/semgrep.json)\")" 2>/dev/null \
     || echo "    wrote $OUT_DIR/semgrep.json"
 fi
+
+echo "==> Checkov (Helm chart)"
+set +e
+docker compose -f "$COMPOSE" run --rm checkov \
+  -d /src/infra/helm/knowledge-platform \
+  --framework kubernetes helm --soft-fail \
+  -o json --output-file-path /out
+code=$?
+set -e
+if [[ "$code" -ne 0 && "$code" -ne 1 ]]; then
+  echo "WARN: checkov exit $code" >&2
+fi
+# Normalize Checkov output name
+if [[ -f "$OUT_DIR/results_json.json" && ! -f "$OUT_DIR/checkov.json" ]]; then
+  mv "$OUT_DIR/results_json.json" "$OUT_DIR/checkov.json"
+  echo "    wrote $OUT_DIR/checkov.json"
+elif [[ -f "$OUT_DIR/checkov.json" ]]; then
+  echo "    wrote $OUT_DIR/checkov.json"
+elif [[ -f "$OUT_DIR/results_json.json" ]]; then
+  cp "$OUT_DIR/results_json.json" "$OUT_DIR/checkov.json"
+  echo "    wrote $OUT_DIR/checkov.json"
+fi
+
+echo "==> Nmap (host.docker.internal — local Ingress only)"
+set +e
+docker compose -f "$COMPOSE" run --rm nmap \
+  -sV -p 8088,80,443,11434 -oN /out/nmap.txt host.docker.internal
+code=$?
+set -e
+if [[ "$code" -ne 0 && "$code" -ne 1 ]]; then
+  echo "WARN: nmap exit $code" >&2
+else
+  echo "    wrote $OUT_DIR/nmap.txt"
+fi
+
+echo "==> Nuclei (http://host.docker.internal:8088)"
+set +e
+docker compose -f "$COMPOSE" run --rm nuclei \
+  -u http://host.docker.internal:8088 -silent -o /out/nuclei.txt
+code=$?
+set -e
+if [[ "$code" -ne 0 && "$code" -ne 1 && "$code" -ne 2 ]]; then
+  echo "WARN: nuclei exit $code (is Ingress up on :8088?)" >&2
+else
+  echo "    wrote $OUT_DIR/nuclei.txt"
+fi
+
+echo "==> kube-bench (best-effort)"
+set +e
+docker compose -f "$COMPOSE" run --rm kube-bench \
+  run --targets policies >"$OUT_DIR/kube-bench.txt" 2>&1
+code=$?
+set -e
+if [[ "$code" -ne 0 ]]; then
+  echo "WARN: kube-bench exit $code — often unsupported on Docker Desktop; see tmp/sec-ops/kube-bench.txt" >&2
+else
+  echo "    wrote $OUT_DIR/kube-bench.txt"
+fi
+
+if [[ "$DEEP" == "1" || "$DEEP" == "true" || "$DEEP" == "yes" ]]; then
+  echo "==> ZAP baseline (SEC_SCAN_DEEP=$DEEP)"
+  set +e
+  docker compose -f "$COMPOSE" run --rm zap \
+    zap-baseline.py -t http://host.docker.internal:8088 -J /out/zap-baseline.json -I
+  code=$?
+  set -e
+  if [[ "$code" -gt 3 ]]; then
+    echo "WARN: zap exit $code" >&2
+  else
+    echo "    wrote $OUT_DIR/zap-baseline.json (zap exit $code; 0-3 often OK with findings)"
+  fi
+else
+  echo "==> ZAP skipped (set SEC_SCAN_DEEP=1 for baseline)"
+fi
+
+echo "==> Summary"
+python3 "$ROOT/scripts/sec-parse-summary.py" "$OUT_DIR" 2>/dev/null \
+  || python "$ROOT/scripts/sec-parse-summary.py" "$OUT_DIR" 2>/dev/null \
+  || echo "WARN: sec-parse-summary.py failed" >&2
 
 echo
 echo "Done. Reports: tmp/sec-ops/"
