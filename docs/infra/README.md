@@ -3,6 +3,7 @@
 | Путь | Когда | Документ | Схема |
 |------|-------|----------|-------|
 | **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology.png](../../diagrams/k8s-topology.png) |
+| **K8s + Helm primer** | Сущности кластера, схема связей, поставка фич | [k8s-primer.md](k8s-primer.md) | mermaid в документе |
 | **Standalone Compose** | Без K8s / CI | [docker-compose.standalone.yml](../../infra/docker-compose.standalone.yml) | [compose-topology.png](../../diagrams/compose-topology.png) |
 | **DevSecOps lab** | Аудит `kp` (Trivy / Semgrep / Nmap / ZAP / Nuclei / Checkov / kube-bench) | [sec-ops.md](sec-ops.md) | — |
 
@@ -44,6 +45,7 @@ bash scripts/sec-scan.sh
 |-----|-----|
 | How-to (Win + Mac) | [SETUP.md](../SETUP.md) |
 | curl / kubectl / Helm | [SRE.md](../SRE.md) |
+| Сущности K8s / Helm / поставка | [k8s-primer.md](k8s-primer.md) |
 | DevSecOps / Security Engineer lab | [sec-ops.md](sec-ops.md) |
 | Chart / compose | [`infra/`](../../infra/) |
 

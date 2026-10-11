@@ -4,6 +4,7 @@
 
 Источник правды: Helm chart [`infra/helm/knowledge-platform/`](../../infra/helm/knowledge-platform/), [`scripts/k8s-up.ps1`](../../scripts/k8s-up.ps1).  
 Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).  
+Что такое сущности K8s / Helm и как катить фичи: [k8s-primer.md](k8s-primer.md).  
 Логические сегменты: [architecture/deployment.md](../architecture/deployment.md).
 
 ## Nodes
