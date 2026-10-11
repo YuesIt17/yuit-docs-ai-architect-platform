@@ -1,0 +1,151 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "API up (scrape)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "up{job=\"kp-api-k8s\"}",
+          "legendFormat": "api",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      },
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Requests / min",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 10, "x": 4, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "sum by (endpoint, status) (rate(kp_requests_total[1m])) * 60",
+          "legendFormat": "{{endpoint}} / {{status}}",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Cache hit rate",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 14, "y": 0 },
+      "id": 3,
+      "targets": [
+        { "expr": "semantic_cache_hit_rate", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.3 }, { "color": "green", "value": 0.7 }] }
+        }
+      },
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "ACL denies / min",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "targets": [
+        { "expr": "sum(rate(acl_denies_total[5m])) * 60", "refId": "A" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "RAG latency p50 / p95 (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(rag_latency_ms_bucket[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(rag_latency_ms_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Vision latency p95 (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(vision_latency_ms_bucket[5m])))",
+          "legendFormat": "p95",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "LLM tokens / min",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "sum by (direction) (rate(llm_tokens_total[1m])) * 60",
+          "legendFormat": "{{direction}}",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Request totals",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "sum by (endpoint, status) (kp_requests_total)",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        { "id": "labelsToFields", "options": {} },
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true } } }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["knowledge-platform", "hybrid"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "title": "KP Overview",
+  "uid": "kp-overview",
+  "version": 1
+}

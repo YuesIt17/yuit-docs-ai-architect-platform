@@ -14,7 +14,7 @@
 
 | Компонент | Default MVP |
 |-----------|-------------|
-| Chat LLM | MOCK или Qwen2.5/3-Instruct via vLLM/Ollama |
+| Chat LLM | MOCK или Qwen2.5 via Ollama (`qwen2.5:0.5b` demo) |
 | Embeddings | Deterministic mock / multilingual-e5-base |
 | Vision | Mock OCR; опционально Qwen-VL |
 

@@ -27,15 +27,15 @@ RetailPartnerX требует on-prem инференс без SaaS OpenAI/Anthro
 
 ## Решение
 
-- Serving: **vLLM** (целевой) или **Ollama** (ноутбук); **MOCK** для CI
-- Модели: Qwen2.5/3-Instruct (RU), альтернатива DeepSeek-distill
-- Квантование: AWQ/GGUF; KV-cache в vLLM
-- Клиент: единый адаптер `LLMClient` через `OPENAI_BASE_URL`
+- Runtime MVP: **Ollama** (laptop) + **MOCK** (CI / стабильное демо)
+- Модель демо: `qwen2.5:0.5b` (лёгкая); крупнее — по желанию в Ollama
+- Клиент: единый адаптер `LLMClient` через OpenAI-compatible API
+- **vLLM** остаётся в таблице альтернатив (prod GPU throughput), в runtime MVP **не** подключается
 
 ## Последствия
 
-- (+) Data residency, контролируемые latency/cost, единый контракт клиента
-- (−) Ops-нагрузка по GPU (см. hw-7 sizing); на demo-ноутбуке — маленькая модель / offloading
+- (+) Data residency, простой closed loop на ноутбуке, единый контракт клиента
+- (−) Ollama 0.5B слабее по качеству ответа; prod throughput — отдельный этап (hw-7 / vLLM вне MVP)
 
 ## Ссылки
 

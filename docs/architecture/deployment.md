@@ -13,12 +13,12 @@
 | DMZ / Edge | Load Balancer → `kp-api` |
 | Internal Control | Prometheus, Grafana, Jaeger, Vault (stub) |
 | Data | Postgres, Neo4j, Qdrant, Redis, MinIO |
-| GPU Pool | vLLM (опциональный compose profile) |
+| LLM (Compose) | Ollama (`qwen2.5:0.5b`) / MOCK |
 
-## Секреты и GPU
+## Секреты и LLM
 
 - **Secrets:** Vault file stub / env — никогда в образах.
-- **GPU:** consumer GPU → квантование AWQ/GGUF ([ADR-001](../adr/ADR-001-llm-serving.md)). Без GPU — Ollama small / MOCK.
+- **LLM:** Ollama на хосте (hybrid) или MOCK ([ADR-001](../adr/ADR-001-llm-serving.md)).
 
 ```mermaid
 flowchart TB
@@ -39,8 +39,8 @@ flowchart TB
     RD[(Redis)]
     S3[(MinIO)]
   end
-  subgraph gpu [GPU_Pool]
-    vLLM[vLLM]
+  subgraph llm [Compose_LLM]
+    Ollama[Ollama]
   end
   LB --> API
   API --> PG
@@ -48,7 +48,7 @@ flowchart TB
   API --> QD
   API --> RD
   API --> S3
-  API --> vLLM
+  API --> Ollama
   API --> Jaeger
   Prom --> API
   Graf --> Prom

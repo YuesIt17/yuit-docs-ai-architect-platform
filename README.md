@@ -21,7 +21,7 @@
 | [hw-1](../yuit-docs-ai-architect/hw-1/) | Риски, 152-ФЗ, roadmap | Контур безопасности и residency |
 | [hw-2](../yuit-docs-ai-architect/hw-2/) | C4, Sequence, API | Паттерн границ BFF ↔ AI Service |
 | [hw-3](../yuit-docs-ai-architect/hw-3/) | Multi-agent + LangGraph | SRP агентов → оркестратор Knowledge Platform |
-| [hw-4](../yuit-docs-ai-architect/hw-4/) | ADR SaaS LLM | **Инверсия:** self-hosted vLLM/Ollama для closed loop |
+| [hw-4](../yuit-docs-ai-architect/hw-4/) | ADR SaaS LLM | **Инверсия:** self-hosted Ollama для closed loop |
 | [hw-5](../yuit-docs-ai-architect/hw-5/) | Data pipeline | Ingest → chunk → embed → index |
 | [hw-6](../yuit-docs-ai-architect/hw-6/) | Guardrails, eval, obs | Input/Output guards + OTel/Prometheus |
 | [hw-7](../yuit-docs-ai-architect/hw-7/) | Inference sizing | GPU / квантование AWQ/GGUF |
@@ -63,7 +63,7 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 
 | Критерий | Как закрыто |
 | -------- | ----------- |
-| Нет облачных API (OpenAI/Anthropic) | [ADR-001](docs/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama / vLLM |
+| Нет облачных API (OpenAI/Anthropic) | [ADR-001](docs/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama |
 | Есть Deployment и Data Flow | [deployment](docs/architecture/deployment.md) · [data-flow](docs/architecture/data-flow.md) · [docs/infra/](docs/infra/) · [diagrams/](diagrams/) |
 | GraphRAG (не только векторный поиск) | [ADR-003](docs/adr/ADR-003-graph-db.md) · `backend/app/services/knowledge_store.py` · `backend/app/agent/graph.py` |
 | ACL: User B не видит секретный документ | [ADR-005](docs/adr/ADR-005-security.md) · demo: manager vs compliance |

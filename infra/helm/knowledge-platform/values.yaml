@@ -7,7 +7,7 @@ images:
 
 # Ollama is Compose-only (`make llm-ollama`); use values-desktop-compose-ollama.yaml for hybrid.
 llm:
-  provider: MOCK # MOCK | OLLAMA | VLLM
+  provider: MOCK # MOCK | OLLAMA
   baseUrl: ""
   model: mock-graph-rag
 
@@ -20,7 +20,7 @@ api:
     STORE_BACKEND: memory
     EMBEDDING_PROVIDER: MOCK
     # Compose Jaeger (make obs) via Docker Desktop host gateway
-    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4317
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
 
 frontend:
   replicas: 1
@@ -42,6 +42,8 @@ neo4j:
   enabled: true
   image: neo4j:5.26-community
   password: retailpartnerx
+  serviceType: ClusterIP
+  httpNodePort: null
 
 qdrant:
   enabled: true
@@ -59,6 +61,8 @@ minio:
   rootPassword: minioadmin
   # bitnami entrypoint; leave empty (do not pass minio server args)
   args: []
+  serviceType: ClusterIP
+  consoleNodePort: null
 
 resources:
   api:

@@ -95,9 +95,8 @@ Browser → ingress-nginx :8088
 
 | Компонент | Где |
 |-----------|-----|
-| Prometheus / Grafana / Jaeger | Compose (`make obs`) |
-| Ollama | Compose (`make llm-ollama`) |
-| vLLM | Compose profile `llm-gpu` |
+| Prometheus / Grafana / Jaeger | Compose (`obs` profile) |
+| Ollama | Compose (`llm` profile) |
 
 **Zero-overlap:** MinIO/stores/api/frontend — только Helm. Ollama + obs — только Compose (`make side`).  
 Не запускать `make demo-standalone` параллельно с этим кластером.

@@ -12,13 +12,13 @@
 On-premise **GraphRAG Knowledge Platform**:
 
 - **Control Plane:** AuthZ/RBAC, Input/Output Guardrails, LangGraph, ACL на retrieval
-- **Data Plane:** Neo4j, Qdrant (compose + in-memory MVP), MinIO, Postgres, vLLM/Ollama/MOCK
+- **Data Plane:** Neo4j, Qdrant (compose + in-memory MVP), MinIO, Postgres, Ollama/MOCK
 - **Модальности:** text chat + распознавание этикеток (PDF/PNG/…)
 - **Handoff:** JSON в MinIO `exports/` + outbox `label.recognized` → PIM/ERP
 
 ## Continuity
 
-Развитие кейса из `yuit-docs-ai-architect` (hw-1…hw-10) и pointer [hw-11](../../yuit-docs-ai-architect/hw-11/): dual KB, LangGraph, security layer, vLLM sizing, sync/async, FinOps/Model Card. **Инверсия hw-4:** self-hosted LLM вместо SaaS.
+Развитие кейса из `yuit-docs-ai-architect` (hw-1…hw-10) и pointer [hw-11](../../yuit-docs-ai-architect/hw-11/): dual KB, LangGraph, security layer, inference sizing, sync/async, FinOps/Model Card. **Инверсия hw-4:** self-hosted Ollama вместо SaaS.
 
 ## Доказательства на демо
 

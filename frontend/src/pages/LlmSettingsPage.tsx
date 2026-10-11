@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { probeLlm, putLlmConfig } from "../api/client";
 import { useApp } from "../state/AppContext";
 
-const PROVIDERS = ["MOCK", "OLLAMA", "VLLM"] as const;
+const PROVIDERS = ["MOCK", "OLLAMA"] as const;
 
 export function LlmSettingsPage() {
   const { role, llm, setLlm, refreshLlm } = useApp();
@@ -70,7 +70,7 @@ export function LlmSettingsPage() {
       <section className="panel stack">
         <h2>LLM Settings</h2>
         <p>
-          Frontend управляет provider через Control Plane API. Serving (Ollama/vLLM) остаётся в Data Plane.
+          Frontend управляет provider через Control Plane API. Serving (Ollama) — Compose side-stack.
           Смена доступна ролям manager / compliance.
         </p>
         <div className="row">

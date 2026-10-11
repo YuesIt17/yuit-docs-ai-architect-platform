@@ -25,9 +25,10 @@ Accepted
 
 ## Решение
 
-- OpenTelemetry → Jaeger
-- Prometheus: `llm_tokens_total`, `rag_latency_ms`, `vision_latency_ms`, `semantic_cache_hit_rate`
-- Grafana datasource provisioned в compose profile `obs`
+- OpenTelemetry → Jaeger (`FastAPIInstrumentor.instrument_app`, OTLP/HTTP `:4318/v1/traces`)
+- Prometheus: `llm_tokens_total`, `rag_latency_ms`, `vision_latency_ms`, `semantic_cache_hit_rate`, `kp_requests_total`, `acl_denies_total`
+- Grafana: datasource + provisioned dashboard **KP Overview** (`infra/grafana/provisioning/`)
+- Hybrid scrape: `host.docker.internal:30080/metrics` (API NodePort)
 - Audit rows с FinOps-полем `cost_est`
 
 ## Последствия

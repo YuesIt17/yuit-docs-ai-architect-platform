@@ -83,11 +83,15 @@ metadata:
   name: neo4j
   namespace: {{ .Values.namespace }}
 spec:
+  type: {{ .Values.neo4j.serviceType | default "ClusterIP" }}
   selector:
     app: neo4j
   ports:
     - name: http
       port: 7474
+      {{- if and (eq (.Values.neo4j.serviceType | default "ClusterIP") "NodePort") .Values.neo4j.httpNodePort }}
+      nodePort: {{ .Values.neo4j.httpNodePort }}
+      {{- end }}
     - name: bolt
       port: 7687
 {{- end }}
@@ -211,6 +215,7 @@ metadata:
   name: minio
   namespace: {{ .Values.namespace }}
 spec:
+  type: {{ .Values.minio.serviceType | default "ClusterIP" }}
   selector:
     app: minio
   ports:
@@ -218,4 +223,7 @@ spec:
       port: 9000
     - name: console
       port: 9001
+      {{- if and (eq (.Values.minio.serviceType | default "ClusterIP") "NodePort") .Values.minio.consoleNodePort }}
+      nodePort: {{ .Values.minio.consoleNodePort }}
+      {{- end }}
 {{- end }}

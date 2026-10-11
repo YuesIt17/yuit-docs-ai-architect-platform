@@ -67,14 +67,18 @@ curl.exe -s http://127.0.0.1:8080/v1/llm/health
 curl.exe -s http://127.0.0.1:8080/metrics
 ```
 
-### K8s через ingress (нужен Host, если нет записи в hosts)
+### K8s hybrid (NodePort metrics + ingress API)
 
 ```powershell
-$H = @{ Host = "kp.local" }
+curl.exe -s http://127.0.0.1:30080/metrics | Select-String "kp_requests_total|rag_latency"
 curl.exe -s -H "Host: kp.local" http://127.0.0.1:8088/api/health
 curl.exe -s -H "Host: kp.local" http://127.0.0.1:8088/api/v1/llm/config
 curl.exe -s -H "Host: kp.local" http://127.0.0.1:8088/api/v1/llm/health
 ```
+
+Prometheus targets: http://127.0.0.1:9090/targets (`kp-api-k8s` UP).  
+Grafana: http://127.0.0.1:3000 → **Knowledge Platform / KP Overview**.  
+Jaeger: http://127.0.0.1:16686 → service `kp-api` после chat.
 
 Ожидание в `/health`: `llm_provider`, `llm_reachable`, `store_backend`.
 

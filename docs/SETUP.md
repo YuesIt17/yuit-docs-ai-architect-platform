@@ -45,9 +45,11 @@ cd yuit-docs-ai-architect-platform
 | Ollama | http://127.0.0.1:11434/v1/models |
 | Jaeger | http://127.0.0.1:16686 |
 | Prometheus | http://127.0.0.1:9090 |
-| Grafana | http://127.0.0.1:3000 (admin) |
-| MinIO | `kubectl -n kp port-forward svc/minio 9000:9000 9001:9001` |
-| Neo4j (in-cluster) | `kubectl -n kp port-forward svc/neo4j 7474:7474 7687:7687` |
+| Grafana | http://127.0.0.1:3000 (admin / admin) → dashboard **KP Overview** |
+| Jaeger service | service `kp-api` after chat traffic |
+| MinIO Console | http://127.0.0.1:30901 (NodePort, minioadmin / minioadmin) |
+| Neo4j Browser | http://127.0.0.1:30474 (NodePort) |
+| API /metrics | http://127.0.0.1:30080/metrics (NodePort) |
 
 Side-stack отдельно:
 
@@ -62,8 +64,9 @@ LLM в UI: Provider `OLLAMA`, Base URL `http://host.docker.internal:11434/v1`, m
 
 ```powershell
 .\scripts\k8s-down.ps1
-docker compose -f infra/docker-compose.yml --profile obs --profile llm --profile llm-gpu down -v
+docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
 ```
+
 
 ---
 
@@ -119,10 +122,10 @@ manager не видит secret promo (`42%`); compliance видит.
 
 | Переменная | Смысл | Hybrid |
 |------------|-------|--------|
-| `LLM_PROVIDER` | MOCK / OLLAMA / VLLM | overlay / UI Apply |
+| `LLM_PROVIDER` | MOCK / OLLAMA | overlay / UI Apply |
 | `OPENAI_BASE_URL` | endpoint из **пода API** | `http://host.docker.internal:11434/v1` |
 | `STORE_BACKEND` | memory / live | `live` в K8s desktop |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | traces | `http://host.docker.internal:4317` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | traces (OTLP/HTTP) | `http://host.docker.internal:4318` |
 
 ---
 
@@ -134,7 +137,10 @@ manager не видит secret promo (`42%`); compliance видит.
 | Port clash / два postgres | Не гонять `demo-standalone` + K8s |
 | Ingress `:8088` 404 IIS | Hosts `kp.local`, LB на 8088 |
 | `ollama pull` TLS timeout | `.\scripts\ollama-pull.ps1` |
-| MinIO 9000 на хосте пусто | MinIO только в K8s → port-forward |
+| MinIO 9000 на хосте пусто | MinIO в K8s → Console NodePort `:30901` |
+| Grafana пустой | Dashboards: folder Knowledge Platform → **KP Overview**; recreate obs: `docker compose -f infra/docker-compose.yml --profile obs up -d` |
+| Jaeger пустой | Нужен chat traffic; OTel `host.docker.internal:4318`; rebuild `kp-api:dev` после правок `main.py` |
+| Prometheus target DOWN | Scrape `host.docker.internal:30080/metrics` (не Ingress Host) |
 
 ---
 
@@ -144,5 +150,5 @@ manager не видит secret promo (`42%`); compliance видит.
 2. Chat MOCK/OLLAMA → citations
 3. ACL manager vs compliance
 4. Labels upload (MinIO in-cluster)
-5. Jaeger / Prometheus / Grafana с Compose
-6. (Опционально) Graph Neo4j port-forward
+5. Observability: Prometheus `kp-api-k8s` UP → Grafana **KP Overview** → Jaeger service `kp-api` после chat
+6. (Опционально) Graph Neo4j Browser :30474

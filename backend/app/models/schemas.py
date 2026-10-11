@@ -85,7 +85,7 @@ class HealthResponse(BaseModel):
 
 
 class LLMConfigUpdate(BaseModel):
-    provider: Literal["MOCK", "OLLAMA", "VLLM"]
+    provider: Literal["MOCK", "OLLAMA"]
     base_url: str | None = None
     model: str | None = None
 

@@ -112,7 +112,7 @@ services:
       NEO4J_URI: bolt://neo4j:7687
       QDRANT_URL: http://qdrant:6333
       REDIS_URL: redis://redis:6379/0
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
       LLM_PROVIDER: MOCK
       EMBEDDING_PROVIDER: MOCK
       STORE_BACKEND: ${STORE_BACKEND:-memory}

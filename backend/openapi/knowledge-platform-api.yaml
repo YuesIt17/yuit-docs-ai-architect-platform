@@ -79,7 +79,7 @@ paths:
         "200":
           description: LLMConfigResponse
     put:
-      summary: Switch MOCK/OLLAMA/VLLM at runtime (manager/compliance)
+      summary: Switch MOCK/OLLAMA at runtime (manager/compliance)
       responses:
         "200":
           description: LLMConfigResponse

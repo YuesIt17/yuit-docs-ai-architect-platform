@@ -11,7 +11,7 @@
 | Paved Road | Golden-path compose demo stack |
 | Soft degrade | Fallback при timeout LLM (`degraded=true`) |
 | Semantic Cache | Кэш ответов после Output Guard; invalidate по `index_version` |
-| LLM Serving | vLLM / Ollama / MOCK через OpenAI-compatible API |
+| LLM Serving | Ollama / MOCK через OpenAI-compatible API |
 | Outbox | Таблица событий (`label.recognized`) для PIM/ERP |
 | Trust boundary | Граница BFF ↔ KP: только OpenAPI |
 

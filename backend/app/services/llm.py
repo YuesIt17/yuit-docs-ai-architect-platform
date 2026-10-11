@@ -1,4 +1,4 @@
-"""LLM client: MOCK | VLLM | OLLAMA via OpenAI-compatible API with mutable runtime config."""
+"""LLM client: MOCK | OLLAMA via OpenAI-compatible API with mutable runtime config."""
 
 from __future__ import annotations
 
@@ -10,10 +10,8 @@ from app.config import Settings
 
 PROVIDER_PRESETS: dict[str, dict[str, str]] = {
     "MOCK": {"base_url": "", "model": "mock-graph-rag"},
-    # Desktop default: API in K8s / Docker → Ollama published on host :11434 (make llm-ollama).
-    # Same-compose network: use http://ollama:11434/v1; API on host: http://localhost:11434/v1.
+    # Desktop default: API in K8s → Ollama on host :11434 (hybrid-up / llm profile).
     "OLLAMA": {"base_url": "http://host.docker.internal:11434/v1", "model": "qwen2.5:0.5b"},
-    "VLLM": {"base_url": "http://localhost:8000/v1", "model": "Qwen/Qwen2.5-7B-Instruct"},
 }
 
 

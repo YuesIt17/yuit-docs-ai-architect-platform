@@ -192,10 +192,8 @@ def render_compose():
     draw_container(d, graf, "grafana\n:3000")
     draw_container(d, jaeger, "jaeger\n:16686")
 
-    oll = (data[0] + 40, data[1] + 50, 200, 70)
-    vllm = (data[0] + 40, data[1] + 150, 200, 70)
+    oll = (data[0] + 40, data[1] + 80, 200, 80)
     draw_container(d, oll, "ollama\n:11434 mem 3g")
-    draw_container(d, vllm, "vllm (opt)\n:8000")
 
     k8s = (800, 200, 200, 80)
     draw_container(d, k8s, "K8s kp\napi+stores+minio", external=True)

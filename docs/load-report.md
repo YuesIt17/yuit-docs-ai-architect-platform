@@ -1,6 +1,6 @@
 # Нагрузочный отчёт (smoke)
 
-> Учебный smoke на локальном железе с **MOCK LLM**. Это **не** production SLO и не замена нагрузочного стенда с vLLM на GPU.
+> Учебный smoke на локальном железе с **MOCK LLM**. Это **не** production SLO и не замена стенда с крупной GPU-моделью.
 
 ## Методика
 
@@ -29,7 +29,7 @@
 | Chat FAQ (MOCK) | RPS / p95 API+RAG | таблица выше |
 | Chat + ACL deny | корректность фильтра | функциональный критерий, не RPS |
 | Label mock OCR | p95 vision path | цель дизайна &lt; 1 s (см. capability matrix) |
-| Chat + Ollama/vLLM | tokens/s, p95 E2E | требует GPU; для видео на аренде |
+| Chat + Ollama | tokens/s, p95 E2E | опционально на ноутбуке (`qwen2.5:0.5b`) |
 
 ## Вывод
 

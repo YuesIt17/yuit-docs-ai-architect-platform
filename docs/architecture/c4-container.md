@@ -16,7 +16,7 @@
 | LangGraph Orchestrator | Stateful agent loop |
 | Semantic Cache (Redis) | Кэш ответов после Output Guard |
 | Neo4j / Qdrant / Postgres / MinIO | Graph, vectors, audit, blobs |
-| vLLM / Ollama / MOCK | On-prem LLM Serving |
+| Ollama / MOCK | On-prem LLM Serving |
 
 ```mermaid
 flowchart TB
@@ -35,7 +35,7 @@ flowchart TB
     Qdrant[(Qdrant)]
     PG[(Postgres)]
     MinIO[(MinIO_S3)]
-    LLM[vLLM_or_Ollama_or_Mock]
+    LLM[Ollama_or_Mock]
   end
   GW --> Auth --> IG --> Orch --> OG
   Orch --> Cache

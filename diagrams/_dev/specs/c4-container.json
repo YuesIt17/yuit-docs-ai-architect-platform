@@ -132,7 +132,7 @@
     },
     {
       "id": "llm",
-      "label": "LLM Serving\nvLLM / Ollama / MOCK",
+      "label": "LLM Serving\nOllama / MOCK",
       "style": "container",
       "x": 100,
       "y": 300,

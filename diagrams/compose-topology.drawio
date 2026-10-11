@@ -25,10 +25,7 @@
           <mxGeometry x="400" y="120" width="320" height="280" as="geometry"/>
         </mxCell>
         <mxCell id="8" value="ollama&amp;#10;:11434 mem 3g" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#ffffff;align=center;" vertex="1" parent="7">
-          <mxGeometry x="40" y="50" width="200" height="70" as="geometry"/>
-        </mxCell>
-        <mxCell id="9" value="vllm (opt)&amp;#10;:8000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#ffffff;align=center;" vertex="1" parent="7">
-          <mxGeometry x="40" y="150" width="200" height="70" as="geometry"/>
+          <mxGeometry x="40" y="80" width="200" height="80" as="geometry"/>
         </mxCell>
         <mxCell id="10" value="K8s kp&amp;#10;api+stores+minio" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#666666;fontColor=#ffffff;align=center;" vertex="1" parent="1">
           <mxGeometry x="800" y="200" width="200" height="80" as="geometry"/>

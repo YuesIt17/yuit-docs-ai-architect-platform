@@ -15,7 +15,12 @@ api:
     # MinIO in-cluster for label raw/normalized objects
     STORE_BACKEND: live
     EMBEDDING_PROVIDER: MOCK
-    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4317
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
+
+neo4j:
+  # Browser UI on host for Ops deep links
+  serviceType: NodePort
+  httpNodePort: 30474
 
 minio:
   enabled: true
@@ -23,8 +28,11 @@ minio:
   rootUser: minioadmin
   rootPassword: minioadmin
   args: []
+  # Console on host for Ops deep links
+  serviceType: NodePort
+  consoleNodePort: 30901
 
-# Ollama stays in Docker Compose (make llm-ollama) — not in Desktop K8s.
+# Ollama stays in Docker Compose — not in Desktop K8s.
 # Hybrid: $env:KP_LLM='compose-ollama' → values-desktop-compose-ollama.yaml
 llm:
   provider: MOCK

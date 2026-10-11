@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     index_version: str = "v1"
     policy_version: str = "v1"
 
-    llm_provider: str = "MOCK"  # MOCK | VLLM | OLLAMA
-    openai_base_url: str = "http://localhost:8000/v1"
+    llm_provider: str = "MOCK"  # MOCK | OLLAMA
+    openai_base_url: str = "http://host.docker.internal:11434/v1"
     openai_api_key: str = "not-needed"
-    llm_model: str = "Qwen2.5-7B-Instruct"
+    llm_model: str = "qwen2.5:0.5b"
 
     enable_semantic_cache: bool = True
     enable_vlm: bool = False
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     minio_bucket: str = "knowledge-platform"
     minio_secure: bool = False
 
-    otel_exporter_otlp_endpoint: str = "http://localhost:4317"
+    otel_exporter_otlp_endpoint: str = "http://localhost:4318"
     otel_service_name: str = "kp-api"
     prometheus_enabled: bool = True
 

@@ -37,32 +37,47 @@ export function OpsPage() {
           <span className="badge">index {health?.index_version}</span>
         </div>
         <pre className="mono">{JSON.stringify(health, null, 2)}</pre>
-        <h3>Deep links (compose)</h3>
+        <h3>Deep links (hybrid)</h3>
+        <p>
+          Compose: Jaeger / Grafana / Prometheus. K8s NodePort: Neo4j / MinIO / API metrics. Нужен side-stack
+          obs + Desktop Helm.
+        </p>
         <ul>
           <li>
             <a href="http://localhost:16686" target="_blank" rel="noreferrer">
               Jaeger
-            </a>
+            </a>{" "}
+            <span className="badge">compose :16686</span>
           </li>
           <li>
             <a href="http://localhost:3000" target="_blank" rel="noreferrer">
               Grafana
-            </a>
+            </a>{" "}
+            <span className="badge">compose :3000</span>
           </li>
           <li>
-            <a href="http://localhost:7474" target="_blank" rel="noreferrer">
+            <a href="http://localhost:9090" target="_blank" rel="noreferrer">
+              Prometheus
+            </a>{" "}
+            <span className="badge">compose :9090</span>
+          </li>
+          <li>
+            <a href="http://localhost:30474" target="_blank" rel="noreferrer">
               Neo4j Browser
-            </a>
+            </a>{" "}
+            <span className="badge">k8s NodePort :30474</span>
           </li>
           <li>
-            <a href="http://localhost:9001" target="_blank" rel="noreferrer">
+            <a href="http://localhost:30901" target="_blank" rel="noreferrer">
               MinIO Console
-            </a>
+            </a>{" "}
+            <span className="badge">k8s NodePort :30901 · minioadmin</span>
           </li>
           <li>
-            <a href="http://localhost:8080/metrics" target="_blank" rel="noreferrer">
-              Prometheus metrics
-            </a>
+            <a href="http://localhost:30080/metrics" target="_blank" rel="noreferrer">
+              API /metrics
+            </a>{" "}
+            <span className="badge">k8s NodePort :30080</span>
           </li>
         </ul>
       </section>

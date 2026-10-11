@@ -45,7 +45,7 @@
         <mxCell id="14" value="MinIO&amp;#10;raw / recognized" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#ffffff;" vertex="1" parent="10">
           <mxGeometry x="200" y="170" width="150" height="80" as="geometry"/>
         </mxCell>
-        <mxCell id="15" value="LLM Serving&amp;#10;vLLM / Ollama / MOCK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#ffffff;align=center;" vertex="1" parent="10">
+        <mxCell id="15" value="LLM Serving&amp;#10;Ollama / MOCK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3C7FC0;fontColor=#ffffff;align=center;" vertex="1" parent="10">
           <mxGeometry x="100" y="300" width="200" height="90" as="geometry"/>
         </mxCell>
         <mxCell id="16" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="5">

@@ -34,15 +34,17 @@ def create_app() -> FastAPI:
     )
     app.include_router(router)
 
+    _setup_otel(app, settings)
+
     @app.on_event("startup")
     async def _startup() -> None:
         c = get_container()
         seed_store(c.store)
-        _setup_otel(settings)
         logger.info(
-            "KP started store=%s llm=%s docs=%s",
+            "KP started store=%s llm=%s otel=%s docs=%s",
             settings.store_backend,
             settings.llm_provider,
+            settings.otel_exporter_otlp_endpoint,
             c.store.graph_stats(),
         )
 
@@ -53,22 +55,32 @@ def create_app() -> FastAPI:
     return app
 
 
-def _setup_otel(settings) -> None:
+def _setup_otel(app: FastAPI, settings) -> None:
+    """Wire OTLP/HTTP traces → Jaeger (Compose :4318/v1/traces). Failures are non-fatal."""
     try:
         from opentelemetry import trace
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+        endpoint = (settings.otel_exporter_otlp_endpoint or "").strip().rstrip("/")
+        if not endpoint:
+            logger.warning("OTel skipped: empty OTEL_EXPORTER_OTLP_ENDPOINT")
+            return
+        # Prefer HTTP/protobuf :4318 (gRPC :4317 needs insecure channel + no scheme).
+        if endpoint.endswith(":4317"):
+            endpoint = endpoint[:-5] + ":4318"
+        if not endpoint.endswith("/v1/traces"):
+            endpoint = f"{endpoint}/v1/traces"
 
         resource = Resource.create({"service.name": settings.otel_service_name})
         provider = TracerProvider(resource=resource)
-        exporter = OTLPSpanExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True)
-        provider.add_span_processor(BatchSpanProcessor(exporter))
+        provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
         trace.set_tracer_provider(provider)
-        # Instrumentation attached lazily on app instance in create_app if needed
-        FastAPIInstrumentor().instrument()
+        FastAPIInstrumentor.instrument_app(app, excluded_urls="metrics,health")
+        logger.info("OTel enabled → %s (service=%s)", endpoint, settings.otel_service_name)
     except Exception as exc:
         logging.getLogger("kp").warning("OTel not fully enabled: %s", exc)
 
