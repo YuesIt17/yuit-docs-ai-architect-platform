@@ -51,18 +51,56 @@
 
 ---
 
+## Глоссарий (термины lab)
+
+| Термин | Что это | Зачем Security Engineer |
+|--------|---------|-------------------------|
+| **DevSecOps** | Безопасность встроенная в разработку и поставку (scan → fix → CI), не «отдел в конце» | Роль lab: ловить misconfig/CVE до prod |
+| **внутренний контур** | Сеть/сервисы внутри компании или локального стенда, не публичный интернет | Типичный scope пентеста / аудита |
+| **kp / `kp.local`** | Namespace и hostname нашей Knowledge Platform | Единственная учебная цель сканеров |
+| **finding** | Конкретная находка (misconfig, CVE, открытый порт) с evidence | Единица отчёта и triage |
+| **breaking / building** | Сломать/найти риск → предложить и сделать fix | Полный цикл Security Engineer, не только «нашли» |
+| **misconfig** | Небезопасная настройка (нет NetPol, privileged, secrets в values) | Чаще реальный риск, чем «голый» CVE |
+| **PoC** | Proof of Concept — демонстрация, что риск реален | Здесь: narrative + evidence в отчёте, не exploit в git |
+| **RBAC** | Role-Based Access Control — кто что может через API | Аудит `can-i`, ClusterRoleBinding, SA |
+| **SA** | ServiceAccount — идентичность Pod'а в API | Украденный token + широкие права = путь к Secrets |
+| **NetPol** | NetworkPolicy — firewall pod↔pod | Без неё сеть плоская: любой pod → postgres |
+| **PSS** | Pod Security Standards (Privileged / Baseline / Restricted) | Политика «какие Pod вообще можно создать» |
+| **Admission** | Контроллеры, проверяющие объект **до** create/update | Gatekeeper / Kyverno / PSS — блок privileged, hostPath |
+| **OPA Gatekeeper / Kyverno** | Policy engines в кластере (правила как код) | В lab не ставим; направление для prod |
+| **CNI** | Container Network Interface — как Pod'ы получают IP и маршруты | База для сегментации; NetPol работает поверх CNI |
+| **CIS** | Center for Internet Security — бенчмарки «как должно быть» | kube-bench проверяет CIS Kubernetes |
+| **CVE** | Известная уязвимость в ПО (номер в базе) | Trivy находит CVE в образах; triage по severity + контексту |
+| **IaC** | Infrastructure as Code (Helm, Terraform, манифесты) | Checkov / Trivy config — политики на YAML до деплоя |
+| **supply-chain** | Цепочка сборки/образов/зависимостей | Скан image + pin digest + CI gate |
+| **Vulnerability Management** | Процесс: найти → оценить → ticket → fix → verify | Сервис, а не разовый отчёт сканера |
+| **triage** | Разбор: ложный позитив? severity? приоритет fix? | Без triage сканер = шум |
+| **SOC / Blue Team** | Центр мониторинга / защитники (детект, реагирование) | Им передаём IoC после теста |
+| **IoC** | Indicator of Compromise — IP, hash, URL, SA для hunt/block | Шаблон handoff ниже |
+| **SIEM** | Система сбора логов и алертов (работа) | Вне lab; здесь только формат IoC |
+| **IMDS** | Instance Metadata Service в облаке (credentials с VM) | Аналог риска: SA token / cloud metadata из pod |
+| **blast radius** | Насколько далеко «разлетится» компромисс | etcd / hostPath / docker.sock → почти весь кластер |
+| **ephemeral** | Контейнер сканера живёт только на время `compose run` | Не держит БД/API; не пересекается с `kp` |
+| **FOSS** | Free/Open Source Software | ZAP = бесплатный стенд вместо Burp в lab |
+| **RCE** | Remote Code Execution — удалённое выполнение кода | Критичный класс; эскалация Senior/Lead |
+| **JD** | Job Description — требования вакансии | Колонка «обязанность» в карте выше |
+
+Сущности K8s (Pod, Deployment, Secret, Ingress…): [k8s-primer.md](k8s-primer.md).
+
+---
+
 ## База компетенций
 
 ### Kubernetes (control plane и путь атаки)
 
-| Компонент | Зачем Security Engineer |
-|-----------|-------------------------|
-| **kube-apiserver** | Единая точка authn/authz; все `kubectl` и контроллеры ходят сюда |
-| **etcd** | Состояние кластера и Secrets (at rest); доступ к etcd ≈ полный компромисс |
-| **kubelet** | Runtime на ноде; слабый kubelet API / privileged pod → host |
-| **CNI** | Pod network; без NetworkPolicy сеть плоская (любой pod → любой) |
-| **RBAC** | Role/ClusterRole + Binding; кто и что может через API |
-| **Admission** | PSS / OPA Gatekeeper / Kyverno — блокируют небезопасные Pod до create |
+| Компонент | Что это | Зачем Security Engineer |
+|-----------|---------|-------------------------|
+| **kube-apiserver** | API-шлюз кластера | Единая точка authn/authz; все `kubectl` и контроллеры ходят сюда |
+| **etcd** | Ключ-значение хранилище состояния | Secrets и конфиг at rest; доступ к etcd ≈ полный компромисс |
+| **kubelet** | Агент на каждой Node, запускает контейнеры | Слабый kubelet API / privileged pod → выход на host |
+| **CNI** | Плагин сети Pod'ов | Без NetworkPolicy сеть плоская (любой pod → любой) |
+| **RBAC** | Роли и привязки к пользователям/SA | Кто и что может через API |
+| **Admission** | Хуки до create (PSS / Gatekeeper / Kyverno) | Блокируют небезопасные Pod до появления в кластере |
 
 Путь риска (запомнить): `Pod → SA token → RBAC → Secrets / privileged → Node`.
 
@@ -79,34 +117,37 @@
 | Отчёты | `tmp\sec-ops\` | `tmp/sec-ops/` |
 | Парсинг JSON | `python scripts/sec-parse-trivy.py` · `sec-parse-summary.py` | то же |
 
-### Toolchain matrix
+### Toolchain matrix (что делает каждый инструмент)
 
-| Инструмент (JD) | В lab | Как использовать здесь |
-|-----------------|-------|------------------------|
-| Trivy / Semgrep | да | compose |
-| Nmap | да | compose → `host.docker.internal` |
-| OWASP ZAP | да | compose (FOSS-стенд Burp); `SEC_SCAN_DEEP=1` |
-| Nuclei | да | compose (web/API templates) |
-| kube-bench | да | compose; на Docker Desktop часто skip (нет node FS) |
-| Checkov | да | compose, Helm chart |
-| Burp Suite | внешний | ручной аудит `http://kp.local:8088` |
-| Nessus | внешний | infra vulns; в lab — Trivy + Nmap + Checkov |
-| Kali / Parrot | внешний host | окружение для Nmap / Burp / msf |
-| Metasploit | внешний | роль в authorized red team; **без** exploit steps в этом doc |
+Слои: **образ** → **код** → **IaC/Helm** → **кластер (CIS/RBAC)** → **сеть/порты** → **Web/API**. Один сканер не закрывает всё.
+
+| Инструмент | Что делает | Зачем в lab / на работе | В lab |
+|------------|------------|-------------------------|-------|
+| **Trivy** | CVE в Docker-образах + базовые misconfig в YAML/Helm | «Что опасного в `kp-api:dev` и chart?» | compose |
+| **Semgrep** | Статический анализ кода (правила SAST) | Найти типичные баги безопасности в `backend/` без запуска | compose |
+| **Checkov** | Policy-as-code по IaC (Helm/K8s) | «Chart нарушает best practices?» (дополняет Trivy config) | compose |
+| **Nmap** | Скан портов и версий сервисов | Что слушает host: Ingress 8088 и лишнее снаружи | compose → `host.docker.internal` |
+| **Nuclei** | Шаблоны известных web/API уязвимостей | Быстрый авточек HTTP `kp.local` на известные паттерны | compose |
+| **OWASP ZAP** | Авто/пассивный web-сканер (прокси) | FOSS-стенд Burp: baseline по UI/API | compose; `SEC_SCAN_DEEP=1` |
+| **kube-bench** | Проверки CIS Kubernetes | Hardening control-plane/node/policies | compose; на Desktop часто skip |
+| **Burp Suite** | Ручной proxy для Web/API (Repeater, Intruder…) | Глубокий ручной аудит на работе | внешний → `http://kp.local:8088` |
+| **Nessus** | Корпоративный vuln-сканер инфраструктуры | Широкий infra-scan; в lab заменяем Trivy+Nmap+Checkov | внешний |
+| **Kali / Parrot** | Дистрибутивы с пентест-тулчейном | Готовое окружение (Nmap, Burp, msf…) | внешний host |
+| **Metasploit** | Фреймворк эксплуатации | Только authorized red team; **шагов exploit в этом doc нет** | внешний |
 
 ---
 
 ## OpenStack (концепт, без стенда в репо)
 
-На работе / отдельном стенде аудит облака обычно включает:
+**Зачем блок:** в JD часто «аудит OpenStack»; стенда в репо нет — ниже маппинг «облако → тот же навык на `kp`».
 
-| Область | Что смотреть | Аналог в `kp` / K8s |
-|---------|--------------|---------------------|
-| Identity / RBAC | роли, trusts, over-privileged users | K8s RBAC, SA bindings |
-| Security groups | открытые 0.0.0.0/0, лишние порты | NetworkPolicy, Ingress |
-| Metadata / IMDS | доступ к credentials с инстанса | cloud metadata + SA tokens в pod |
-| Images / volumes | непатченные образы, публичные snapshots | Trivy image, registry policy |
-| Tenant vs provider net | сегментация, flat L2 | CNI + NetPol |
+| Область | Что это / смотреть | Аналог в `kp` / K8s |
+|---------|--------------------|---------------------|
+| Identity / RBAC | кто админ облака, лишние роли | K8s RBAC, SA bindings |
+| Security groups | firewall VM: открытые `0.0.0.0/0`, лишние порты | NetworkPolicy, Ingress |
+| Metadata / IMDS | HTTP-сервис на VM отдаёт cloud credentials | SA tokens в pod, cloud metadata |
+| Images / volumes | устаревшие образы VM, публичные диски | Trivy image, registry policy |
+| Tenant vs provider net | изоляция сетей арендаторов | CNI + NetPol |
 | Logging / audit | кто менял SG / роли | Kubernetes audit logs, SIEM |
 
 Этот репозиторий **не** поднимает OpenStack — только чеклист для собеса и переноса навыков.
@@ -198,7 +239,11 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm zap \
 
 ## Лаборатория на `kp`
 
+Каждый шаг = один слой защиты. Цель — собрать findings с evidence, не «прогнать все флаги».
+
 ### 1. Разведка namespace + sanity control plane
+
+**Зачем:** понять поверхность атаки — что крутится, есть ли NetPol/Ingress/Secrets, не раздаётся ли `cluster-admin`.
 
 **Windows**
 
@@ -223,6 +268,8 @@ kubectl get --raw='/readyz?verbose'   # apiserver health (если доступ�
 Critical assets для red-team рамки: Ingress `kp.local`, `deploy/api`, postgres / neo4j / redis / qdrant / minio (Data plane).
 
 ### 2. Мисконфиги (privileged / host / RBAC)
+
+**Зачем:** типичный путь компромисса в K8s — privileged/hostPath/docker.sock и слишком широкие права default SA.
 
 **Windows**
 
@@ -250,6 +297,8 @@ kubectl -n kp get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spe
 
 ### 3. Trivy — образы и манифесты
 
+**Зачем:** CVE в `kp-api` / `kp-frontend` и грубые ошибки в Helm YAML (supply-chain + config).
+
 ```bash
 docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-api.json kp-api:dev
 docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-frontend.json kp-frontend:dev
@@ -258,6 +307,8 @@ python scripts/sec-parse-trivy.py tmp/sec-ops/trivy-api.json
 ```
 
 ### 4. Semgrep — код backend
+
+**Зачем:** SAST — найти в коде паттерны вроде небезопасного SQL/десериализации/секретов до деплоя.
 
 **Windows**
 
@@ -277,6 +328,8 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep \
 
 ### 5. Checkov — IaC / Helm policy
 
+**Зачем:** policy-as-code по chart: нет securityContext, лишние capabilities, публичные Service и т.п.
+
 ```bash
 docker compose -f infra/docker-compose.sec-ops.yml run --rm checkov \
   -d /src/infra/helm/knowledge-platform \
@@ -287,6 +340,8 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm checkov \
 
 ### 6. Nmap — сегмент / открытые порты (только localhost)
 
+**Зачем:** снаружи видно только то, что слушает host; лишний открытый порт = лишняя поверхность.
+
 ```bash
 docker compose -f infra/docker-compose.sec-ops.yml run --rm nmap \
   -sV -p 8088,80,443,11434 -oN /out/nmap.txt host.docker.internal
@@ -296,6 +351,8 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm nmap \
 
 ### 7. Nuclei — web/API templates
 
+**Зачем:** быстрый прогон известных HTTP/API проверок (headers, path disclosure, типовые misconfig) по Ingress.
+
 ```bash
 docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei \
   -u http://host.docker.internal:8088 -silent -o /out/nuclei.txt
@@ -303,6 +360,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei \
 
 ### 8. OWASP ZAP — baseline (FOSS-стенд Burp)
 
+**Зачем:** пассивный/базовый web-аудит UI и API (как упрощённый Burp без ручного proxy).  
 Долгий шаг; в `make sec-scan` только при `SEC_SCAN_DEEP=1`.
 
 ```bash
@@ -310,11 +368,12 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm zap \
   zap-baseline.py -t http://host.docker.internal:8088 -J /out/zap-baseline.json -I
 ```
 
-Ручной аналог на работе: Burp Suite против того же URL (Proxy / Repeater / Intruder — по политике engagement).
+Ручной аналог на работе: Burp Suite против того же URL — **Proxy** (перехват трафика), **Repeater** (повтор/правка запроса), **Intruder** (перебор параметров); только по политике engagement.
 
 ### 9. kube-bench — CIS (best-effort)
 
-На Docker Desktop часто нет доступа к файлам control-plane/node → скрипт пишет WARN и skip. На kind/VM с доступом к ноде:
+**Зачем:** сверить кластер с CIS Kubernetes (шифр etcd, anon-auth, файлы ноды…). На Desktop часто skip — нет FS ноды.  
+На kind/VM с доступом к ноде:
 
 ```bash
 docker compose -f infra/docker-compose.sec-ops.yml run --rm kube-bench \
@@ -325,6 +384,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm kube-bench \
 
 ### 10. Hardening direction (building)
 
+**Зачем:** закрыть breaking-находки конкретными контролями (NetPol, PSS, RBAC, admission, image gate).  
 В desktop-lab Gatekeeper обычно **не** ставим (тяжело для ноутбука). Направление для prod / shared cluster:
 
 | Контроль | Что сделать |
@@ -370,6 +430,8 @@ App-level ACL (роли guest/manager) — [ADR-005](../adr/ADR-005-security.md)
 ---
 
 ## Vulnerability Management (внутренний сервис)
+
+**Зачем:** сканер без процесса = PDF в никуда. VM — как findings доходят до fix и закрытия.
 
 Жизненный цикл на отчётах из `tmp/sec-ops/`:
 
@@ -433,12 +495,15 @@ Severity:    High
 
 ### IoC handoff → SOC / Blue Team
 
+**Зачем:** после теста защитники должны знать, *что* искать в логах (IP, hash, URL, SA), а не перечитывать весь отчёт пентеста.
+
 ```text
 indicator | type        | source finding      | first_seen | last_seen | confidence | blue_action
 ----------|-------------|---------------------|------------|-----------|------------|------------------
 <ip/hash/url/sa> | ip/domain/hash/sa | sec-ops lab / ticket | ISO8601 | ISO8601 | high/med/low | block / watch / hunt
 ```
 
+- **block** — блокировать индикатор; **watch** — алерт без автоблока; **hunt** — поиск по историческим логам.  
 Передавай только индикаторы из **авторизованного** теста своего контура; уточняй false positive вместе с Blue Team.
 
 ---

@@ -176,7 +176,7 @@ flowchart LR
 | 2 | Собираешь образы | `kp-api:dev`, `kp-frontend:dev` (`pullPolicy: Never` на Desktop) |
 | 3 | Ставишь/обновляешь release | `.\scripts\k8s-up.ps1` или `helm upgrade --install kp ...` |
 | 4 | Helm применяет diff | новые/изменённые Deployment, Service, Ingress, Secret |
-| 5 | Контроллер катит Pod'ы | rolling update; старый Pod → новый |
+| 5 | Deployment-контроллер катит Pod'ы | rolling update через ReplicaSet; старый Pod → новый |
 | 6 | Проверка | `kubectl -n kp get pods`, `curl http://kp.local:8088/api/health` |
 
 Типовые команды (Windows; macOS — [SRE.md](../SRE.md)):
