@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # Clean hybrid: Compose side-stack (Ollama + obs) + Desktop K8s platform.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 echo "==> Compose side-stack (ollama + prometheus/grafana/jaeger)"
 docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d --remove-orphans
-bash "$ROOT/scripts/ollama-pull.sh" qwen2.5:0.5b
+bash "$ROOT/scripts/ollama/ollama-pull.sh" qwen2.5:0.5b
 
 echo "==> Kubernetes platform (api/frontend/stores/minio) + OLLAMA overlay"
 export KP_LLM=compose-ollama
-bash "$ROOT/scripts/k8s-up.sh"
+bash "$ROOT/scripts/k8s/k8s-up.sh"
 
 cat <<'EOF'
 

@@ -7,8 +7,8 @@
 #   docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei -u http://host.docker.internal:8088
 #   docker compose -f infra/docker-compose.sec-ops.yml run --rm zap zap-baseline.py -t http://host.docker.internal:8088 -I
 # Or one-shot: make sec-scan  (SEC_SCAN_DEEP=1 for ZAP)
-#   Windows → scripts/sec-scan.ps1
-#   macOS   → scripts/sec-scan.sh
+#   Windows → scripts/sec/sec-scan.ps1
+#   macOS   → scripts/sec/sec-scan.sh
 # Docs: docs/infra/sec-ops.md
 # Reports: tmp/sec-ops/ (mounted as /out)
 #

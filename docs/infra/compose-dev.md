@@ -26,9 +26,9 @@ Project: `retailpartnerx-kp`.
 
 | Target | Windows | macOS |
 |--------|---------|-------|
-| Hybrid up | `.\scripts\hybrid-up.ps1` | `bash scripts/hybrid-up.sh` |
+| Hybrid up | `.\scripts\hybrid\hybrid-up.ps1` | `bash scripts/hybrid/hybrid-up.sh` |
 | `llm` + `obs` | `docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d` | то же |
-| Sec scanners | `.\scripts\sec-scan.ps1` | `bash scripts/sec-scan.sh` |
+| Sec scanners | `.\scripts\sec\sec-scan.ps1` | `bash scripts/sec/sec-scan.sh` |
 
 ## Порты (Compose)
 
@@ -48,14 +48,14 @@ Grafana provisioning: `infra/grafana/provisioning/` → datasource Prometheus + 
 **Windows**
 
 ```powershell
-.\scripts\hybrid-up.ps1
+.\scripts\hybrid\hybrid-up.ps1
 # или: make demo
 ```
 
 **macOS**
 
 ```bash
-bash scripts/hybrid-up.sh
+bash scripts/hybrid/hybrid-up.sh
 # или: make demo
 ```
 

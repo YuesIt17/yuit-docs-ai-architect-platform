@@ -3,9 +3,9 @@
   Pull an Ollama model with retries / alternate DNS (fixes TLS timeouts to registry.ollama.ai).
 
 .USAGE
-  .\scripts\ollama-pull.ps1
-  .\scripts\ollama-pull.ps1 -Model qwen2.5:1.5b-instruct
-  .\scripts\ollama-pull.ps1 -Model qwen2.5:7b-instruct -Retries 15
+  .\scripts\ollama\ollama-pull.ps1
+  .\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:1.5b-instruct
+  .\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:7b-instruct -Retries 15
 #>
 param(
   [string]$Model = "qwen2.5:0.5b",
@@ -14,7 +14,7 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
-$Root = Split-Path -Parent $PSScriptRoot
+$Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $Root
 
 function Get-OllamaContainer {

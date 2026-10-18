@@ -82,13 +82,13 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 **Windows**
 
 ```powershell
-.\scripts\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
+.\scripts\hybrid\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
 ```
 
 **macOS**
 
 ```bash
-bash scripts/hybrid-up.sh   # или: make demo
+bash scripts/hybrid/hybrid-up.sh   # или: make demo
 ```
 
 | Сервис | Где | URL / порт |

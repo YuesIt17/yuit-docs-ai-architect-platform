@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Pull an Ollama model (macOS / Linux). Windows: scripts/ollama-pull.ps1
+# Pull an Ollama model (macOS / Linux). Windows: scripts/ollama/ollama-pull.ps1
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 MODEL="${1:-qwen2.5:0.5b}"

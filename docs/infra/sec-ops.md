@@ -31,7 +31,7 @@
 | Vulnerability Management как сервис | Жизненный цикл на `tmp/sec-ops/` | Jira/ServiceNow + SLA компании |
 | Handoff SOC / Blue Team (IoC) | Шаблон IoC ниже | Реальный SIEM / ticketing |
 | Kali / Parrot, Burp, Metasploit, Nmap | Nmap (+ ZAP) в compose; остальное — внешний toolchain | Установка Kali/Burp/msf на host |
-| Python / Bash автоматизация | Скрипты `scripts/sec-scan.*`, parse helpers | Расширение оркестрации под corp scanners |
+| Python / Bash автоматизация | Скрипты `scripts/sec/sec-scan.*`, parse helpers | Расширение оркестрации под corp scanners |
 | Архитектура K8s (etcd, apiserver, CNI) | База ниже + аудит namespace | Deep dive control-plane на bare-metal/cloud |
 | Breaking ↔ building | Таблица findings + направление Helm fix | PR с заказчиком платформы |
 | Клиентоориентированность | Шаблон отчёта для внутренних заказчиков | Стейкхолдер-митинги |
@@ -115,7 +115,7 @@
 | Поиск в YAML | `Select-String` | `grep -E` |
 | Сканеры | `docker compose run --rm` | то же |
 | Отчёты | `tmp\sec-ops\` | `tmp/sec-ops/` |
-| Парсинг JSON | `python scripts/sec-parse-trivy.py` · `sec-parse-summary.py` | то же |
+| Парсинг JSON | `python scripts/sec/sec-parse-trivy.py` · `sec-parse-summary.py` | то же |
 
 ### Toolchain matrix (что делает каждый инструмент)
 
@@ -162,8 +162,8 @@
 
 ```powershell
 make demo
-# или: .\scripts\hybrid-up.ps1
-# или только кластер: .\scripts\k8s-up.ps1
+# или: .\scripts\hybrid\hybrid-up.ps1
+# или только кластер: .\scripts\k8s\k8s-up.ps1
 kubectl -n kp get pods
 ```
 
@@ -171,8 +171,8 @@ kubectl -n kp get pods
 
 ```bash
 make demo
-# или: bash scripts/hybrid-up.sh
-# или только кластер: bash scripts/k8s-up.sh
+# или: bash scripts/hybrid/hybrid-up.sh
+# или только кластер: bash scripts/k8s/k8s-up.sh
 kubectl -n kp get pods
 ```
 
@@ -180,7 +180,7 @@ kubectl -n kp get pods
 
 ## Быстрый старт (один проход)
 
-Скрипты: [`sec-scan.ps1`](../../scripts/sec-scan.ps1) (Windows) · [`sec-scan.sh`](../../scripts/sec-scan.sh) (macOS).
+Скрипты: [`sec-scan.ps1`](../../scripts/sec/sec-scan.ps1) (Windows) · [`sec-scan.sh`](../../scripts/sec/sec-scan.sh) (macOS).
 
 | Шаг | Результат |
 |-----|-----------|
@@ -198,7 +198,7 @@ kubectl -n kp get pods
 
 ```powershell
 make sec-scan
-# или: .\scripts\sec-scan.ps1
+# или: .\scripts\sec\sec-scan.ps1
 
 # глубокий проход (+ ZAP; дольше):
 $env:SEC_SCAN_DEEP = "1"; make sec-scan
@@ -208,7 +208,7 @@ $env:SEC_SCAN_DEEP = "1"; make sec-scan
 
 ```bash
 make sec-scan
-# или: bash scripts/sec-scan.sh
+# или: bash scripts/sec/sec-scan.sh
 
 # глубокий проход (+ ZAP; дольше):
 SEC_SCAN_DEEP=1 make sec-scan
@@ -303,7 +303,7 @@ kubectl -n kp get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spe
 docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-api.json kp-api:dev
 docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-frontend.json kp-frontend:dev
 docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy config /src/infra/helm/knowledge-platform
-python scripts/sec-parse-trivy.py tmp/sec-ops/trivy-api.json
+python scripts/sec/sec-parse-trivy.py tmp/sec-ops/trivy-api.json
 ```
 
 ### 4. Semgrep — код backend
@@ -449,7 +449,7 @@ discover → triage (severity + контекст) → ticket → fix/verify → 
 Сводка counts:
 
 ```bash
-python scripts/sec-parse-summary.py tmp/sec-ops
+python scripts/sec/sec-parse-summary.py tmp/sec-ops
 ```
 
 ### Эскалация Senior / Lead

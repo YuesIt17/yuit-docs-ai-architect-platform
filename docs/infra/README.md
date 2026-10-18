@@ -19,10 +19,10 @@
 **Windows**
 
 ```powershell
-.\scripts\hybrid-up.ps1
+.\scripts\hybrid\hybrid-up.ps1
 # или: make demo
 
-.\scripts\sec-scan.ps1
+.\scripts\sec\sec-scan.ps1
 # или: make sec-scan  → tmp/sec-ops/
 # глубокий (+ ZAP): $env:SEC_SCAN_DEEP = "1"; make sec-scan
 ```
@@ -30,10 +30,10 @@
 **macOS**
 
 ```bash
-bash scripts/hybrid-up.sh
+bash scripts/hybrid/hybrid-up.sh
 # или: make demo
 
-bash scripts/sec-scan.sh
+bash scripts/sec/sec-scan.sh
 # или: make sec-scan  → tmp/sec-ops/
 # глубокий (+ ZAP): SEC_SCAN_DEEP=1 make sec-scan
 ```

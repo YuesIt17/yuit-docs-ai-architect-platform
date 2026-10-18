@@ -2,7 +2,7 @@
 
 **Схема:** [k8s-topology.png](../../diagrams/k8s-topology.png) · [k8s-topology.drawio](../../diagrams/k8s-topology.drawio)
 
-Источник правды: Helm chart [`infra/helm/knowledge-platform/`](../../infra/helm/knowledge-platform/), [`scripts/k8s-up.ps1`](../../scripts/k8s-up.ps1).  
+Источник правды: Helm chart [`infra/helm/knowledge-platform/`](../../infra/helm/knowledge-platform/), [`scripts/k8s/k8s-up.ps1`](../../scripts/k8s/k8s-up.ps1).  
 Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).  
 Что такое сущности K8s / Helm и как катить фичи: [k8s-primer.md](k8s-primer.md).  
 Логические сегменты: [architecture/deployment.md](../architecture/deployment.md).
@@ -90,7 +90,7 @@ Browser → ingress-nginx :8088
 | `compose-ollama` | + compose-ollama overlay |
 
 Скрипт: build images → install ingress-nginx (desktop) → `helm upgrade --install kp ... -n kp --create-namespace --wait`.  
-Снос: `.\scripts\k8s-down.ps1` (desktop оставляет shared ingress-nginx).
+Снос: `.\scripts\k8s\k8s-down.ps1` (desktop оставляет shared ingress-nginx).
 
 ## Что не в Helm (Compose side-stack)
 

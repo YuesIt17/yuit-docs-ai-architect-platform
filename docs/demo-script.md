@@ -4,7 +4,7 @@
 
 | Мин | Шаг | Действие | Ожидаемый результат |
 | --- | --- | -------- | ------------------- |
-| 0:00 | Bring-up | `.\scripts\hybrid-up.ps1` → http://kp.local:8088 | UI живой, health OK |
+| 0:00 | Bring-up | `.\scripts\hybrid\hybrid-up.ps1` → http://kp.local:8088 | UI живой, health OK |
 | 0:40 | LLM | Страница `/llm`: MOCK → Probe → Apply (или уже OLLAMA) | badge `model_uri=…` |
 | 1:20 | ACL deny | Роль `manager`, вопрос про секретный promo / margin | Нет утечки `42%` / secret citations |
 | 2:20 | ACL allow | Роль `compliance`, тот же вопрос | Citations по secret документу |

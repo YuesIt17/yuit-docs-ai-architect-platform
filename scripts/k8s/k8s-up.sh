@@ -3,7 +3,7 @@
 #   KP_K8S=desktop   # default
 #   KP_K8S=kind
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 mode="$(echo "${KP_K8S:-desktop}" | tr '[:upper:]' '[:lower:]')"

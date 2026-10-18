@@ -4,30 +4,30 @@
 ifeq ($(OS),Windows_NT)
   RUN_PS = powershell -ExecutionPolicy Bypass -File
   demo:
-	$(RUN_PS) scripts/hybrid-up.ps1
+	$(RUN_PS) scripts/hybrid/hybrid-up.ps1
   llm-ollama:
 	docker compose -f infra/docker-compose.yml --profile llm up -d ollama
-	$(RUN_PS) scripts/ollama-pull.ps1 -Model qwen2.5:0.5b
+	$(RUN_PS) scripts/ollama/ollama-pull.ps1 -Model qwen2.5:0.5b
 	@echo "K8s API -> OLLAMA http://host.docker.internal:11434/v1 model=qwen2.5:0.5b"
   k8s-up:
-	$(RUN_PS) scripts/k8s-up.ps1
+	$(RUN_PS) scripts/k8s/k8s-up.ps1
   k8s-down:
-	$(RUN_PS) scripts/k8s-down.ps1
+	$(RUN_PS) scripts/k8s/k8s-down.ps1
   sec-scan sec-ops:
-	$(RUN_PS) scripts/sec-scan.ps1
+	$(RUN_PS) scripts/sec/sec-scan.ps1
 else
   demo:
-	bash scripts/hybrid-up.sh
+	bash scripts/hybrid/hybrid-up.sh
   llm-ollama:
 	docker compose -f infra/docker-compose.yml --profile llm up -d ollama
-	bash scripts/ollama-pull.sh qwen2.5:0.5b
+	bash scripts/ollama/ollama-pull.sh qwen2.5:0.5b
 	@echo "K8s API -> OLLAMA http://host.docker.internal:11434/v1 model=qwen2.5:0.5b"
   k8s-up:
-	bash scripts/k8s-up.sh
+	bash scripts/k8s/k8s-up.sh
   k8s-down:
-	bash scripts/k8s-down.sh
+	bash scripts/k8s/k8s-down.sh
   sec-scan sec-ops:
-	bash scripts/sec-scan.sh
+	bash scripts/sec/sec-scan.sh
 endif
 
 # Compose side-stack only

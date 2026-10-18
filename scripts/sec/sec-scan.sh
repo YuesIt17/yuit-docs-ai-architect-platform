@@ -2,7 +2,7 @@
 # DevSecOps lab: kubectl + Trivy + Semgrep + Checkov + Nmap + Nuclei (+ ZAP if SEC_SCAN_DEEP=1).
 # Docs: docs/infra/sec-ops.md
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 COMPOSE="infra/docker-compose.sec-ops.yml"
@@ -70,7 +70,7 @@ echo "==> Parse Trivy CRITICAL/HIGH"
 shopt -s nullglob
 trivy_files=("$OUT_DIR"/trivy-*.json)
 if [[ ${#trivy_files[@]} -gt 0 ]]; then
-  python3 "$ROOT/scripts/sec-parse-trivy.py" "${trivy_files[@]}" || python "$ROOT/scripts/sec-parse-trivy.py" "${trivy_files[@]}"
+  python3 "$ROOT/scripts/sec/sec-parse-trivy.py" "${trivy_files[@]}" || python "$ROOT/scripts/sec/sec-parse-trivy.py" "${trivy_files[@]}"
 else
   echo "WARN: no trivy JSON reports" >&2
 fi
@@ -163,8 +163,8 @@ else
 fi
 
 echo "==> Summary"
-python3 "$ROOT/scripts/sec-parse-summary.py" "$OUT_DIR" 2>/dev/null \
-  || python "$ROOT/scripts/sec-parse-summary.py" "$OUT_DIR" 2>/dev/null \
+python3 "$ROOT/scripts/sec/sec-parse-summary.py" "$OUT_DIR" 2>/dev/null \
+  || python "$ROOT/scripts/sec/sec-parse-summary.py" "$OUT_DIR" 2>/dev/null \
   || echo "WARN: sec-parse-summary.py failed" >&2
 
 echo

@@ -13,7 +13,7 @@
 | **Chart** | Пакет шаблонов YAML (`templates/`) + `values.yaml` | [`infra/helm/knowledge-platform/`](../../infra/helm/knowledge-platform/) |
 | **Values** | Параметры (replicas, images, LLM, stores) | `values.yaml` + overlays `values-desktop*.yaml` |
 | **Release** | Установленный экземпляр chart в namespace | имя `kp` в namespace `kp` |
-| **helm upgrade --install** | Создать или обновить release атомарно | `scripts/k8s-up.ps1` / `.sh` |
+| **helm upgrade --install** | Создать или обновить release атомарно | `scripts/k8s/k8s-up.ps1` / `.sh` |
 
 Helm **не** runtime: он рендерит манифесты и отдаёт их API-серверу. Дальше контроллеры Kubernetes сами гоняют Pod'ы.
 
@@ -174,7 +174,7 @@ flowchart LR
 |-----|----------|--------|
 | 1 | Меняешь код / chart / values | backend, frontend, `templates/*.yaml`, overlay |
 | 2 | Собираешь образы | `kp-api:dev`, `kp-frontend:dev` (`pullPolicy: Never` на Desktop) |
-| 3 | Ставишь/обновляешь release | `.\scripts\k8s-up.ps1` или `helm upgrade --install kp ...` |
+| 3 | Ставишь/обновляешь release | `.\scripts\k8s\k8s-up.ps1` или `helm upgrade --install kp ...` |
 | 4 | Helm применяет diff | новые/изменённые Deployment, Service, Ingress, Secret |
 | 5 | Deployment-контроллер катит Pod'ы | rolling update через ReplicaSet; старый Pod → новый |
 | 6 | Проверка | `kubectl -n kp get pods`, `curl http://kp.local:8088/api/health` |
@@ -183,7 +183,7 @@ flowchart LR
 
 ```powershell
 # полный цикл (образы + ingress-nginx + helm)
-.\scripts\k8s-up.ps1
+.\scripts\k8s\k8s-up.ps1
 
 # только перевыкат chart (образы уже собраны)
 helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace `
@@ -192,7 +192,7 @@ helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace
 
 # после смены только LLM overlay
 $env:KP_LLM = "compose-ollama"
-.\scripts\k8s-up.ps1
+.\scripts\k8s\k8s-up.ps1
 # или точечно:
 kubectl -n kp rollout restart deploy/api
 ```
@@ -215,7 +215,7 @@ helm rollback kp N-1    →  откат манифестов (образы до�
 helm uninstall kp       →  удалить ресурсы release (у нас обёртка: k8s-down)
 ```
 
-Снос стенда: `.\scripts\k8s-down.ps1` (ingress-nginx на Desktop обычно оставляют shared).
+Снос стенда: `.\scripts\k8s\k8s-down.ps1` (ingress-nginx на Desktop обычно оставляют shared).
 
 ### Связь с Compose (hybrid)
 

@@ -79,8 +79,8 @@ kubectl -n kp rollout status deploy/api --timeout=120s
 
 | ОС | Команда |
 |----|---------|
-| Windows | `make demo` или `.\scripts\hybrid-up.ps1` |
-| macOS | `make demo` или `bash scripts/hybrid-up.sh` |
+| Windows | `make demo` или `.\scripts\hybrid\hybrid-up.ps1` |
+| macOS | `make demo` или `bash scripts/hybrid/hybrid-up.sh` |
 
 In-cluster Ollama убран из Helm — только Compose.
 
@@ -235,8 +235,6 @@ kubectl -n kp port-forward svc/api 8080:8080
 kubectl -n kp port-forward svc/frontend 5173:80
 ```
 
-Legacy kind: Windows `.\scripts\k8s-expose.ps1` · macOS `bash scripts/k8s-expose.sh` → http://kp.local:8088
-
 ---
 
 ## Helm
@@ -252,7 +250,7 @@ helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace
   -f infra/helm/knowledge-platform/values-desktop.yaml `
   --wait --timeout 5m
 
-.\scripts\k8s-down.ps1
+.\scripts\k8s\k8s-down.ps1
 ```
 
 **macOS**
@@ -266,7 +264,7 @@ helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace
   -f infra/helm/knowledge-platform/values-desktop.yaml \
   --wait --timeout 5m
 
-bash scripts/k8s-down.sh
+bash scripts/k8s/k8s-down.sh
 ```
 
 ---
@@ -283,7 +281,7 @@ docker compose -f infra/docker-compose.yml --profile obs --profile llm ps
 docker compose -f infra/docker-compose.yml logs ollama --tail=50
 ```
 
-Pull модели: Windows `.\scripts\ollama-pull.ps1 -Model qwen2.5:0.5b` · macOS `bash scripts/ollama-pull.sh qwen2.5:0.5b`
+Pull модели: Windows `.\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b` · macOS `bash scripts/ollama/ollama-pull.sh qwen2.5:0.5b`
 
 ---
 

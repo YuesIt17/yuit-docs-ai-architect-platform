@@ -2,9 +2,9 @@
 
 | Режим | Когда | Windows (PowerShell) | macOS (bash/zsh) |
 |-------|-------|----------------------|------------------|
-| **Hybrid (рекомендуется)** | Desktop / защита — **без дублей** | `.\scripts\hybrid-up.ps1` | `bash scripts/hybrid-up.sh` |
-| **Только K8s** | MOCK, без Ollama/obs | `.\scripts\k8s-up.ps1` | `bash scripts/k8s-up.sh` |
-| **DevSecOps lab** | Trivy / Semgrep / kubectl | `.\scripts\sec-scan.ps1` | `bash scripts/sec-scan.sh` |
+| **Hybrid (рекомендуется)** | Desktop / защита — **без дублей** | `.\scripts\hybrid\hybrid-up.ps1` | `bash scripts/hybrid/hybrid-up.sh` |
+| **Только K8s** | MOCK, без Ollama/obs | `.\scripts\k8s\k8s-up.ps1` | `bash scripts/k8s/k8s-up.sh` |
+| **DevSecOps lab** | Trivy / Semgrep / kubectl | `.\scripts\sec\sec-scan.ps1` | `bash scripts/sec/sec-scan.sh` |
 
 > **`make`** (если установлен): на Windows вызывает `.ps1`, на macOS — `.sh`.  
 > Примеры: `make demo`, `make sec-scan`, `make obs`, `make down`.
@@ -51,7 +51,7 @@ sudo sh -c 'grep -q "kp.local" /etc/hosts || echo "127.0.0.1 kp.local" >> /etc/h
 
 ```powershell
 cd yuit-docs-ai-architect-platform
-.\scripts\hybrid-up.ps1
+.\scripts\hybrid\hybrid-up.ps1
 # = side-stack (ollama + obs) + k8s-up с KP_LLM=compose-ollama
 ```
 
@@ -59,7 +59,7 @@ cd yuit-docs-ai-architect-platform
 
 ```bash
 cd yuit-docs-ai-architect-platform
-bash scripts/hybrid-up.sh
+bash scripts/hybrid/hybrid-up.sh
 # или: make demo
 ```
 
@@ -81,14 +81,14 @@ Side-stack отдельно:
 
 ```powershell
 docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d
-.\scripts\ollama-pull.ps1 -Model qwen2.5:0.5b
+.\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b
 ```
 
 **macOS**
 
 ```bash
 docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d
-bash scripts/ollama-pull.sh qwen2.5:0.5b
+bash scripts/ollama/ollama-pull.sh qwen2.5:0.5b
 ```
 
 LLM в UI: Provider `OLLAMA`, Base URL `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b`.
@@ -98,14 +98,14 @@ LLM в UI: Provider `OLLAMA`, Base URL `http://host.docker.internal:11434/v1`, m
 **Windows**
 
 ```powershell
-.\scripts\k8s-down.ps1
+.\scripts\k8s\k8s-down.ps1
 docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
 ```
 
 **macOS**
 
 ```bash
-bash scripts/k8s-down.sh
+bash scripts/k8s/k8s-down.sh
 docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
 # или: make k8s-down && make down
 ```
@@ -118,8 +118,8 @@ docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
 
 | ОС | Команда |
 |----|---------|
-| Windows | `.\scripts\sec-scan.ps1` или `make sec-scan` |
-| macOS | `bash scripts/sec-scan.sh` или `make sec-scan` |
+| Windows | `.\scripts\sec\sec-scan.ps1` или `make sec-scan` |
+| macOS | `bash scripts/sec/sec-scan.sh` или `make sec-scan` |
 
 Подробно: [infra/sec-ops.md](infra/sec-ops.md). Отчёты: `tmp/sec-ops/`.
 

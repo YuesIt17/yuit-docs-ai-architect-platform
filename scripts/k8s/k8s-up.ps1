@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
+$Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $Root
 
 # Docker Desktop Kubernetes (default) or kind (legacy):
@@ -92,9 +92,6 @@ Docker Desktop:
   API http://kp.local:8088/api/health
   Or: curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
 
-kind (legacy):
-  .\scripts\k8s-expose.ps1   -> http://kp.local:8088
-
-Hybrid LLM: make llm-ollama; then `$env:KP_LLM='compose-ollama'; .\scripts\k8s-up.ps1
+Hybrid LLM: make llm-ollama; then `$env:KP_LLM='compose-ollama'; .\scripts\k8s\k8s-up.ps1
 Observability: make obs  (Prometheus / Grafana / Jaeger — Compose only)
 "@

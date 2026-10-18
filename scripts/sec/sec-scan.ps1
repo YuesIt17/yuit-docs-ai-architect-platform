@@ -3,7 +3,7 @@
 # Docs: docs/infra/sec-ops.md
 
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
+$Root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $Root
 
 $Compose = "infra/docker-compose.sec-ops.yml"
@@ -78,7 +78,7 @@ if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
 Write-Host "==> Parse Trivy CRITICAL/HIGH"
 $trivyFiles = Get-ChildItem -Path $OutDir -Filter "trivy-*.json" -ErrorAction SilentlyContinue
 if ($trivyFiles) {
-  python (Join-Path $Root "scripts\sec-parse-trivy.py") @($trivyFiles.FullName)
+  python (Join-Path $Root "scripts\sec\sec-parse-trivy.py") @($trivyFiles.FullName)
 } else {
   Write-Host "WARN: no trivy JSON reports" -ForegroundColor Yellow
 }
@@ -168,7 +168,7 @@ if ($Deep -eq "1" -or $Deep -eq "true" -or $Deep -eq "yes") {
 
 Write-Host "==> Summary"
 try {
-  python (Join-Path $Root "scripts\sec-parse-summary.py") $OutDir
+  python (Join-Path $Root "scripts\sec\sec-parse-summary.py") $OutDir
 } catch {
   Write-Host "WARN: sec-parse-summary.py failed" -ForegroundColor Yellow
 }
