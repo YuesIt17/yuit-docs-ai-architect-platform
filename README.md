@@ -2,13 +2,30 @@
 
 **Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)**
 
-> **Сокращения:** [Глоссарий](docs/Glossary.md) · **Артефакты:** [docs/](docs/) · [diagrams/](diagrams/) · **Infra:** [docs/infra/](docs/infra/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md) · **DevSecOps lab:** [docs/infra/sec-ops.md](docs/infra/sec-ops.md)
+> **Сокращения:** [Глоссарий](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Ops:** [docs/](docs/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md) · **DevSecOps:** [docs/infra/sec-ops.md](docs/infra/sec-ops.md)
 
 ## Цель
 
 Спроектировать и реализовать **MVP производственного конвейера (End-to-End Pipeline)** для извлечения знаний из неструктурированных данных (сканы этикеток, PDF, политики) в **закрытом контуре** (On-premise / Air-gapped), без внешних API OpenAI/Anthropic.
 
 Роль: **Platform Engineer & AI Architect**. Снижение «галлюцинаций» и потери контекста через **GraphRAG** (нейро-символический подход) и **Security-by-Design** (разграничение прав на уровне чанков / узлов графа). Кейс демонстрирует готовность к внедрению AI в enterprise-ритейле РФ (паттерны применимы к банковскому / промышленному контуру).
+
+## Структура репозитория
+
+| Путь | Что внутри |
+| ---- | ---------- |
+| [`app/`](app/) | Runnable-платформа: `backend/`, `frontend/`, `infra/` (Compose/Helm), `datasets/`, `scripts/`, `evals/` |
+| [`architecture/`](architecture/) | ADD: C4 / flows / ER / sequences, ADR, [`diagrams/`](architecture/diagrams/) (drawio+png) |
+| [`docs/`](docs/) | Онбординг и ops: SETUP, SRE, [`infra/`](docs/infra/) (how-to + DevSec), demo, glossary, model-card |
+| [`data/`](data/) | Локальный runtime/state (object-store и т.п.), не исходники |
+| Корень | `Makefile`, `.env.example` — точки входа |
+
+**Куда идти**
+
+- Защита / ADD → [`architecture/`](architecture/)
+- Запуск стенда → [`docs/SETUP.md`](docs/SETUP.md)
+- Инфра / сканеры → [`docs/infra/`](docs/infra/)
+- Код и оркестрация → [`app/`](app/)
 
 ## Контекст и преемственность
 
@@ -39,11 +56,11 @@
 
 | Шаг | Артефакт |
 | --- | -------- |
-| 1. Architecture & Design (C4 L1–L3, Deployment, Sequence, ER, Data Flow) | [docs/architecture/](docs/architecture/) · [diagrams/](diagrams/) |
-| 1b. Infra topology (Compose / K8s) | [docs/infra/](docs/infra/) · [compose-topology](diagrams/compose-topology.png) · [k8s-topology](diagrams/k8s-topology.png) |
-| 2. ADR со trade-off (LLM, Vector, Graph, Orchestration, Security, Obs, …) | [docs/adr/](docs/adr/) |
-| 3. MVP: GraphRAG + LangGraph + Guardrails + multimodal labels | [backend/](backend/) · [frontend/](frontend/) |
-| 4. Infra: Compose + Helm (Data Plane + Control Plane) | [infra/](infra/) |
+| 1. Architecture & Design (C4 L1–L3, Deployment, Sequence, ER, Data Flow) | [architecture/](architecture/) · [diagrams/](architecture/diagrams/) |
+| 1b. Infra topology (Compose / K8s) | [docs/infra/](docs/infra/) · [compose-topology](architecture/diagrams/compose-topology.png) · [k8s-topology](architecture/diagrams/k8s-topology.png) |
+| 2. ADR со trade-off (LLM, Vector, Graph, Orchestration, Security, Obs, …) | [architecture/adr/](architecture/adr/) |
+| 3. MVP: GraphRAG + LangGraph + Guardrails + multimodal labels | [app/backend/](app/backend/) · [app/frontend/](app/frontend/) |
+| 4. Infra: Compose + Helm (Data Plane + Control Plane) | [app/infra/](app/infra/) |
 | 5. Демо-скрипт 5–7 мин | [docs/demo-script.md](docs/demo-script.md) |
 | 6. Нагрузочный отчёт | [docs/load-report.md](docs/load-report.md) |
 
@@ -51,9 +68,9 @@
 
 | Артефакт | Путь |
 | -------- | ---- |
-| Monorepo `/infra` + `/backend` + `/docs` (+ frontend) | корень репозитория |
-| Архитектурная документация (ADD) | [docs/](docs/) |
-| Диаграммы Draw.io + PNG | [diagrams/](diagrams/) |
+| Monorepo `app/` + `architecture/` + `docs/` | корень репозитория |
+| Архитектурная документация (ADD) | [architecture/](architecture/) |
+| Диаграммы Draw.io + PNG | [architecture/diagrams/](architecture/diagrams/) |
 | Видео-демо (Deep Dive) | запись по [demo-script](docs/demo-script.md) (вручную) |
 | Нагрузочный отчёт | [docs/load-report.md](docs/load-report.md) |
 
@@ -63,15 +80,15 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 
 | Критерий | Как закрыто |
 | -------- | ----------- |
-| Нет облачных API (OpenAI/Anthropic) | [ADR-001](docs/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama |
-| Есть Deployment и Data Flow | [deployment](docs/architecture/deployment.md) · [data-flow](docs/architecture/data-flow.md) · [docs/infra/](docs/infra/) · [diagrams/](diagrams/) |
-| GraphRAG (не только векторный поиск) | [ADR-003](docs/adr/ADR-003-graph-db.md) · `backend/app/services/knowledge_store.py` · `backend/app/agent/graph.py` |
-| ACL: User B не видит секретный документ | [ADR-005](docs/adr/ADR-005-security.md) · demo: manager vs compliance |
-| Control Plane / Data Plane | [c4-container](docs/architecture/c4-container.md) |
-| LangGraph (state machine), не линейный скрипт | [ADR-004](docs/adr/ADR-004-orchestration.md) · `backend/app/agent/graph.py` |
-| Observability | [ADR-006](docs/adr/ADR-006-observability.md) · Jaeger / Prometheus / Grafana |
+| Нет облачных API (OpenAI/Anthropic) | [ADR-001](architecture/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama |
+| Есть Deployment и Data Flow | [deployment](architecture/deployment.md) · [data-flow](architecture/data-flow.md) · [docs/infra/](docs/infra/) · [diagrams/](architecture/diagrams/) |
+| GraphRAG (не только векторный поиск) | [ADR-003](architecture/adr/ADR-003-graph-db.md) · `app/backend/app/services/knowledge_store.py` · `app/backend/app/agent/graph.py` |
+| ACL: User B не видит секретный документ | [ADR-005](architecture/adr/ADR-005-security.md) · demo: manager vs compliance |
+| Control Plane / Data Plane | [c4-container](architecture/c4-container.md) |
+| LangGraph (state machine), не линейный скрипт | [ADR-004](architecture/adr/ADR-004-orchestration.md) · `app/backend/app/agent/graph.py` |
+| Observability | [ADR-006](architecture/adr/ADR-006-observability.md) · Jaeger / Prometheus / Grafana |
 | Желательно: streaming | SSE в chat API (см. sequence) |
-| Желательно: тесты | `cd backend; pytest -q` |
+| Желательно: тесты | `cd app/backend; pytest -q` |
 
 Статус «Принято», если критичные критерии выполнены с evidence выше.
 
@@ -82,13 +99,13 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 **Windows**
 
 ```powershell
-.\scripts\hybrid\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
+.\app\scripts\hybrid\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
 ```
 
 **macOS**
 
 ```bash
-bash scripts/hybrid/hybrid-up.sh   # или: make demo
+bash app/scripts/hybrid/hybrid-up.sh   # или: make demo
 ```
 
 | Сервис | Где | URL / порт |
@@ -101,7 +118,7 @@ bash scripts/hybrid/hybrid-up.sh   # или: make demo
 Демо-токены (Role switcher): `guest` | `associate` | `manager` | `compliance`
 
 ```bash
-cd backend && pytest -q
+cd app/backend && pytest -q
 ```
 
 ## Автор

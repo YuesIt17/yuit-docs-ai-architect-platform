@@ -24,7 +24,7 @@ RBAC на retrieval; input injection guard; output ACL; редакция PII в 
 
 ## Evaluation
 
-Gold set в `/evals`; Faithfulness-style checks (пороги hw-6) — planned / stub LLM-as-Judge.
+Faithfulness-style checks / LLM-as-Judge (пороги hw-6) — out of scope для MVP.
 
 ## Cost / FinOps
 

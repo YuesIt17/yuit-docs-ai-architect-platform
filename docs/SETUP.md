@@ -1,13 +1,27 @@
-# Настройка и запуск инфраструктуры
+﻿# Настройка и запуск инфраструктуры
 
 | Режим | Когда | Windows (PowerShell) | macOS (bash/zsh) |
 |-------|-------|----------------------|------------------|
-| **Hybrid (рекомендуется)** | Desktop / защита — **без дублей** | `.\scripts\hybrid\hybrid-up.ps1` | `bash scripts/hybrid/hybrid-up.sh` |
-| **Только K8s** | MOCK, без Ollama/obs | `.\scripts\k8s\k8s-up.ps1` | `bash scripts/k8s/k8s-up.sh` |
-| **DevSecOps lab** | Trivy / Semgrep / kubectl | `.\scripts\sec\sec-scan.ps1` | `bash scripts/sec/sec-scan.sh` |
+| **Hybrid (рекомендуется)** | Desktop / защита — **без дублей** | `.\app\scripts\hybrid\hybrid-up.ps1` | `bash app/scripts/hybrid/hybrid-up.sh` |
+| **Только K8s** | MOCK, без Ollama/obs | `.\app\scripts\k8s\k8s-up.ps1` | `bash app/scripts/k8s/k8s-up.sh` |
+| **DevSecOps lab** | Trivy / Semgrep / kubectl | `.\app\scripts\sec\sec-scan.ps1` | `bash app/scripts/sec/sec-scan.sh` |
 
-> **`make`** (если установлен): на Windows вызывает `.ps1`, на macOS — `.sh`.  
-> Примеры: `make demo`, `make sec-scan`, `make obs`, `make down`.
+> **`make`** (если установлен): на Windows вызывает `.ps1`, на macOS/Linux — `.sh`.
+
+| Команда | Что делает |
+|---------|------------|
+| `make demo` | Hybrid: side-stack (Ollama + obs) + `k8s-up` |
+| `make k8s-up` / `make k8s-down` | Только Kubernetes (поднять / снести) |
+| `make side` | Compose side-stack: Ollama + observability |
+| `make llm-ollama` | Ollama + pull `qwen2.5:0.5b` |
+| `make obs` | Prometheus / Grafana / Jaeger |
+| `make up` | То же, что `make side` |
+| `make down` | Снести Compose (`obs` + `llm`, с volumes) |
+| `make sec-scan` | DevSecOps lab (Trivy / Semgrep / kubectl); alias: `sec-ops` |
+| `make api` / `make frontend` | Локальный API (`:8080`) / UI (`npm run dev`) |
+| `make seed` | Заполнить stores (`pipelines.seed_all`) |
+| `make test` | Pytest backend |
+| `make load-smoke` | Лёгкий нагрузочный smoke |
 
 **Hybrid zero-overlap:** K8s = api/frontend/stores/**minio**; Compose = **ollama** + prometheus/grafana/jaeger.
 
@@ -51,7 +65,7 @@ sudo sh -c 'grep -q "kp.local" /etc/hosts || echo "127.0.0.1 kp.local" >> /etc/h
 
 ```powershell
 cd yuit-docs-ai-architect-platform
-.\scripts\hybrid\hybrid-up.ps1
+.\app\scripts\hybrid\hybrid-up.ps1
 # = side-stack (ollama + obs) + k8s-up с KP_LLM=compose-ollama
 ```
 
@@ -59,7 +73,7 @@ cd yuit-docs-ai-architect-platform
 
 ```bash
 cd yuit-docs-ai-architect-platform
-bash scripts/hybrid/hybrid-up.sh
+bash app/scripts/hybrid/hybrid-up.sh
 # или: make demo
 ```
 
@@ -80,15 +94,15 @@ Side-stack отдельно:
 **Windows**
 
 ```powershell
-docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d
-.\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b
+docker compose -f app/infra/docker-compose.yml --profile llm --profile obs up -d
+.\app\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b
 ```
 
 **macOS**
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d
-bash scripts/ollama/ollama-pull.sh qwen2.5:0.5b
+docker compose -f app/infra/docker-compose.yml --profile llm --profile obs up -d
+bash app/scripts/ollama/ollama-pull.sh qwen2.5:0.5b
 ```
 
 LLM в UI: Provider `OLLAMA`, Base URL `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b`.
@@ -98,15 +112,15 @@ LLM в UI: Provider `OLLAMA`, Base URL `http://host.docker.internal:11434/v1`, m
 **Windows**
 
 ```powershell
-.\scripts\k8s\k8s-down.ps1
-docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
+.\app\scripts\k8s\k8s-down.ps1
+docker compose -f app/infra/docker-compose.yml --profile obs --profile llm down -v
 ```
 
 **macOS**
 
 ```bash
-bash scripts/k8s/k8s-down.sh
-docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
+bash app/scripts/k8s/k8s-down.sh
+docker compose -f app/infra/docker-compose.yml --profile obs --profile llm down -v
 # или: make k8s-down && make down
 ```
 
@@ -118,8 +132,8 @@ docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
 
 | ОС | Команда |
 |----|---------|
-| Windows | `.\scripts\sec\sec-scan.ps1` или `make sec-scan` |
-| macOS | `bash scripts/sec/sec-scan.sh` или `make sec-scan` |
+| Windows | `.\app\scripts\sec\sec-scan.ps1` или `make sec-scan` |
+| macOS | `bash app/scripts/sec/sec-scan.sh` или `make sec-scan` |
 
 Подробно: [infra/sec-ops.md](infra/sec-ops.md). Отчёты: `tmp/sec-ops/`.
 
@@ -132,7 +146,7 @@ Stores на хосте не нужны: ниже `STORE_BACKEND=memory`.
 **Windows**
 
 ```powershell
-cd backend
+cd app/backend
 .\.venv\Scripts\Activate.ps1
 $env:LLM_PROVIDER = "MOCK"
 $env:STORE_BACKEND = "memory"
@@ -140,7 +154,7 @@ uvicorn app.main:app --reload --port 8080
 ```
 
 ```powershell
-cd frontend
+cd app/frontend
 npm install
 npm run dev
 ```
@@ -148,7 +162,7 @@ npm run dev
 **macOS**
 
 ```bash
-cd backend
+cd app/backend
 source .venv/bin/activate
 export LLM_PROVIDER=MOCK
 export STORE_BACKEND=memory
@@ -156,7 +170,7 @@ uvicorn app.main:app --reload --port 8080
 ```
 
 ```bash
-cd frontend
+cd app/frontend
 npm install
 npm run dev
 ```
@@ -196,7 +210,7 @@ manager не видит secret promo (`42%`); compliance видит.
 | Ingress `:8088` 404 IIS (Windows) | Hosts `kp.local`, LB на 8088 |
 | `ollama pull` TLS timeout | `ollama-pull.ps1` / `ollama-pull.sh` |
 | MinIO 9000 на хосте пусто | MinIO в K8s → Console NodePort `:30901` |
-| Grafana пустой | Dashboards: Knowledge Platform → **KP Overview**; `docker compose -f infra/docker-compose.yml --profile obs up -d` |
+| Grafana пустой | Dashboards: Knowledge Platform → **KP Overview**; `docker compose -f app/infra/docker-compose.yml --profile obs up -d` |
 | Jaeger пустой | Нужен chat traffic; OTel `host.docker.internal:4318`; rebuild `kp-api:dev` |
 | Prometheus target DOWN | Scrape `host.docker.internal:30080/metrics` |
 

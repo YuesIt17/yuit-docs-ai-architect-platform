@@ -1,8 +1,8 @@
-# Инфраструктура Knowledge Platform
+﻿# Инфраструктура Knowledge Platform
 
 | Путь | Когда | Документ | Схема |
 |------|-------|----------|-------|
-| **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology.png](../../diagrams/k8s-topology.png) |
+| **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology.png](../../architecture/diagrams/k8s-topology.png) |
 | **K8s + Helm primer** | Сущности кластера, схема связей, поставка фич | [k8s-primer.md](k8s-primer.md) | mermaid в документе |
 | **DevSecOps lab** | Аудит `kp` (Trivy / Semgrep / Nmap / ZAP / Nuclei / Checkov / kube-bench) | [sec-ops.md](sec-ops.md) | — |
 
@@ -19,10 +19,10 @@
 **Windows**
 
 ```powershell
-.\scripts\hybrid\hybrid-up.ps1
+.\app\scripts\hybrid\hybrid-up.ps1
 # или: make demo
 
-.\scripts\sec\sec-scan.ps1
+.\app\scripts\sec\sec-scan.ps1
 # или: make sec-scan  → tmp/sec-ops/
 # глубокий (+ ZAP): $env:SEC_SCAN_DEEP = "1"; make sec-scan
 ```
@@ -30,10 +30,10 @@
 **macOS**
 
 ```bash
-bash scripts/hybrid/hybrid-up.sh
+bash app/scripts/hybrid/hybrid-up.sh
 # или: make demo
 
-bash scripts/sec/sec-scan.sh
+bash app/scripts/sec/sec-scan.sh
 # или: make sec-scan  → tmp/sec-ops/
 # глубокий (+ ZAP): SEC_SCAN_DEEP=1 make sec-scan
 ```
@@ -46,6 +46,6 @@ bash scripts/sec/sec-scan.sh
 | curl / kubectl / Helm | [SRE.md](../SRE.md) |
 | Сущности K8s / Helm / поставка | [k8s-primer.md](k8s-primer.md) |
 | DevSecOps / Security Engineer lab | [sec-ops.md](sec-ops.md) |
-| Chart / compose | [`infra/`](../../infra/) |
+| Chart / compose | [`app/infra/`](../../app/infra/) |
 
-Логические DMZ / Control / Data / GPU: [architecture/deployment.md](../architecture/deployment.md).
+Логические DMZ / Control / Data / GPU: [architecture/deployment.md](../../architecture/deployment.md).

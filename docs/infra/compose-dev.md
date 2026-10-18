@@ -1,8 +1,8 @@
-# Compose — hybrid side-stack
+﻿# Compose — hybrid side-stack
 
-**Схема:** [compose-topology.png](../../diagrams/compose-topology.png) · [compose-topology.drawio](../../diagrams/compose-topology.drawio)
+**Схема:** [compose-topology.png](../../architecture/diagrams/compose-topology.png) · [compose-topology.drawio](../../architecture/diagrams/compose-topology.drawio)
 
-Источник: [`infra/docker-compose.yml`](../../infra/docker-compose.yml), [`Makefile`](../../Makefile).  
+Источник: [`app/infra/docker-compose.yml`](../../app/infra/docker-compose.yml), [`Makefile`](../../Makefile).  
 Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).
 
 Project: `retailpartnerx-kp`.
@@ -22,13 +22,13 @@ Project: `retailpartnerx-kp`.
 | `obs` | jaeger, prometheus, grafana |
 | `llm` | ollama |
 
-Сканеры безопасности (отдельный файл, ephemeral): [sec-ops.md](sec-ops.md) · `make sec-scan` · [`docker-compose.sec-ops.yml`](../../infra/docker-compose.sec-ops.yml).
+Сканеры безопасности (отдельный файл, ephemeral): [sec-ops.md](sec-ops.md) · `make sec-scan` · [`docker-compose.sec-ops.yml`](../../app/infra/docker-compose.sec-ops.yml).
 
 | Target | Windows | macOS |
 |--------|---------|-------|
-| Hybrid up | `.\scripts\hybrid\hybrid-up.ps1` | `bash scripts/hybrid/hybrid-up.sh` |
-| `llm` + `obs` | `docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d` | то же |
-| Sec scanners | `.\scripts\sec\sec-scan.ps1` | `bash scripts/sec/sec-scan.sh` |
+| Hybrid up | `.\app\scripts\hybrid\hybrid-up.ps1` | `bash app/scripts/hybrid/hybrid-up.sh` |
+| `llm` + `obs` | `docker compose -f app/infra/docker-compose.yml --profile llm --profile obs up -d` | то же |
+| Sec scanners | `.\app\scripts\sec\sec-scan.ps1` | `bash app/scripts/sec/sec-scan.sh` |
 
 ## Порты (Compose)
 
@@ -41,21 +41,21 @@ Project: `retailpartnerx-kp`.
 
 Prometheus scrape (hybrid): `host.docker.internal:30080/metrics` (API NodePort).
 
-Grafana provisioning: `infra/grafana/provisioning/` → datasource Prometheus + dashboard **KP Overview** (folder Knowledge Platform).
+Grafana provisioning: `app/infra/grafana/provisioning/` → datasource Prometheus + dashboard **KP Overview** (folder Knowledge Platform).
 
 ## Hybrid flow
 
 **Windows**
 
 ```powershell
-.\scripts\hybrid\hybrid-up.ps1
+.\app\scripts\hybrid\hybrid-up.ps1
 # или: make demo
 ```
 
 **macOS**
 
 ```bash
-bash scripts/hybrid/hybrid-up.sh
+bash app/scripts/hybrid/hybrid-up.sh
 # или: make demo
 ```
 

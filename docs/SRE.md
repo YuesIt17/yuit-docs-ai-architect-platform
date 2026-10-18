@@ -1,4 +1,4 @@
-# SRE / ops runbook (curl, kubectl, Helm, Compose)
+﻿# SRE / ops runbook (curl, kubectl, Helm, Compose)
 
 Шпаргалка для эксплуатации **RetailPartnerX Knowledge Platform** (Docker Desktop + Helm).  
 Подробный setup (Win + Mac): [SETUP.md](SETUP.md). Инфра: [infra/](infra/). Аудит: [infra/sec-ops.md](infra/sec-ops.md) (`make sec-scan`).
@@ -55,9 +55,9 @@ curl http://127.0.0.1:11434/v1/models
 
 ```powershell
 cd yuit-docs-ai-architect-platform
-helm upgrade kp infra/helm/knowledge-platform -n kp `
-  -f infra/helm/knowledge-platform/values-desktop.yaml `
-  -f infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml `
+helm upgrade kp app/infra/helm/knowledge-platform -n kp `
+  -f app/infra/helm/knowledge-platform/values-desktop.yaml `
+  -f app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml `
   --wait --timeout 5m
 kubectl -n kp rollout restart deploy/api
 kubectl -n kp rollout status deploy/api --timeout=120s
@@ -67,9 +67,9 @@ kubectl -n kp rollout status deploy/api --timeout=120s
 
 ```bash
 cd yuit-docs-ai-architect-platform
-helm upgrade kp infra/helm/knowledge-platform -n kp \
-  -f infra/helm/knowledge-platform/values-desktop.yaml \
-  -f infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml \
+helm upgrade kp app/infra/helm/knowledge-platform -n kp \
+  -f app/infra/helm/knowledge-platform/values-desktop.yaml \
+  -f app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml \
   --wait --timeout 5m
 kubectl -n kp rollout restart deploy/api
 kubectl -n kp rollout status deploy/api --timeout=120s
@@ -79,8 +79,8 @@ kubectl -n kp rollout status deploy/api --timeout=120s
 
 | ОС | Команда |
 |----|---------|
-| Windows | `make demo` или `.\scripts\hybrid\hybrid-up.ps1` |
-| macOS | `make demo` или `bash scripts/hybrid/hybrid-up.sh` |
+| Windows | `make demo` или `.\app\scripts\hybrid\hybrid-up.ps1` |
+| macOS | `make demo` или `bash app/scripts/hybrid/hybrid-up.sh` |
 
 In-cluster Ollama убран из Helm — только Compose.
 
@@ -246,11 +246,11 @@ helm -n kp list
 helm -n kp status kp
 helm -n kp get values kp
 
-helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace `
-  -f infra/helm/knowledge-platform/values-desktop.yaml `
+helm upgrade --install kp app/infra/helm/knowledge-platform -n kp --create-namespace `
+  -f app/infra/helm/knowledge-platform/values-desktop.yaml `
   --wait --timeout 5m
 
-.\scripts\k8s\k8s-down.ps1
+.\app\scripts\k8s\k8s-down.ps1
 ```
 
 **macOS**
@@ -260,11 +260,11 @@ helm -n kp list
 helm -n kp status kp
 helm -n kp get values kp
 
-helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace \
-  -f infra/helm/knowledge-platform/values-desktop.yaml \
+helm upgrade --install kp app/infra/helm/knowledge-platform -n kp --create-namespace \
+  -f app/infra/helm/knowledge-platform/values-desktop.yaml \
   --wait --timeout 5m
 
-bash scripts/k8s/k8s-down.sh
+bash app/scripts/k8s/k8s-down.sh
 ```
 
 ---
@@ -277,11 +277,11 @@ make side              # ollama + obs only
 make down
 make sec-scan          # DevSecOps lab → tmp/sec-ops/
 
-docker compose -f infra/docker-compose.yml --profile obs --profile llm ps
-docker compose -f infra/docker-compose.yml logs ollama --tail=50
+docker compose -f app/infra/docker-compose.yml --profile obs --profile llm ps
+docker compose -f app/infra/docker-compose.yml logs ollama --tail=50
 ```
 
-Pull модели: Windows `.\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b` · macOS `bash scripts/ollama/ollama-pull.sh qwen2.5:0.5b`
+Pull модели: Windows `.\app\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b` · macOS `bash app/scripts/ollama/ollama-pull.sh qwen2.5:0.5b`
 
 ---
 

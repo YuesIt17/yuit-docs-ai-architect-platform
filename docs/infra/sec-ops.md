@@ -1,4 +1,4 @@
-# DevSecOps / Security Engineer lab
+﻿# DevSecOps / Security Engineer lab
 
 Короткий путь: **база → сканеры → аудит своего `kp` → отчёт (breaking) → fix (building)**.  
 Цель — потренировать обязанности Security Engineer на **этой** платформе: внутренний контур, Web/API, K8s, оркестрация сканеров, Vulnerability Management и handoff в SOC — без атак на чужие системы.
@@ -10,9 +10,9 @@
 | Авторизованный аудит **своего** локального кластера / `kp.local` | Гайды по взлому чужих систем |
 | Сканеры + `kubectl` + шаблоны отчётов / IoC | Пошаговый Metasploit / готовые exploit PoC |
 | Breaking **и** building (misconfig → impact → Helm/fix) | Только «нашли CVE и ушли» |
-| Кластерная и supply-chain безопасность | App ACL / guardrails ([ADR-005](../adr/ADR-005-security.md)) |
+| Кластерная и supply-chain безопасность | App ACL / guardrails ([ADR-005](../../architecture/adr/ADR-005-security.md)) |
 
-Инфра: [compose-dev.md](compose-dev.md) · [k8s-architecture.md](k8s-architecture.md) · Compose сканеров: [`infra/docker-compose.sec-ops.yml`](../../infra/docker-compose.sec-ops.yml).
+Инфра: [compose-dev.md](compose-dev.md) · [k8s-architecture.md](k8s-architecture.md) · Compose сканеров: [`app/infra/docker-compose.sec-ops.yml`](../../app/infra/docker-compose.sec-ops.yml).
 
 **ОС:** блоки **Windows (PowerShell)** и **macOS (zsh/bash)**. `make` работает на обеих, если установлен GNU Make.
 
@@ -31,7 +31,7 @@
 | Vulnerability Management как сервис | Жизненный цикл на `tmp/sec-ops/` | Jira/ServiceNow + SLA компании |
 | Handoff SOC / Blue Team (IoC) | Шаблон IoC ниже | Реальный SIEM / ticketing |
 | Kali / Parrot, Burp, Metasploit, Nmap | Nmap (+ ZAP) в compose; остальное — внешний toolchain | Установка Kali/Burp/msf на host |
-| Python / Bash автоматизация | Скрипты `scripts/sec/sec-scan.*`, parse helpers | Расширение оркестрации под corp scanners |
+| Python / Bash автоматизация | Скрипты `app/scripts/sec/sec-scan.*`, parse helpers | Расширение оркестрации под corp scanners |
 | Архитектура K8s (etcd, apiserver, CNI) | База ниже + аудит namespace | Deep dive control-plane на bare-metal/cloud |
 | Breaking ↔ building | Таблица findings + направление Helm fix | PR с заказчиком платформы |
 | Клиентоориентированность | Шаблон отчёта для внутренних заказчиков | Стейкхолдер-митинги |
@@ -115,7 +115,7 @@
 | Поиск в YAML | `Select-String` | `grep -E` |
 | Сканеры | `docker compose run --rm` | то же |
 | Отчёты | `tmp\sec-ops\` | `tmp/sec-ops/` |
-| Парсинг JSON | `python scripts/sec/sec-parse-trivy.py` · `sec-parse-summary.py` | то же |
+| Парсинг JSON | `python app/scripts/sec/sec-parse-trivy.py` · `sec-parse-summary.py` | то же |
 
 ### Toolchain matrix (что делает каждый инструмент)
 
@@ -124,7 +124,7 @@
 | Инструмент | Что делает | Зачем в lab / на работе | В lab |
 |------------|------------|-------------------------|-------|
 | **Trivy** | CVE в Docker-образах + базовые misconfig в YAML/Helm | «Что опасного в `kp-api:dev` и chart?» | compose |
-| **Semgrep** | Статический анализ кода (правила SAST) | Найти типичные баги безопасности в `backend/` без запуска | compose |
+| **Semgrep** | Статический анализ кода (правила SAST) | Найти типичные баги безопасности в `app/backend/` без запуска | compose |
 | **Checkov** | Policy-as-code по IaC (Helm/K8s) | «Chart нарушает best practices?» (дополняет Trivy config) | compose |
 | **Nmap** | Скан портов и версий сервисов | Что слушает host: Ingress 8088 и лишнее снаружи | compose → `host.docker.internal` |
 | **Nuclei** | Шаблоны известных web/API уязвимостей | Быстрый авточек HTTP `kp.local` на известные паттерны | compose |
@@ -162,8 +162,8 @@
 
 ```powershell
 make demo
-# или: .\scripts\hybrid\hybrid-up.ps1
-# или только кластер: .\scripts\k8s\k8s-up.ps1
+# или: .\app\scripts\hybrid\hybrid-up.ps1
+# или только кластер: .\app\scripts\k8s\k8s-up.ps1
 kubectl -n kp get pods
 ```
 
@@ -171,8 +171,8 @@ kubectl -n kp get pods
 
 ```bash
 make demo
-# или: bash scripts/hybrid/hybrid-up.sh
-# или только кластер: bash scripts/k8s/k8s-up.sh
+# или: bash app/scripts/hybrid/hybrid-up.sh
+# или только кластер: bash app/scripts/k8s/k8s-up.sh
 kubectl -n kp get pods
 ```
 
@@ -180,13 +180,13 @@ kubectl -n kp get pods
 
 ## Быстрый старт (один проход)
 
-Скрипты: [`sec-scan.ps1`](../../scripts/sec/sec-scan.ps1) (Windows) · [`sec-scan.sh`](../../scripts/sec/sec-scan.sh) (macOS).
+Скрипты: [`sec-scan.ps1`](../../app/scripts/sec/sec-scan.ps1) (Windows) · [`sec-scan.sh`](../../app/scripts/sec/sec-scan.sh) (macOS).
 
 | Шаг | Результат |
 |-----|-----------|
 | kubectl checklist | `tmp/sec-ops/kubectl-audit.txt` |
 | Trivy images + Helm config | `tmp/sec-ops/trivy-*.json` (+ parse) |
-| Semgrep `backend/` | `tmp/sec-ops/semgrep.json` |
+| Semgrep `app/backend/` | `tmp/sec-ops/semgrep.json` |
 | Checkov (Helm) | `tmp/sec-ops/checkov.json` |
 | Nmap (localhost Ingress) | `tmp/sec-ops/nmap.txt` |
 | Nuclei | `tmp/sec-ops/nuclei.txt` |
@@ -198,7 +198,7 @@ kubectl -n kp get pods
 
 ```powershell
 make sec-scan
-# или: .\scripts\sec\sec-scan.ps1
+# или: .\app\scripts\sec\sec-scan.ps1
 
 # глубокий проход (+ ZAP; дольше):
 $env:SEC_SCAN_DEEP = "1"; make sec-scan
@@ -208,7 +208,7 @@ $env:SEC_SCAN_DEEP = "1"; make sec-scan
 
 ```bash
 make sec-scan
-# или: bash scripts/sec/sec-scan.sh
+# или: bash app/scripts/sec/sec-scan.sh
 
 # глубокий проход (+ ZAP; дольше):
 SEC_SCAN_DEEP=1 make sec-scan
@@ -221,17 +221,17 @@ SEC_SCAN_DEEP=1 make sec-scan
 **Windows / macOS** (compose-строки одинаковы)
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image --severity HIGH,CRITICAL kp-api:dev
-docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep semgrep --config=auto /src/backend
-docker compose -f infra/docker-compose.sec-ops.yml run --rm checkov -d /src/infra/helm/knowledge-platform --framework kubernetes helm --soft-fail -o json --output-file-path /out
-docker compose -f infra/docker-compose.sec-ops.yml run --rm nmap -sV -p 8088,80,443 -oN /out/nmap.txt host.docker.internal
-docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei -u http://host.docker.internal:8088 -silent -o /out/nuclei.txt
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm trivy image --severity HIGH,CRITICAL kp-api:dev
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm semgrep semgrep --config=auto /src/backend
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm checkov -d /src/infra/helm/knowledge-platform --framework kubernetes helm --soft-fail -o json --output-file-path /out
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm nmap -sV -p 8088,80,443 -oN /out/nmap.txt host.docker.internal
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm nuclei -u http://host.docker.internal:8088 -silent -o /out/nuclei.txt
 ```
 
 ZAP (deep):
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm zap \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm zap \
   zap-baseline.py -t http://host.docker.internal:8088 -J /out/zap-baseline.json -I
 ```
 
@@ -300,10 +300,10 @@ kubectl -n kp get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spe
 **Зачем:** CVE в `kp-api` / `kp-frontend` и грубые ошибки в Helm YAML (supply-chain + config).
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-api.json kp-api:dev
-docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-frontend.json kp-frontend:dev
-docker compose -f infra/docker-compose.sec-ops.yml run --rm trivy config /src/infra/helm/knowledge-platform
-python scripts/sec/sec-parse-trivy.py tmp/sec-ops/trivy-api.json
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-api.json kp-api:dev
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm trivy image -f json -o /out/trivy-frontend.json kp-frontend:dev
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm trivy config /src/infra/helm/knowledge-platform
+python app/scripts/sec/sec-parse-trivy.py tmp/sec-ops/trivy-api.json
 ```
 
 ### 4. Semgrep — код backend
@@ -313,14 +313,14 @@ python scripts/sec/sec-parse-trivy.py tmp/sec-ops/trivy-api.json
 **Windows**
 
 ```powershell
-docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep `
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm semgrep `
   semgrep --config=auto --json -o /out/semgrep.json /src/backend
 ```
 
 **macOS**
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm semgrep \
   semgrep --config=auto --json -o /out/semgrep.json /src/backend
 ```
 
@@ -331,7 +331,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm semgrep \
 **Зачем:** policy-as-code по chart: нет securityContext, лишние capabilities, публичные Service и т.п.
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm checkov \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm checkov \
   -d /src/infra/helm/knowledge-platform \
   --framework kubernetes helm --soft-fail \
   -o json --output-file-path /out
@@ -343,7 +343,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm checkov \
 **Зачем:** снаружи видно только то, что слушает host; лишний открытый порт = лишняя поверхность.
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm nmap \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm nmap \
   -sV -p 8088,80,443,11434 -oN /out/nmap.txt host.docker.internal
 ```
 
@@ -354,7 +354,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm nmap \
 **Зачем:** быстрый прогон известных HTTP/API проверок (headers, path disclosure, типовые misconfig) по Ingress.
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm nuclei \
   -u http://host.docker.internal:8088 -silent -o /out/nuclei.txt
 ```
 
@@ -364,7 +364,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm nuclei \
 Долгий шаг; в `make sec-scan` только при `SEC_SCAN_DEEP=1`.
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm zap \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm zap \
   zap-baseline.py -t http://host.docker.internal:8088 -J /out/zap-baseline.json -I
 ```
 
@@ -376,7 +376,7 @@ docker compose -f infra/docker-compose.sec-ops.yml run --rm zap \
 На kind/VM с доступом к ноде:
 
 ```bash
-docker compose -f infra/docker-compose.sec-ops.yml run --rm kube-bench \
+docker compose -f app/infra/docker-compose.sec-ops.yml run --rm kube-bench \
   run --targets policies 2>&1 | tee tmp/sec-ops/kube-bench.txt
 ```
 
@@ -408,7 +408,7 @@ spec:
   policyTypes: ["Ingress"]
 ```
 
-Дальше — отдельные allow-правила `api → postgres/neo4j/redis/...` и Ingress controller → frontend/api.
+Дальше — отдельные allow-правила `api → postgres/neo4j/redis/...` и Ingress controller → app/frontend/api.
 
 ---
 
@@ -423,7 +423,7 @@ spec:
 | Default SA у подов | Chart без отдельных SA | отдельный SA + минимальный Role |
 | CVE CRITICAL/HIGH в образах | Базовый image | rebuild / patch base, pin digest, CI gate |
 
-App-level ACL (роли guest/manager) — [ADR-005](../adr/ADR-005-security.md), не замена кластерному аудиту.
+App-level ACL (роли guest/manager) — [ADR-005](../../architecture/adr/ADR-005-security.md), не замена кластерному аудиту.
 
 **Done-критерий lab:** для каждого High+ finding есть evidence, impact и конкретный building-шаг (даже если PR ещё не смержен).
 
@@ -449,7 +449,7 @@ discover → triage (severity + контекст) → ticket → fix/verify → 
 Сводка counts:
 
 ```bash
-python scripts/sec/sec-parse-summary.py tmp/sec-ops
+python app/scripts/sec/sec-parse-summary.py tmp/sec-ops
 ```
 
 ### Эскалация Senior / Lead

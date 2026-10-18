@@ -1,18 +1,18 @@
-# Kubernetes — архитектура (Docker Desktop + Helm)
+﻿# Kubernetes — архитектура (Docker Desktop + Helm)
 
-**Схема:** [k8s-topology.png](../../diagrams/k8s-topology.png) · [k8s-topology.drawio](../../diagrams/k8s-topology.drawio)
+**Схема:** [k8s-topology.png](../../architecture/diagrams/k8s-topology.png) · [k8s-topology.drawio](../../architecture/diagrams/k8s-topology.drawio)
 
-Источник правды: Helm chart [`infra/helm/knowledge-platform/`](../../infra/helm/knowledge-platform/), [`scripts/k8s/k8s-up.ps1`](../../scripts/k8s/k8s-up.ps1).  
+Источник правды: Helm chart [`app/infra/helm/knowledge-platform/`](../../app/infra/helm/knowledge-platform/), [`app/scripts/k8s/k8s-up.ps1`](../../app/scripts/k8s/k8s-up.ps1).  
 Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).  
 Что такое сущности K8s / Helm и как катить фичи: [k8s-primer.md](k8s-primer.md).  
-Логические сегменты: [architecture/deployment.md](../architecture/deployment.md).
+Логические сегменты: [architecture/deployment.md](../../architecture/deployment.md).
 
 ## Nodes
 
 | Режим | Как | Ноды |
 |-------|-----|------|
 | **Desktop (default)** | `kubectl` context `docker-desktop` | Одна нода Docker Desktop Kubernetes |
-| **Legacy kind** | `$env:KP_K8S='kind'` | Кластер `retailpartnerx-kp`: 1× control-plane, label `ingress-ready=true`, hostPort `8088→80` / `8443→443` ([`infra/kind/kind-config.yaml`](../../infra/kind/kind-config.yaml)) |
+| **Legacy kind** | `$env:KP_K8S='kind'` | Кластер `retailpartnerx-kp`: 1× control-plane, label `ingress-ready=true`, hostPort `8088→80` / `8443→443` ([`app/infra/kind/kind-config.yaml`](../../app/infra/kind/kind-config.yaml)) |
 
 В chart **нет** nodeSelector / affinity / taints — все поды на единственной ноде ноутбука.
 
@@ -78,9 +78,9 @@ Browser → ingress-nginx :8088
 
 | File | Роль |
 |------|------|
-| [`values.yaml`](../../infra/helm/knowledge-platform/values.yaml) | База: MOCK LLM, все stores on (вкл. MinIO), replicas=1 |
-| [`values-desktop.yaml`](../../infra/helm/knowledge-platform/values-desktop.yaml) | Desktop: `pullPolicy: Never`, live MinIO, MOCK LLM |
-| [`values-desktop-compose-ollama.yaml`](../../infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml) | Hybrid: `OLLAMA` → `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b` |
+| [`values.yaml`](../../app/infra/helm/knowledge-platform/values.yaml) | База: MOCK LLM, все stores on (вкл. MinIO), replicas=1 |
+| [`values-desktop.yaml`](../../app/infra/helm/knowledge-platform/values-desktop.yaml) | Desktop: `pullPolicy: Never`, live MinIO, MOCK LLM |
+| [`values-desktop-compose-ollama.yaml`](../../app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml) | Hybrid: `OLLAMA` → `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b` |
 
 `k8s-up.ps1` + `$env:KP_LLM`:
 
@@ -90,7 +90,7 @@ Browser → ingress-nginx :8088
 | `compose-ollama` | + compose-ollama overlay |
 
 Скрипт: build images → install ingress-nginx (desktop) → `helm upgrade --install kp ... -n kp --create-namespace --wait`.  
-Снос: `.\scripts\k8s\k8s-down.ps1` (desktop оставляет shared ingress-nginx).
+Снос: `.\app\scripts\k8s\k8s-down.ps1` (desktop оставляет shared ingress-nginx).
 
 ## Что не в Helm (Compose side-stack)
 

@@ -1,4 +1,4 @@
-# Kubernetes + Helm — primer (сущности, схема, поставка)
+﻿# Kubernetes + Helm — primer (сущности, схема, поставка)
 
 Краткий учебный слой над нашей топологией. Практика стенда: [k8s-architecture.md](k8s-architecture.md) · команды: [SRE.md](../SRE.md) · запуск: [SETUP.md](../SETUP.md).
 
@@ -10,10 +10,10 @@
 
 | Термин | Что это | У нас |
 |--------|---------|-------|
-| **Chart** | Пакет шаблонов YAML (`templates/`) + `values.yaml` | [`infra/helm/knowledge-platform/`](../../infra/helm/knowledge-platform/) |
+| **Chart** | Пакет шаблонов YAML (`templates/`) + `values.yaml` | [`app/infra/helm/knowledge-platform/`](../../app/infra/helm/knowledge-platform/) |
 | **Values** | Параметры (replicas, images, LLM, stores) | `values.yaml` + overlays `values-desktop*.yaml` |
 | **Release** | Установленный экземпляр chart в namespace | имя `kp` в namespace `kp` |
-| **helm upgrade --install** | Создать или обновить release атомарно | `scripts/k8s/k8s-up.ps1` / `.sh` |
+| **helm upgrade --install** | Создать или обновить release атомарно | `app/scripts/k8s/k8s-up.ps1` / `.sh` |
 
 Helm **не** runtime: он рендерит манифесты и отдаёт их API-серверу. Дальше контроллеры Kubernetes сами гоняют Pod'ы.
 
@@ -76,7 +76,7 @@ Chart + Values  →  helm template/upgrade  →  API Server  →  Deployments/Se
 | Сущность | Зачем | У нас |
 |----------|-------|-------|
 | **Release** | Установленное приложение | `kp`, также `ingress-nginx` |
-| **Chart** | Источник шаблонов | local path `infra/helm/knowledge-platform` |
+| **Chart** | Источник шаблонов | local path `app/infra/helm/knowledge-platform` |
 
 ### Access Control
 
@@ -174,7 +174,7 @@ flowchart LR
 |-----|----------|--------|
 | 1 | Меняешь код / chart / values | backend, frontend, `templates/*.yaml`, overlay |
 | 2 | Собираешь образы | `kp-api:dev`, `kp-frontend:dev` (`pullPolicy: Never` на Desktop) |
-| 3 | Ставишь/обновляешь release | `.\scripts\k8s\k8s-up.ps1` или `helm upgrade --install kp ...` |
+| 3 | Ставишь/обновляешь release | `.\app\scripts\k8s\k8s-up.ps1` или `helm upgrade --install kp ...` |
 | 4 | Helm применяет diff | новые/изменённые Deployment, Service, Ingress, Secret |
 | 5 | Deployment-контроллер катит Pod'ы | rolling update через ReplicaSet; старый Pod → новый |
 | 6 | Проверка | `kubectl -n kp get pods`, `curl http://kp.local:8088/api/health` |
@@ -183,16 +183,16 @@ flowchart LR
 
 ```powershell
 # полный цикл (образы + ingress-nginx + helm)
-.\scripts\k8s\k8s-up.ps1
+.\app\scripts\k8s\k8s-up.ps1
 
 # только перевыкат chart (образы уже собраны)
-helm upgrade --install kp infra/helm/knowledge-platform -n kp --create-namespace `
-  -f infra/helm/knowledge-platform/values-desktop.yaml `
+helm upgrade --install kp app/infra/helm/knowledge-platform -n kp --create-namespace `
+  -f app/infra/helm/knowledge-platform/values-desktop.yaml `
   --wait --timeout 5m
 
 # после смены только LLM overlay
 $env:KP_LLM = "compose-ollama"
-.\scripts\k8s\k8s-up.ps1
+.\app\scripts\k8s\k8s-up.ps1
 # или точечно:
 kubectl -n kp rollout restart deploy/api
 ```
@@ -201,7 +201,7 @@ kubectl -n kp rollout restart deploy/api
 
 | Тип изменения | Куда | Как выкатить |
 |---------------|------|--------------|
-| Код API / UI | `backend/`, `frontend/` | rebuild images → `k8s-up` или `helm upgrade` + restart deploy |
+| Код API / UI | `app/backend/`, `app/frontend/` | rebuild images → `k8s-up` или `helm upgrade` + restart deploy |
 | Env / LLM / stores | `values*.yaml` | `helm upgrade` (потом restart `deploy/api`, если env уже в Pod) |
 | Новые порты / Ingress path | `templates/ingress.yaml`, Service | `helm upgrade` |
 | Секреты | `templates/secret.yaml` / values | `helm upgrade` (не коммитить прод-секреты) |
@@ -215,7 +215,7 @@ helm rollback kp N-1    →  откат манифестов (образы до�
 helm uninstall kp       →  удалить ресурсы release (у нас обёртка: k8s-down)
 ```
 
-Снос стенда: `.\scripts\k8s\k8s-down.ps1` (ingress-nginx на Desktop обычно оставляют shared).
+Снос стенда: `.\app\scripts\k8s\k8s-down.ps1` (ingress-nginx на Desktop обычно оставляют shared).
 
 ### Связь с Compose (hybrid)
 

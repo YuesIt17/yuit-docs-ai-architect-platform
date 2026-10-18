@@ -1,4 +1,4 @@
-# Резюме для защиты — RetailPartnerX Knowledge Platform
+﻿# Резюме для защиты — RetailPartnerX Knowledge Platform
 
 **Заказчик:** RetailPartnerX — крупный FMCG-ритейлер.  
 **Роль:** Platform Engineer / AI Architect — Internal Developer Platform для AI knowledge workloads.
@@ -31,8 +31,8 @@ On-premise **GraphRAG Knowledge Platform**:
 | Раздел | Путь |
 | ------ | ---- |
 | Задание / критерии | [README](../README.md) |
-| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](architecture/) · [diagrams/](../diagrams/) |
-| ADR | [adr/](adr/) |
+| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagrams/](../architecture/diagrams/) |
+| ADR | [adr/](../architecture/adr/) |
 | Демо / нагрузка | [demo-script.md](demo-script.md) · [load-report.md](load-report.md) |
 | Model Card | [model-card.md](model-card.md) |
 
