@@ -21,6 +21,4 @@ Hybrid ready (no Compose↔K8s duplicates):
   Jaeger http://127.0.0.1:16686
   Prom   http://127.0.0.1:9090
   Graf   http://127.0.0.1:3000
-
-Do NOT run make demo-standalone while K8s is up.
 EOF

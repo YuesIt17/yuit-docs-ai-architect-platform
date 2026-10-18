@@ -10,7 +10,6 @@
 | Режим | UI | API (health) |
 |-------|-----|----------------|
 | **Hybrid** (рекомендуется) | http://kp.local:8088 | http://kp.local:8088/api/health |
-| Standalone Compose | http://localhost:5173 | http://localhost:8080/health |
 
 Hosts → `127.0.0.1 kp.local`:
 
@@ -277,7 +276,6 @@ bash scripts/k8s-down.sh
 ```bash
 make demo              # hybrid (Win→.ps1, Mac→.sh)
 make side              # ollama + obs only
-make demo-standalone   # full stack WITHOUT k8s — mutually exclusive
 make down
 make sec-scan          # DevSecOps lab → tmp/sec-ops/
 

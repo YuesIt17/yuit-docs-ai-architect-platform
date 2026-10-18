@@ -3,7 +3,6 @@
 | Режим | Когда | Windows (PowerShell) | macOS (bash/zsh) |
 |-------|-------|----------------------|------------------|
 | **Hybrid (рекомендуется)** | Desktop / защита — **без дублей** | `.\scripts\hybrid-up.ps1` | `bash scripts/hybrid-up.sh` |
-| **Standalone Compose** | Без K8s / CI | см. ниже | см. ниже |
 | **Только K8s** | MOCK, без Ollama/obs | `.\scripts\k8s-up.ps1` | `bash scripts/k8s-up.sh` |
 | **DevSecOps lab** | Trivy / Semgrep / kubectl | `.\scripts\sec-scan.ps1` | `bash scripts/sec-scan.sh` |
 
@@ -113,21 +112,7 @@ docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
 
 ---
 
-## B. Standalone Compose (без K8s)
-
-**Не** сочетать с `k8s-up` — конфликт портов/stores.
-
-```bash
-docker compose -f infra/docker-compose.standalone.yml up -d --build
-# UI http://localhost:5173  API http://localhost:8080
-```
-
-Файл: [`infra/docker-compose.standalone.yml`](../infra/docker-compose.standalone.yml).  
-`STORE_BACKEND=memory` (MinIO нет). Ollama: side-stack `--profile llm` или MOCK.
-
----
-
-## C. DevSecOps lab (сканеры)
+## B. DevSecOps lab (сканеры)
 
 После hybrid / `k8s-up`:
 
@@ -140,9 +125,9 @@ docker compose -f infra/docker-compose.standalone.yml up -d --build
 
 ---
 
-## D. Локальная разработка API/UI на хосте
+## C. Локальная разработка API/UI на хосте
 
-Нужны stores — либо K8s port-forward, либо `demo-standalone` без api/frontend контейнеров.
+Stores на хосте не нужны: ниже `STORE_BACKEND=memory`.
 
 **Windows**
 
@@ -208,7 +193,6 @@ manager не видит secret promo (`42%`); compliance видит.
 | Симптом | Что сделать |
 |---------|-------------|
 | OLLAMA unreachable | Base URL `host.docker.internal`, не `localhost` из пода |
-| Port clash / два postgres | Не гонять `demo-standalone` + K8s |
 | Ingress `:8088` 404 IIS (Windows) | Hosts `kp.local`, LB на 8088 |
 | `ollama pull` TLS timeout | `ollama-pull.ps1` / `ollama-pull.sh` |
 | MinIO 9000 на хосте пусто | MinIO в K8s → Console NodePort `:30901` |

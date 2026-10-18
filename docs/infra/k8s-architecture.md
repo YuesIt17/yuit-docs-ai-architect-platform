@@ -99,8 +99,7 @@ Browser → ingress-nginx :8088
 | Prometheus / Grafana / Jaeger | Compose (`obs` profile) |
 | Ollama | Compose (`llm` profile) |
 
-**Zero-overlap:** MinIO/stores/api/frontend — только Helm. Ollama + obs — только Compose (`make side`).  
-Не запускать `make demo-standalone` параллельно с этим кластером.
+**Zero-overlap:** MinIO/stores/api/frontend — только Helm. Ollama + obs — только Compose (`make side`).
 
 Frontend **никогда** не ходит в Ollama напрямую — только через API (`/v1/chat`, `/v1/llm/*`).
 

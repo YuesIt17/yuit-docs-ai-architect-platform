@@ -1,8 +1,6 @@
 # Hybrid side-stack only — no overlap with Helm/K8s platform.
 # K8s owns: api, frontend, postgres, neo4j, qdrant, redis, minio
 # Compose owns: ollama, prometheus, grafana, jaeger
-#
-# Full no-K8s stack: infra/docker-compose.standalone.yml
 name: retailpartnerx-kp
 
 networks:

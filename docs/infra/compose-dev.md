@@ -15,8 +15,6 @@ Project: `retailpartnerx-kp`.
 | LLM (**ollama**) | **только Compose** |
 | Observability (prometheus, grafana, jaeger) | **только Compose** |
 
-Не поднимать standalone Compose вместе с K8s.
-
 ## Profiles
 
 | Profile | Сервисы |
@@ -30,7 +28,6 @@ Project: `retailpartnerx-kp`.
 |--------|---------|-------|
 | Hybrid up | `.\scripts\hybrid-up.ps1` | `bash scripts/hybrid-up.sh` |
 | `llm` + `obs` | `docker compose -f infra/docker-compose.yml --profile llm --profile obs up -d` | то же |
-| Standalone | `docker compose -f infra/docker-compose.standalone.yml up -d --build` | то же |
 | Sec scanners | `.\scripts\sec-scan.ps1` | `bash scripts/sec-scan.sh` |
 
 ## Порты (Compose)

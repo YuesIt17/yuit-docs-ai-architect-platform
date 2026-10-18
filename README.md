@@ -83,14 +83,12 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 
 ```powershell
 .\scripts\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
-# без K8s: docker compose -f infra/docker-compose.standalone.yml up -d --build
 ```
 
 **macOS**
 
 ```bash
 bash scripts/hybrid-up.sh   # или: make demo
-# без K8s: docker compose -f infra/docker-compose.standalone.yml up -d --build
 ```
 
 | Сервис | Где | URL / порт |

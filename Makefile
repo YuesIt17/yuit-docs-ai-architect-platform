@@ -1,4 +1,4 @@
-.PHONY: up down demo demo-standalone seed test api frontend llm-ollama obs side k8s-up k8s-down load-smoke sec-scan sec-ops
+.PHONY: up down demo seed test api frontend llm-ollama obs side k8s-up k8s-down load-smoke sec-scan sec-ops
 
 # Windows: PowerShell scripts; macOS/Linux: bash scripts
 ifeq ($(OS),Windows_NT)
@@ -36,15 +36,10 @@ side: llm-ollama obs
 obs:
 	docker compose -f infra/docker-compose.yml --profile obs up -d
 
-# Full stack WITHOUT Kubernetes (mutually exclusive with k8s-up)
-demo-standalone:
-	docker compose -f infra/docker-compose.standalone.yml up -d --build
-
 up: side
 
 down:
 	docker compose -f infra/docker-compose.yml --profile obs --profile llm down -v
-	-docker compose -f infra/docker-compose.standalone.yml down -v
 
 seed:
 	cd backend && python -m pipelines.seed_all
