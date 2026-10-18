@@ -13,8 +13,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app.deps import get_container
-from app.services.knowledge_store import DocumentNode
+from kp.deps import get_container
+from kp.domain.nodes import DocumentNode
 
 
 def parse_act(path: Path) -> DocumentNode | None:

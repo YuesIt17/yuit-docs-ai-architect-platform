@@ -1,4 +1,8 @@
-"""LLM client: MOCK | OLLAMA via OpenAI-compatible API with mutable runtime config."""
+"""LLM client: MOCK | OLLAMA via OpenAI-compatible API with mutable runtime config.
+
+Ollama base URL and model come from Settings (Helm `llm.*` → env / .env), not from
+hardcoded presets in this module.
+"""
 
 from __future__ import annotations
 
@@ -6,29 +10,59 @@ from dataclasses import dataclass
 
 import httpx
 
-from app.config import Settings
+from kp.config import Settings
 
-PROVIDER_PRESETS: dict[str, dict[str, str]] = {
-    "MOCK": {"base_url": "", "model": "mock-graph-rag"},
-    # Desktop default: API in K8s → Ollama on host :11434 (hybrid-up / llm profile).
-    "OLLAMA": {"base_url": "http://host.docker.internal:11434/v1", "model": "qwen2.5:0.5b"},
-}
+SUPPORTED_PROVIDERS = frozenset({"MOCK", "OLLAMA"})
+MOCK_MODEL = "mock-graph-rag"
+# Used only when Settings still carry the MOCK defaults (empty URL / mock model name).
+DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434/v1"
+DEFAULT_OLLAMA_MODEL = "qwen2.5:0.5b"
+
+
+def ollama_endpoint(settings: Settings) -> tuple[str, str]:
+    """OLLAMA URL and model from Settings, with host-dev defaults instead of the MOCK model."""
+    base_url = (settings.openai_base_url or "").strip() or DEFAULT_OLLAMA_BASE_URL
+    model = (settings.llm_model or "").strip()
+    if not model or model == MOCK_MODEL:
+        model = DEFAULT_OLLAMA_MODEL
+    return base_url, model
+
+
+def provider_presets(settings: Settings) -> dict[str, dict[str, str]]:
+    """UI presets: MOCK is fixed; OLLAMA URL/model come from Helm / .env via Settings."""
+    base_url, model = ollama_endpoint(settings)
+    return {
+        "MOCK": {"base_url": "", "model": MOCK_MODEL},
+        "OLLAMA": {"base_url": base_url, "model": model},
+    }
 
 
 @dataclass
 class LLMRuntimeConfig:
     provider: str = "MOCK"
     base_url: str = ""
-    model: str = "mock-graph-rag"
+    model: str = MOCK_MODEL
     api_key: str = "not-needed"
 
     @classmethod
     def from_settings(cls, settings: Settings) -> LLMRuntimeConfig:
         provider = settings.llm_provider.upper()
-        preset = PROVIDER_PRESETS.get(provider, PROVIDER_PRESETS["MOCK"])
-        base = settings.openai_base_url or preset["base_url"]
-        model = settings.llm_model or preset["model"]
-        return cls(provider=provider, base_url=base, model=model, api_key=settings.openai_api_key)
+        if provider not in SUPPORTED_PROVIDERS:
+            provider = "MOCK"
+        if provider == "MOCK":
+            return cls(
+                provider=provider,
+                base_url="",
+                model=MOCK_MODEL,
+                api_key=settings.openai_api_key,
+            )
+        base_url, model = ollama_endpoint(settings)
+        return cls(
+            provider=provider,
+            base_url=base_url,
+            model=model,
+            api_key=settings.openai_api_key,
+        )
 
     @property
     def model_uri(self) -> str:
@@ -47,17 +81,31 @@ class LLMClient:
     def get_config(self) -> LLMRuntimeConfig:
         return self.runtime
 
-    def apply_config(self, provider: str, base_url: str | None = None, model: str | None = None) -> LLMRuntimeConfig:
+    def apply_config(
+        self, provider: str, base_url: str | None = None, model: str | None = None
+    ) -> LLMRuntimeConfig:
         provider = provider.upper()
-        if provider not in PROVIDER_PRESETS:
+        if provider not in SUPPORTED_PROVIDERS:
             raise ValueError(f"unsupported provider: {provider}")
-        preset = PROVIDER_PRESETS[provider]
-        self.runtime = LLMRuntimeConfig(
-            provider=provider,
-            base_url=(base_url if base_url is not None else preset["base_url"]),
-            model=(model if model is not None else preset["model"]),
-            api_key=self.settings.openai_api_key,
-        )
+        if provider == "MOCK":
+            self.runtime = LLMRuntimeConfig(
+                provider=provider,
+                base_url="",
+                model=MOCK_MODEL,
+                api_key=self.settings.openai_api_key,
+            )
+        else:
+            # Prefer an explicit URL/model; otherwise Settings, not the MOCK model name.
+            fallback_url, fallback_model = ollama_endpoint(self.settings)
+            chosen_model = (model or "").strip()
+            if not chosen_model or chosen_model == MOCK_MODEL:
+                chosen_model = fallback_model
+            self.runtime = LLMRuntimeConfig(
+                provider=provider,
+                base_url=(base_url or "").strip() or fallback_url,
+                model=chosen_model,
+                api_key=self.settings.openai_api_key,
+            )
         return self.runtime
 
     async def probe(self) -> dict:
@@ -73,7 +121,6 @@ class LLMClient:
             }
         url = cfg.base_url.rstrip("/")
         if not url.endswith("/v1"):
-            # allow passing host without /v1
             probe_url = f"{url}/v1/models" if not url.endswith("/models") else url
         else:
             probe_url = f"{url}/models"
@@ -116,20 +163,20 @@ class LLMClient:
         if provider == "MOCK":
             return self._mock_complete(system, user), len(user.split()), 80
         try:
-            from langchain_openai import ChatOpenAI
             from langchain_core.messages import HumanMessage, SystemMessage
+            from langchain_openai import ChatOpenAI
 
-            base = self.runtime.base_url
-            if provider == "OLLAMA" and base and "11434" not in base and "ollama" not in base:
-                base = "http://host.docker.internal:11434/v1"
-            llm = ChatOpenAI(
-                model=self.runtime.model,
-                api_key=self.runtime.api_key or "not-needed",
-                base_url=base,
-                temperature=0.1,
-                max_tokens=max_tokens,
-            )
-            resp = await llm.ainvoke([SystemMessage(content=system), HumanMessage(content=user)])
+            # trust_env=False: a system/HTTP proxy must not intercept 127.0.0.1 Ollama (502).
+            async with httpx.AsyncClient(trust_env=False, timeout=120.0) as http_async_client:
+                llm = ChatOpenAI(
+                    model=self.runtime.model,
+                    api_key=self.runtime.api_key or "not-needed",
+                    base_url=self.runtime.base_url,
+                    temperature=0.1,
+                    max_tokens=max_tokens,
+                    http_async_client=http_async_client,
+                )
+                resp = await llm.ainvoke([SystemMessage(content=system), HumanMessage(content=user)])
             text = resp.content if isinstance(resp.content, str) else str(resp.content)
             return text, len(user.split()), len(text.split())
         except Exception as exc:

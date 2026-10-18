@@ -1,3 +1,5 @@
+"""Runtime settings (env / .env) for the Knowledge Platform API."""
+
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -8,22 +10,25 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     log_level: str = "INFO"
+    # Reserved: real JWT verification not wired yet (demo uses Bearer role tokens).
     jwt_secret: str = "dev-retailpartnerx-change-me"
     index_version: str = "v1"
     policy_version: str = "v1"
 
+    # Ollama URL/model: Helm `llm.baseUrl` / `llm.model` → env, or .env (see .env.example).
     llm_provider: str = "MOCK"  # MOCK | OLLAMA
-    openai_base_url: str = "http://host.docker.internal:11434/v1"
+    openai_base_url: str = ""
     openai_api_key: str = "not-needed"
-    llm_model: str = "qwen2.5:0.5b"
+    llm_model: str = "mock-graph-rag"
 
     enable_semantic_cache: bool = True
     enable_vlm: bool = False
     enable_vision_ocr: bool = True
 
-    # memory = in-process stores (CI/tests); live = external services
+    # memory = in-process store + cache; live = Neo4j/Qdrant/Redis/MinIO on request path
     store_backend: str = "memory"
 
+    # Helm still injects these; postgres reserved for a future metadata store.
     postgres_dsn: str = "postgresql+asyncpg://kp:kp@localhost:5432/knowledge"
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"

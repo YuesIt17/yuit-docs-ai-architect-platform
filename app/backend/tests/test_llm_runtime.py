@@ -1,6 +1,8 @@
 import pytest
 
-from app.deps import get_container
+from kp.config import Settings
+from kp.deps import get_container
+from kp.infrastructure.llm import LLMClient, provider_presets
 from pipelines.seed_all import seed_store
 
 
@@ -30,3 +32,21 @@ async def test_switch_provider_runtime(seeded):
     assert "host.docker.internal" in cfg.base_url
     c.llm.apply_config("MOCK")
     assert c.llm.get_config().provider == "MOCK"
+
+
+def test_ollama_url_model_from_settings_not_code():
+    settings = Settings(
+        llm_provider="OLLAMA",
+        openai_base_url="http://ollama.example:11434/v1",
+        llm_model="custom-model:tag",
+    )
+    client = LLMClient(settings)
+    cfg = client.get_config()
+    assert cfg.base_url == "http://ollama.example:11434/v1"
+    assert cfg.model == "custom-model:tag"
+    presets = provider_presets(settings)
+    assert presets["OLLAMA"]["base_url"] == settings.openai_base_url
+    assert presets["OLLAMA"]["model"] == settings.llm_model
+    client.apply_config("OLLAMA")
+    assert client.get_config().base_url == settings.openai_base_url
+    assert client.get_config().model == settings.llm_model

@@ -6,15 +6,16 @@ from typing import Any
 
 from langgraph.graph import END, StateGraph
 
-from app.agent.state import AgentState
-from app.security.guardrails import input_guard, output_guard
-from app.security.rbac import Principal
-from app.services.knowledge_store import KnowledgeStore
-from app.services.llm import LLMClient
+from kp.agent.state import AgentState
+from kp.infrastructure.llm import LLMClient
+from kp.security.guardrails import input_guard, output_guard
+from kp.security.rbac import Principal
 
 
 class KnowledgeAgent:
-    def __init__(self, store: KnowledgeStore, llm: LLMClient):
+    """GraphRAG agent over a KnowledgeStore-compatible facade."""
+
+    def __init__(self, store, llm: LLMClient):
         self.store = store
         self.llm = llm
         self.graph = self._build()
@@ -78,7 +79,6 @@ class KnowledgeAgent:
         return {"route": "chat"}
 
     def graph_retrieve(self, state: AgentState) -> dict[str, Any]:
-        principal = Principal(user_id=state["user_id"], role=state["role"])
         doc_ids = self.store.graph_resolve_doc_ids(state.get("guarded_message", ""))
         return {"retrieved": [{"via": "graph", "doc_ids": doc_ids}]}
 
@@ -113,7 +113,6 @@ class KnowledgeAgent:
         return {"retrieved": retrieved, "citations": citations, "acl_decision": "allow"}
 
     def label_recognize_node(self, state: AgentState) -> dict[str, Any]:
-        # Label extract is injected by API before invoke; this node enriches query
         extract = state.get("label_extract") or {}
         allergens = ", ".join(extract.get("allergens") or [])
         msg = f"Label allergens: {allergens}. Ingredients: {extract.get('ingredients')}. Brand: {extract.get('brand')}"
@@ -157,10 +156,7 @@ class KnowledgeAgent:
             if "text" in item:
                 ctx_lines.append(f"[{item.get('doc_id')}|{item.get('classification')}] {item['text']}")
         if state.get("modality") == "label" or state.get("route") == "label":
-            user = (
-                f"LABEL_EXTRACT: {state.get('label_extract')}\n"
-                f"CONTEXT:\n" + "\n".join(ctx_lines[:6])
-            )
+            user = f"LABEL_EXTRACT: {state.get('label_extract')}\nCONTEXT:\n" + "\n".join(ctx_lines[:6])
             system = (
                 "You are RetailPartnerX Policy Analyst. Explain label findings vs store policies. "
                 "Use only CONTEXT. Reply in Russian."

@@ -6,17 +6,20 @@ import json
 import sys
 from pathlib import Path
 
-# Ensure backend root on path
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.deps import get_container
-from app.services.knowledge_store import DocumentNode
+from kp.deps import get_container
+from kp.domain.nodes import DocumentNode
 
 
 def _datasets_dir() -> Path:
+    from kp.config import get_settings
+
+    configured = Path(get_settings().datasets_dir)
     candidates = [
+        configured / "seed" if configured.name != "seed" else configured,
         ROOT.parent / "datasets" / "seed",
         Path("/datasets/seed"),
         Path("datasets/seed"),

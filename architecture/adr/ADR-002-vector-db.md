@@ -35,5 +35,5 @@ Accepted
 
 ## Ссылки
 
-- `app/backend/app/services/knowledge_store.py`
+- `app/backend/kp/repositories/memory_store.py`
 - Compose: `app/infra/docker-compose.yml`

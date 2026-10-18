@@ -39,5 +39,5 @@ RetailPartnerX требует on-prem инференс без SaaS OpenAI/Anthro
 
 ## Ссылки
 
-- Код: `app/backend/app/services/llm.py`
+- Код: `app/backend/kp/infrastructure/llm.py`
 - Continuity: hw-4 (SaaS), hw-7 (sizing)

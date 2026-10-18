@@ -1,14 +1,20 @@
-"""In-memory Graph + Vector store with ACL-aware retrieval (GraphRAG MVP)."""
+"""In-memory Graph + Vector store with ACL-aware retrieval (default for CI/tests)."""
 
 from __future__ import annotations
 
 import re
 import uuid
-from dataclasses import dataclass, field
 from typing import Any
 
-from app.security.rbac import Principal, can_access
-from app.services.embeddings import EmbeddingService
+from kp.domain.nodes import (
+    ChunkNode,
+    DocumentNode,
+    EntityNode,
+    LabelAssetNode,
+    RetrievedChunk,
+)
+from kp.infrastructure.embeddings import EmbeddingService
+from kp.security.rbac import Principal, can_access
 
 # MOCK embeddings are bag-of-hash — always return a top-k. Drop noise via lexical overlap + score floor.
 _MIN_VECTOR_SCORE = 0.18
@@ -46,66 +52,16 @@ def _lexical_hits(query: str, text: str) -> int:
     return len(q & _tokens(text))
 
 
-@dataclass
-class DocumentNode:
-    doc_id: str
-    title: str
-    corpus: str  # product | policy | regulatory
-    classification: str
-    allowed_roles: list[str]
-    text: str
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class ChunkNode:
-    chunk_id: str
-    doc_id: str
-    text: str
-    modality: str = "text"
-    embedding: list[float] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class EntityNode:
-    entity_id: str
-    name: str
-    entity_type: str
-    linked_doc_ids: list[str] = field(default_factory=list)
-
-
-@dataclass
-class LabelAssetNode:
-    asset_id: str
-    source_format: str
-    page_count: int
-    classification: str
-    s3_uri_raw: str | None
-    s3_uri_recognized: str | None
-    s3_uri_normalized: str | None
-    etag: str | None
-    extract: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class RetrievedChunk:
-    chunk: ChunkNode
-    document: DocumentNode
-    score: float
-    via: str  # graph | vector | hybrid
-
-
-class KnowledgeStore:
-    """Unified GraphRAG store. Memory backend for MVP/tests; same API for live adapters."""
+class MemoryKnowledgeStore:
+    """Process-local GraphRAG index used as the memory backend and write-through cache."""
 
     def __init__(self, embeddings: EmbeddingService):
         self.embeddings = embeddings
         self.documents: dict[str, DocumentNode] = {}
         self.chunks: dict[str, ChunkNode] = {}
         self.entities: dict[str, EntityNode] = {}
-        self.topics: dict[str, set[str]] = {}  # topic -> doc_ids
-        self.edges: list[tuple[str, str, str]] = []  # (src, rel, dst)
+        self.topics: dict[str, set[str]] = {}
+        self.edges: list[tuple[str, str, str]] = []
         self.labels: dict[str, LabelAssetNode] = {}
         self.outbox: list[dict[str, Any]] = []
         self.jobs: dict[str, dict[str, Any]] = {}
@@ -132,7 +88,9 @@ class KnowledgeStore:
         if existing:
             existing.linked_doc_ids = sorted(set(existing.linked_doc_ids + doc_ids))
         else:
-            self.entities[eid] = EntityNode(entity_id=eid, name=name, entity_type=entity_type, linked_doc_ids=doc_ids)
+            self.entities[eid] = EntityNode(
+                entity_id=eid, name=name, entity_type=entity_type, linked_doc_ids=doc_ids
+            )
         for did in doc_ids:
             self.edges.append((eid, "ABOUT", did))
             if entity_type == "allergen":
@@ -154,7 +112,13 @@ class KnowledgeStore:
                 hits.update(doc_ids)
         return list(hits)
 
-    def vector_search(self, query: str, principal: Principal, top_k: int = 5, doc_allowlist: list[str] | None = None) -> list[RetrievedChunk]:
+    def vector_search(
+        self,
+        query: str,
+        principal: Principal,
+        top_k: int = 5,
+        doc_allowlist: list[str] | None = None,
+    ) -> list[RetrievedChunk]:
         qvec = self.embeddings.embed(query)
         scored: list[RetrievedChunk] = []
         for chunk in self.chunks.values():
@@ -177,7 +141,6 @@ class KnowledgeStore:
             for h in graph_hits:
                 h.via = "hybrid"
             if graph_hits:
-                # merge with global vector for recall
                 vec_hits = self.vector_search(query, principal, top_k=top_k)
                 merged: dict[str, RetrievedChunk] = {h.chunk.chunk_id: h for h in graph_hits}
                 for h in vec_hits:
@@ -199,8 +162,11 @@ class KnowledgeStore:
                 h.via = "hybrid" if h.via == "vector" else h.via
             ranked.append(h)
         ranked.sort(key=lambda x: x.score, reverse=True)
-        kept = [h for h in ranked if _lexical_hits(query, f"{h.document.title} {h.chunk.text}") > 0 or h.score >= _MIN_VECTOR_SCORE]
-        # Prefer lexical matches when present — avoids dumping unrelated policies into tiny LLMs
+        kept = [
+            h
+            for h in ranked
+            if _lexical_hits(query, f"{h.document.title} {h.chunk.text}") > 0 or h.score >= _MIN_VECTOR_SCORE
+        ]
         lexical = [h for h in kept if _lexical_hits(query, f"{h.document.title} {h.chunk.text}") > 0]
         if lexical:
             return lexical[:top_k]
@@ -214,7 +180,13 @@ class KnowledgeStore:
 
     def create_job(self, job_type: str, request: dict[str, Any]) -> str:
         jid = str(uuid.uuid4())
-        self.jobs[jid] = {"job_id": jid, "job_type": job_type, "status": "queued", "request": request, "result": None}
+        self.jobs[jid] = {
+            "job_id": jid,
+            "job_type": job_type,
+            "status": "queued",
+            "request": request,
+            "result": None,
+        }
         return jid
 
     def complete_job(self, job_id: str, result: dict[str, Any]) -> None:
@@ -230,3 +202,7 @@ class KnowledgeStore:
             "edges": len(self.edges),
             "labels": len(self.labels),
         }
+
+
+# Back-compat alias used in a few call sites / docs.
+KnowledgeStore = MemoryKnowledgeStore

@@ -2,7 +2,7 @@
 
 | Каталог | Назначение |
 |---------|------------|
-| `backend/` | FastAPI, LangGraph, GraphRAG, pipelines, tests |
+| `backend/` | FastAPI, LangGraph, GraphRAG, pipelines, tests — [README](backend/README.md) |
 | `frontend/` | Vite + React UI |
 | `infra/` | Docker Compose, Helm, kind, Grafana/Prometheus |
 | `datasets/` | Seed и fixtures |

@@ -6,7 +6,7 @@ import hashlib
 import math
 import re
 
-from app.config import Settings
+from kp.config import Settings
 
 
 def _tokenize(text: str) -> list[str]:
@@ -20,7 +20,6 @@ class EmbeddingService:
 
     def embed(self, text: str) -> list[float]:
         if self.settings.embedding_provider.upper() != "MOCK":
-            # Fallback to mock until sentence-transformers wired in vision profile
             return self._mock_embed(text)
         return self._mock_embed(text)
 
@@ -32,7 +31,6 @@ class EmbeddingService:
             for i in range(0, min(len(digest), 32)):
                 idx = (digest[i] * (i + 1) + len(tok)) % self.dim
                 vec[idx] += (digest[i] / 255.0) * 2 - 1
-        # L2 normalize
         norm = math.sqrt(sum(v * v for v in vec)) or 1.0
         return [v / norm for v in vec]
 

@@ -1,7 +1,7 @@
 import pytest
 
-from app.deps import get_container
-from app.security.rbac import Principal
+from kp.deps import get_container
+from kp.security.rbac import Principal
 from pipelines.seed_all import seed_store
 
 

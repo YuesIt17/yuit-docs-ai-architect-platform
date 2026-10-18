@@ -1,7 +1,7 @@
 import pytest
 
-from app.deps import get_container
-from app.security.rbac import Principal
+from kp.deps import get_container
+from kp.security.rbac import Principal
 from pipelines.seed_all import seed_store
 
 
@@ -42,7 +42,6 @@ async def test_agent_denies_secret_to_manager(seeded):
             "errors": [],
         }
     )
-    # Either no secret citations or empty/insufficient — never leak secret text
     for cit in state.get("citations") or []:
         assert cit["classification"] != "secret"
     assert "42%" not in (state.get("answer") or "") or state.get("acl_decision") == "deny_output"

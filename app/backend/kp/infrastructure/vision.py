@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from PIL import Image
 
-from app.config import Settings
+from kp.config import Settings
 
 
 @dataclass
@@ -70,7 +70,6 @@ class VisionService:
 
     def normalize(self, filename: str, data: bytes, page_limit: int = 3) -> tuple[str, list[bytes]]:
         fmt = self.detect_format(filename, data)
-        # Text/demo fixtures (CI): skip raster decode
         if data.startswith(b"%PDF-TEXT") or (not data.startswith(b"%PDF") and self._looks_like_text(data)):
             return fmt if fmt in {"pdf", "png", "jpeg", "webp", "tiff"} else "png", []
         pages: list[bytes] = []
@@ -104,14 +103,12 @@ class VisionService:
         return any(k in sample for k in ("Brand:", "Ingredients:", "Состав", "Allergen"))
 
     def _mock_ocr_from_bytes(self, filename: str, data: bytes, pages: list[bytes]) -> str:
-        # Prefer embedded plaintext fixtures / filename cues for deterministic demo
         try:
             text = data.decode("utf-8")
             if "Ingredients" in text or "Состав" in text or "allerg" in text.lower():
                 return text
         except UnicodeDecodeError:
             pass
-        # Synthetic OCR based on filename for fixtures
         lower = filename.lower()
         if "secret" in lower:
             return (
@@ -151,8 +148,7 @@ class VisionService:
         for a in ALLERGEN_LEXICON:
             if a in low:
                 allergens.append(a)
-        # de-dupe preserve order
-        seen = set()
+        seen: set[str] = set()
         allergens = [x for x in allergens if not (x in seen or seen.add(x))]
         return {
             "brand": brand,
@@ -166,8 +162,9 @@ class VisionService:
 
     def recognize(self, filename: str, data: bytes, page_limit: int = 3) -> VisionResult:
         fmt, pages = self.normalize(filename, data, page_limit=page_limit)
-        if self.settings.enable_vlm and self.settings.llm_provider.upper() != "MOCK":
-            # Placeholder: VLM path would call multimodal endpoint; fall back to OCR mock
+        if not self.settings.enable_vision_ocr:
+            ocr_text = ""
+        elif self.settings.enable_vlm and self.settings.llm_provider.upper() != "MOCK":
             ocr_text = self._mock_ocr_from_bytes(filename, data, pages)
         else:
             ocr_text = self._mock_ocr_from_bytes(filename, data, pages)

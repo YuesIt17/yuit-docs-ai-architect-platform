@@ -29,4 +29,4 @@ flowchart LR
   RT -->|blocked| GO
 ```
 
-Код: `app/backend/app/agent/graph.py`. Continuity: SRP из hw-3 (Policy Analyst → `policy_check`).
+Код: `app/backend/kp/agent/graph.py`. Continuity: SRP из hw-3 (Policy Analyst → `policy_check`).

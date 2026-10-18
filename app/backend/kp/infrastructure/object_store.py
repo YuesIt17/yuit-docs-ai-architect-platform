@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from app.config import Settings
+from kp.config import Settings
 
 
 class ObjectStore:
@@ -16,7 +16,7 @@ class ObjectStore:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.bucket = settings.minio_bucket
-        # app/backend/app/services → repo root (parents[4]) / data/
+        # platform/infrastructure → repo root (parents[4]) / data/
         self._local_root = Path(__file__).resolve().parents[4] / "data" / "object-store" / self.bucket
         self._local_root.mkdir(parents=True, exist_ok=True)
         self._client = None
@@ -76,8 +76,9 @@ class ObjectStore:
         if self._client:
             from datetime import timedelta
 
-            return self._client.presigned_get_object(self.bucket, key, expires=timedelta(seconds=expires_seconds))
-        # Local stub URL for demo
+            return self._client.presigned_get_object(
+                self.bucket, key, expires=timedelta(seconds=expires_seconds)
+            )
         return f"file://{self._local_root / key}?expires={expires_seconds}"
 
     @staticmethod

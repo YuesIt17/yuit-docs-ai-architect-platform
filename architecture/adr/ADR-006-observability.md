@@ -38,5 +38,5 @@ Accepted
 
 ## Ссылки
 
-- `app/backend/app/main.py`, `app/backend/app/services/metrics.py`
+- `app/backend/kp/main.py`, `app/backend/kp/observability/metrics.py`
 - Compose profile `obs`

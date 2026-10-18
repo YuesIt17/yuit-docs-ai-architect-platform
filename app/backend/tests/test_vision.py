@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from app.config import get_settings
-from app.services.vision import VisionService
+from kp.config import get_settings
+from kp.infrastructure.vision import VisionService
 
 
 def test_recognize_text_fixture_as_png():

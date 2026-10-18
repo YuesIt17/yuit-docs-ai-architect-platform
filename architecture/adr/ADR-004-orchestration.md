@@ -39,5 +39,5 @@ Accepted
 
 ## Ссылки
 
-- `app/backend/app/agent/graph.py`, `app/backend/app/agent/state.py`
+- `app/backend/kp/agent/graph.py`, `app/backend/kp/agent/state.py`
 - Sequence: [sequence-chat.md](../sequence-chat.md)

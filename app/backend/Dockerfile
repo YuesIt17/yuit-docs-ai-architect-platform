@@ -11,16 +11,16 @@ COPY app/backend/pyproject.toml /tmp/pyproject.toml
 RUN pip install --no-cache-dir \
     fastapi "uvicorn[standard]" pydantic pydantic-settings python-multipart httpx \
     langgraph langchain-core langchain-openai neo4j qdrant-client redis minio \
-    "sqlalchemy[asyncio]" asyncpg prometheus-client \
+    prometheus-client \
     opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp \
-    opentelemetry-instrumentation-fastapi "python-jose[cryptography]" \
-    pillow pypdfium2 numpy pyyaml pytest pytest-asyncio
+    opentelemetry-instrumentation-fastapi \
+    pillow pypdfium2
 
-COPY app/backend/app ./app
+COPY app/backend/kp ./kp
 COPY app/backend/pipelines ./pipelines
 COPY app/backend/scripts ./scripts
 COPY app/datasets /datasets
 
 ENV DATASETS_DIR=/datasets
 EXPOSE 8080
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "kp.main:app", "--host", "0.0.0.0", "--port", "8080"]

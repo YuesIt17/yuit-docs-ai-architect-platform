@@ -18,7 +18,9 @@
 | `make up` | То же, что `make side` |
 | `make down` | Снести Compose (`obs` + `llm`, с volumes) |
 | `make sec-scan` | DevSecOps lab (Trivy / Semgrep / kubectl); alias: `sec-ops` |
-| `make api` / `make frontend` | Локальный API (`:8080`) / UI (`npm run dev`) |
+| `make dev-mock` | API + UI на хосте, LLM=MOCK |
+| `make dev-llm` | API + UI на хосте, Ollama в контейнере (`qwen2.5:0.5b`) |
+| `make api` / `make frontend` | То же по отдельности: API (`:8080`) / UI (`npm run dev`) |
 | `make seed` | Заполнить stores (`pipelines.seed_all`) |
 | `make test` | Pytest backend |
 | `make load-smoke` | Лёгкий нагрузочный smoke |
@@ -141,7 +143,20 @@ docker compose -f app/infra/docker-compose.yml --profile obs --profile llm down 
 
 ## C. Локальная разработка API/UI на хосте
 
-Stores на хосте не нужны: ниже `STORE_BACKEND=memory`.
+Stores на хосте не нужны: `STORE_BACKEND=memory` и `LLM_PROVIDER=MOCK` — значения по умолчанию в `kp/config.py`. Команды `make dev-mock` и `make dev-llm` выставляют их сами, поэтому `.env` эти значения не перебивает.
+
+**Make** (из корня, GNU Make). Одна команда поднимает API и UI:
+
+| Команда | Что запускает |
+|---------|----------------|
+| `make dev-mock` | `uvicorn --reload` + Vite, LLM=MOCK |
+| `make dev-llm` | контейнер Ollama (`qwen2.5:0.5b`) + те же процессы, `LLM_PROVIDER=OLLAMA`, base URL `http://127.0.0.1:11434/v1` |
+
+UI: http://127.0.0.1:5173 · API: http://127.0.0.1:8080. Ctrl+C останавливает API и Vite. Stores остаются `memory` — Neo4j/Qdrant не нужны. `dev-llm` не поднимает Kubernetes: Ollama только в Compose, API ходит на `127.0.0.1`, не на `host.docker.internal`.
+
+По отдельности (два терминала): `make api` и `make frontend`. `make frontend` выставляет `VITE_API_BASE_URL=http://127.0.0.1:8080`, чтобы Vite ходил в API на хосте, а не в `/api` ingress.
+
+Перед первым запуском: venv и `pip install -e ".[dev]"` в `app/backend`, `npm install` в `app/frontend`. `make api` берёт Python из `app/backend/.venv`, не из PATH. Для `dev-llm` нужен Docker Desktop.
 
 **Windows**
 
@@ -150,7 +165,7 @@ cd app/backend
 .\.venv\Scripts\Activate.ps1
 $env:LLM_PROVIDER = "MOCK"
 $env:STORE_BACKEND = "memory"
-uvicorn app.main:app --reload --port 8080
+uvicorn kp.main:app --reload --port 8080
 ```
 
 ```powershell
@@ -166,7 +181,7 @@ cd app/backend
 source .venv/bin/activate
 export LLM_PROVIDER=MOCK
 export STORE_BACKEND=memory
-uvicorn app.main:app --reload --port 8080
+uvicorn kp.main:app --reload --port 8080
 ```
 
 ```bash

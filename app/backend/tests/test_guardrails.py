@@ -1,4 +1,4 @@
-from app.security.guardrails import input_guard, vision_input_guard
+from kp.security.guardrails import input_guard, vision_input_guard
 
 
 def test_blocks_prompt_injection():

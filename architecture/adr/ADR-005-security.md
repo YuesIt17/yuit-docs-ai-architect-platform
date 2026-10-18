@@ -38,5 +38,5 @@ Accepted
 
 ## Ссылки
 
-- `app/backend/app/security/rbac.py`, `guardrails.py`
+- `app/backend/kp/security/rbac.py`, `guardrails.py`
 - Demo: [demo-script.md](../demo-script.md)

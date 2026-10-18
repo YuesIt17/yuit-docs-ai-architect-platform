@@ -1,6 +1,8 @@
+"""Prometheus counters/histograms scraped via /metrics (Grafana KP Overview)."""
+
 from prometheus_client import Counter, Gauge, Histogram
 
-# Latency is recorded in milliseconds (see routes._audit / vision path).
+# Latency is recorded in milliseconds (see application.audit / vision path).
 _MS_BUCKETS = (5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000)
 
 LLM_TOKENS = Counter("llm_tokens_total", "LLM tokens", ["direction"])

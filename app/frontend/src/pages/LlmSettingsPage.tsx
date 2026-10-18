@@ -122,12 +122,13 @@ export function LlmSettingsPage() {
         )}
         <h3>Ollama base URL (куда ходит API, не браузер)</h3>
         <p className="mono">
-          Hybrid (make demo): http://host.docker.internal:11434/v1{"\n"}
-          API on host + make llm-ollama: http://localhost:11434/v1
+          Hybrid (make demo, API в K8s): http://host.docker.internal:11434/v1{"\n"}
+          API на хосте (make dev-llm): http://127.0.0.1:11434/v1, model qwen2.5:0.5b
         </p>
         <p>
-          Platform в K8s, Ollama только в Compose — без дублей. Base URL — endpoint{" "}
-          <strong>изнутри пода API</strong>. Preset: <code>host.docker.internal</code>.
+          Platform в K8s, Ollama только в Compose — без дублей. Из пода API base URL —{" "}
+          <code>host.docker.internal</code>. С хоста (<code>make dev-llm</code>) —{" "}
+          <code>127.0.0.1</code>.
         </p>
       </aside>
     </div>
