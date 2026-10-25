@@ -1,30 +1,31 @@
 ﻿# Диаграммы Knowledge Platform
 
-Схемы сдачи (Draw.io + PNG). Specs для перегенерации: [`_dev/specs/`](_dev/specs/).
+Всё в одном каталоге:
 
-| Диаграмма | PNG | Draw.io |
-| --------- | --- | ------- |
-| C4 L1 Контекст | [c4-context.png](c4-context.png) | [c4-context.drawio](c4-context.drawio) |
-| C4 L2 Контейнеры | [c4-container.png](c4-container.png) | [c4-container.drawio](c4-container.drawio) |
-| C4 L3 Компоненты агента | [c4-component.png](c4-component.png) | [c4-component.drawio](c4-component.drawio) |
-| Deployment | [deployment.png](deployment.png) | [deployment.drawio](deployment.drawio) |
-| Sequence (chat) | [sequence-chat.png](sequence-chat.png) | [sequence-chat.drawio](sequence-chat.drawio) |
-| ER | [er-diagram.png](er-diagram.png) | [er-diagram.drawio](er-diagram.drawio) |
-| Data Flow | [data-flow.png](data-flow.png) | [data-flow.drawio](data-flow.drawio) |
-| Compose topology | [compose-topology.png](compose-topology.png) | [compose-topology.drawio](compose-topology.drawio) |
-| K8s topology | [k8s-topology.png](k8s-topology.png) | [k8s-topology.drawio](k8s-topology.drawio) |
+| Путь | Содержимое |
+|------|------------|
+| [`model/`](model/) | Structurizr DSL + source-map + Mermaid fallbacks |
+| [`curated/`](curated/) | Ручные sequence / data-flow / ER (не выдавать за codegen) |
+| [`sources/`](sources/) | Generated Mermaid (LangGraph, Structurizr export, Pyreverse, …) |
+| [`images/`](images/) | **Канонические SVG** |
 
-Markdown + Mermaid: [`architecture/`](../) · infra: [`docs/infra/`](../../docs/infra/).
+| Диаграмма | SVG |
+|-----------|-----|
+| C4 L1 Context | [images/c4-context.svg](images/c4-context.svg) |
+| C4 L2 Containers | [images/c4-container.svg](images/c4-container.svg) |
+| C4 L3 Components | [images/c4-backend-components.svg](images/c4-backend-components.svg) |
+| Hybrid deployment | [images/current-hybrid-deployment.svg](images/current-hybrid-deployment.svg) |
+| Agent workflow | [images/agent-workflow.svg](images/agent-workflow.svg) |
+| Python packages | [images/python-packages.svg](images/python-packages.svg) |
+| K8s topology (desktop, Mermaid) | [images/k8s-topology-desktop.svg](images/k8s-topology-desktop.svg) |
+| K8s topology (KubeDiagrams icons) | [images/k8s-topology-desktop-kube.svg](images/k8s-topology-desktop-kube.svg) |
+| Sequence chat | [images/sequence-chat.svg](images/sequence-chat.svg) |
+| Data flow | [images/data-flow.svg](images/data-flow.svg) |
+| ER conceptual | [images/er-conceptual.svg](images/er-conceptual.svg) |
+| Target overview | [images/target-overview.svg](images/target-overview.svg) |
 
-Перегенерация (из `yuit-docs-ai-architect/tools/drawio-mcp`):
+Сборка: [`docs/DIAGRAMS.md`](../../docs/DIAGRAMS.md)
 
 ```powershell
-node src/cli.mjs --spec <platform>/diagrams/_dev/specs/c4-context.json --output <platform>/diagrams/c4-context.drawio
-node src/cli.mjs --export-png <platform>/diagrams/c4-context.drawio --spec-path <platform>/diagrams/_dev/specs/c4-context.json
-```
-
-Fallback PNG для compose/k8s topology (если drawio CLI / Docker недоступны):
-
-```powershell
-python architecture/diagrams/_dev/render_topology_png.py
+python tools/diagrams/build.py --profile desktop
 ```

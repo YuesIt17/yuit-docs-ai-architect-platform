@@ -1,0 +1,33 @@
+%% status: curated-from-code
+%% view: current-backend-components
+%% profile: desktop
+%% LangGraph topology: agent-workflow.svg
+flowchart TB
+  subgraph backend [Backend_API_same_process]
+    api[API_Router]
+    chat[ChatService]
+    vision[VisionServiceApp]
+    ig[input_guard]
+    og[output_guard]
+    rbac[RBAC]
+    agent[KnowledgeAgent]
+    store[HybridKnowledgeStore]
+    llm[LLMClient]
+    obj[ObjectStore]
+    audit[record_request_audit]
+  end
+  neo4j[(Neo4j)]
+  qdrant[(Qdrant)]
+  api --> chat
+  api --> vision
+  chat --> ig
+  chat --> agent
+  chat --> audit
+  agent --> store
+  agent --> llm
+  agent --> og
+  agent --> rbac
+  vision --> obj
+  vision --> store
+  store --> neo4j
+  store --> qdrant

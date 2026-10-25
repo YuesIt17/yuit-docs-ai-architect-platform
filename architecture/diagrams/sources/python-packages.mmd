@@ -1,0 +1,51 @@
+%% converted: classDiagram -> layered flowchart for editor preview
+flowchart TB
+  subgraph kp_packages [kp_packages]
+    subgraph layer_agent [agent]
+      direction LR
+      agent[agent]
+      n_graph[graph]
+      state[state]
+    end
+    subgraph layer_api [api]
+      direction LR
+      api[api]
+      chat[chat]
+      deps[deps]
+      health[health]
+      jobs[jobs]
+      llm[llm]
+      router[router]
+      vision[vision]
+    end
+    subgraph layer_app [application]
+      direction LR
+      application[application]
+      audit[audit]
+    end
+    subgraph layer_domain [domain]
+      direction LR
+      domain[domain]
+      nodes[nodes]
+      schemas[schemas]
+    end
+    subgraph layer_infra [infrastructure]
+      direction LR
+      infrastructure[infrastructure]
+      cache[cache]
+      embeddings[embeddings]
+      neo4j_graph[neo4j_graph]
+      object_store[object_store]
+      qdrant_vectors[qdrant_vectors]
+    end
+    subgraph layer_obs [observability]
+      direction LR
+      observability[observability]
+      logging_json[logging_json]
+    end
+  end
+  layer_agent --> layer_api
+  layer_api --> layer_app
+  layer_app --> layer_domain
+  layer_domain --> layer_infra
+  layer_infra --> layer_obs

@@ -1,4 +1,4 @@
-.PHONY: up down demo seed test api frontend dev-mock dev-llm llm-ollama obs side k8s-up k8s-down load-smoke sec-scan sec-ops
+.PHONY: up down demo seed test api frontend dev-mock dev-llm llm-ollama obs side k8s-up k8s-down load-smoke sec-scan sec-ops diagrams diagrams-check diagrams-bootstrap
 
 # Windows: PowerShell scripts; macOS/Linux: bash scripts
 ifeq ($(OS),Windows_NT)
@@ -45,8 +45,10 @@ down:
 # cmd.exe treats "/" as a switch, so ".venv/Scripts/python.exe" runs the command ".venv".
 ifeq ($(OS),Windows_NT)
   VENV_PY := .venv\Scripts\python.exe
+  VENV_PY_ROOT := app\backend\.venv\Scripts\python.exe
 else
   VENV_PY := .venv/bin/python
+  VENV_PY_ROOT := app/backend/.venv/bin/python
 endif
 
 seed:
@@ -82,3 +84,13 @@ test:
 
 load-smoke:
 	cd app/backend && $(VENV_PY) -m scripts.load_smoke
+
+# Architecture diagrams-as-code (see docs/DIAGRAMS.md)
+diagrams-bootstrap:
+	$(VENV_PY_ROOT) tools/diagrams/build.py --bootstrap
+
+diagrams:
+	$(VENV_PY_ROOT) tools/diagrams/build.py --profile $(or $(PROFILE),desktop)
+
+diagrams-check:
+	$(VENV_PY_ROOT) tools/diagrams/build.py --profile $(or $(PROFILE),desktop) --check

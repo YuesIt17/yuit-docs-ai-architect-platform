@@ -18,13 +18,26 @@ from kp.security.guardrails import input_guard, output_guard
 from kp.security.rbac import Principal
 
 
+def build_graph(store, llm: LLMClient, *, agent: "KnowledgeAgent | None" = None):
+    """Compile the agent StateGraph with injected deps (no DI / network side effects).
+
+    Used by KnowledgeAgent and by tools/diagrams/export_langgraph.py with no-I/O doubles.
+    Topology must stay identical for both callers — do not maintain a second demo graph.
+    """
+    if agent is None:
+        agent = KnowledgeAgent.__new__(KnowledgeAgent)
+        agent.store = store
+        agent.llm = llm
+    return agent._build()
+
+
 class KnowledgeAgent:
     """GraphRAG agent over a KnowledgeStore-compatible facade."""
 
     def __init__(self, store, llm: LLMClient):
         self.store = store
         self.llm = llm
-        self.graph = self._build()
+        self.graph = build_graph(store, llm, agent=self)
 
     def _build(self):
         g = StateGraph(AgentState)

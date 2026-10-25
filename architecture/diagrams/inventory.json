@@ -1,0 +1,489 @@
+{
+  "compose_services": [
+    {
+      "image": "grafana/alloy:v1.5.1",
+      "name": "alloy",
+      "ports": [
+        "12345"
+      ],
+      "profiles": [
+        "obs"
+      ]
+    },
+    {
+      "image": "grafana/grafana:11.3.0",
+      "name": "grafana",
+      "ports": [
+        "3000"
+      ],
+      "profiles": [
+        "obs"
+      ]
+    },
+    {
+      "image": "grafana/loki:3.2.1",
+      "name": "loki",
+      "ports": [
+        "3100"
+      ],
+      "profiles": [
+        "obs"
+      ]
+    },
+    {
+      "image": "ollama/ollama:latest",
+      "name": "ollama",
+      "ports": [
+        "11434"
+      ],
+      "profiles": [
+        "llm"
+      ]
+    },
+    {
+      "image": "prom/prometheus:v2.55.1",
+      "name": "prometheus",
+      "ports": [
+        "9090"
+      ],
+      "profiles": [
+        "obs"
+      ]
+    },
+    {
+      "image": "grafana/tempo:2.6.1",
+      "name": "tempo",
+      "ports": [
+        "3200",
+        "4317",
+        "4318"
+      ],
+      "profiles": [
+        "obs"
+      ]
+    },
+    {
+      "image": "vllm/vllm-openai:v0.6.6",
+      "name": "vllm",
+      "ports": [
+        "8000"
+      ],
+      "profiles": [
+        "vllm"
+      ]
+    }
+  ],
+  "gpu_profile": "pending",
+  "helm_inputs": [
+    {
+      "path": "app/infra/helm/knowledge-platform/values.yaml",
+      "sha256": "b9eea2b7b08d8820929ae00b532a48b064ec57ce1a1c876f2ec8b8f7f4b96c97"
+    },
+    {
+      "path": "app/infra/helm/knowledge-platform/values-desktop.yaml",
+      "sha256": "a0c8cac0971bc2ab2b0797bfc2f9fdcc4f03e09ba5fefc637f48c2b386de5d5a"
+    }
+  ],
+  "k8s_resources": [
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "api",
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "control"
+      },
+      "name": "api",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "frontend",
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "edge"
+      },
+      "name": "frontend",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "minio",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "minio",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "neo4j",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "neo4j",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "postgres",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "postgres",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "qdrant",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "qdrant",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Deployment",
+      "labels": {
+        "app": "redis",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "redis",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Ingress",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-api",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Ingress",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-ui",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Namespace",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "mixed"
+      },
+      "name": "kp",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "control"
+      },
+      "name": "kp-control-plane-egress",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "kp-data-plane-ingress",
+      "namespace": "kp"
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "kp-minio-data",
+      "namespace": "kp",
+      "storage": "10Gi"
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "kp-neo4j-data",
+      "namespace": "kp",
+      "storage": "5Gi"
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "kp-postgres-data",
+      "namespace": "kp",
+      "storage": "5Gi"
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp",
+        "kp.retailpartnerx.io/plane": "data"
+      },
+      "name": "kp-qdrant-data",
+      "namespace": "kp",
+      "storage": "5Gi"
+    },
+    {
+      "kind": "Secret",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-secrets",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Service",
+      "labels": {
+        "app": "api",
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "api",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": null,
+          "port": 8080,
+          "targetPort": 8080
+        }
+      ],
+      "selector": {
+        "app": "api"
+      }
+    },
+    {
+      "kind": "Service",
+      "labels": {
+        "app": "frontend",
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "frontend",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": null,
+          "port": 80,
+          "targetPort": 80
+        }
+      ],
+      "selector": {
+        "app": "frontend"
+      }
+    },
+    {
+      "kind": "Service",
+      "labels": {},
+      "name": "minio",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": "api",
+          "port": 9000,
+          "targetPort": null
+        },
+        {
+          "name": "console",
+          "port": 9001,
+          "targetPort": null
+        }
+      ],
+      "selector": {
+        "app": "minio"
+      }
+    },
+    {
+      "kind": "Service",
+      "labels": {},
+      "name": "neo4j",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": "http",
+          "port": 7474,
+          "targetPort": null
+        },
+        {
+          "name": "bolt",
+          "port": 7687,
+          "targetPort": null
+        }
+      ],
+      "selector": {
+        "app": "neo4j"
+      }
+    },
+    {
+      "kind": "Service",
+      "labels": {},
+      "name": "postgres",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": null,
+          "port": 5432,
+          "targetPort": null
+        }
+      ],
+      "selector": {
+        "app": "postgres"
+      }
+    },
+    {
+      "kind": "Service",
+      "labels": {},
+      "name": "qdrant",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": null,
+          "port": 6333,
+          "targetPort": null
+        }
+      ],
+      "selector": {
+        "app": "qdrant"
+      }
+    },
+    {
+      "kind": "Service",
+      "labels": {},
+      "name": "redis",
+      "namespace": "kp",
+      "ports": [
+        {
+          "name": null,
+          "port": 6379,
+          "targetPort": null
+        }
+      ],
+      "selector": {
+        "app": "redis"
+      }
+    }
+  ],
+  "langgraph": {
+    "edges": [
+      [
+        "__start__",
+        "guard_input",
+        ""
+      ],
+      [
+        "graph_retrieve",
+        "vector_retrieve",
+        ""
+      ],
+      [
+        "guard_input",
+        "route",
+        ""
+      ],
+      [
+        "guard_output",
+        "__end__",
+        ""
+      ],
+      [
+        "label_recognize",
+        "policy_check",
+        ""
+      ],
+      [
+        "policy_check",
+        "synthesize",
+        ""
+      ],
+      [
+        "refine_retrieve",
+        "synthesize",
+        ""
+      ],
+      [
+        "route",
+        "graph_retrieve",
+        "chat"
+      ],
+      [
+        "route",
+        "guard_output",
+        "blocked"
+      ],
+      [
+        "route",
+        "label_recognize",
+        "label"
+      ],
+      [
+        "synthesize",
+        "guard_output",
+        ""
+      ],
+      [
+        "vector_retrieve",
+        "refine_retrieve",
+        "refine"
+      ],
+      [
+        "vector_retrieve",
+        "synthesize",
+        ""
+      ]
+    ],
+    "nodes": [
+      "__end__",
+      "__start__",
+      "graph_retrieve",
+      "guard_input",
+      "guard_output",
+      "label_recognize",
+      "policy_check",
+      "refine_retrieve",
+      "route",
+      "synthesize",
+      "vector_retrieve"
+    ]
+  },
+  "note": "Not a live cluster inventory. Labels are not isolation guarantees.",
+  "postgres_status": "deployed-unused",
+  "profile": "desktop",
+  "provenance": "generated-from-helm-template",
+  "sanitized_manifest_sha256": "efa4da00a20a825852e57b70eab8e6d56f04c734be2ff311845fd9fe3ad9f898",
+  "status": "declared-deployment"
+}

@@ -1,0 +1,31 @@
+# Pinned toolchain for architecture diagrams (never use :latest in CI).
+# Digests filled/verified by: python tools/diagrams/build.py --bootstrap
+
+[structurizr]
+image = structurizr/cli:2025.05.28
+digest = sha256:7c7e7aa8384e58d1f8cecf6b29e59dd38f6dd76cefd43ff831bf22337458d590
+
+[mermaid-cli]
+npm_package = @mermaid-js/mermaid-cli@11.4.2
+# resolved in package-lock.json
+
+[pyreverse]
+pylint = 3.3.7
+
+[kube-diagrams]
+package = KubeDiagrams==0.5.0
+
+[graphviz]
+note = system Graphviz (dot) required for Pyreverse DOT→SVG and KubeDiagrams
+tested_windows = 16.1.0
+
+[helm]
+min_version = 3.14.0
+tested = 4.3.0
+
+[fonts]
+cyrillic = DejaVu Sans (system / image)
+
+[profiles]
+desktop = values.yaml + values-desktop.yaml
+gpu = pending (no values-gpu.yaml; do not fabricate)

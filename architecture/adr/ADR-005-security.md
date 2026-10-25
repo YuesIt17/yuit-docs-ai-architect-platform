@@ -39,4 +39,4 @@ Accepted
 ## Ссылки
 
 - `app/backend/kp/security/rbac.py`, `guardrails.py`
-- Demo: [docs/demo-script.md](../../docs/demo-script.md)
+- Demo: [tasks/AI_PLATFORM_VIDEO_SCRIPT.md](../../tasks/AI_PLATFORM_VIDEO_SCRIPT.md)

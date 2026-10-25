@@ -31,9 +31,9 @@ On-premise **GraphRAG Knowledge Platform**:
 | Раздел | Путь |
 | ------ | ---- |
 | Задание / критерии | [README](../README.md) |
-| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagrams/](../architecture/diagrams/) |
+| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagrams SVG](../architecture/diagrams/images/) · [DIAGRAMS.md](DIAGRAMS.md) |
 | ADR | [adr/](../architecture/adr/) |
-| Демо / нагрузка | [demo-script.md](demo-script.md) · [load-report.md](load-report.md) |
+| Демо / нагрузка | [AI_PLATFORM_VIDEO_SCRIPT](../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) · [load-report.md](load-report.md) |
 | Model Card | [model-card.md](model-card.md) |
 
 Учебный MVP: runtime GraphRAG — in-memory mirror онтологии; Neo4j/Qdrant в compose для Browser и sync.

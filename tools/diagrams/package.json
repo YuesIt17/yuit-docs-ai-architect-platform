@@ -1,0 +1,9 @@
+{
+  "name": "kp-diagrams-toolchain",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Pinned Mermaid CLI for offline architecture diagram rendering",
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "11.4.2"
+  }
+}

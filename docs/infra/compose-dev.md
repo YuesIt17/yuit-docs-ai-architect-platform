@@ -1,6 +1,6 @@
 ﻿# Compose — hybrid side-stack
 
-**Схема:** [compose-topology.png](../../architecture/diagrams/compose-topology.png) · [compose-topology.drawio](../../architecture/diagrams/compose-topology.drawio)
+**Схема:** [current-hybrid-deployment.svg](../../architecture/diagrams/images/current-hybrid-deployment.svg) (K8s + Compose side-stack)
 
 Источник: [`app/infra/docker-compose.yml`](../../app/infra/docker-compose.yml), [`Makefile`](../../Makefile).  
 Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md) · ADR: [ADR-006](../../architecture/adr/ADR-006-observability.md).

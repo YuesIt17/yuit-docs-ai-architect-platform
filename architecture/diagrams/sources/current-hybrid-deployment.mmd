@@ -1,0 +1,34 @@
+%% status: curated-from-code
+%% view: current-hybrid-deployment
+%% profile: desktop
+%% declared: Helm desktop + Compose llm/obs; GPU/vLLM pending (dashed)
+flowchart TB
+  subgraph host [Developer_Workstation]
+    subgraph k8s [Kubernetes_namespace_kp]
+      ING[Ingress_kp_api_kp_ui]
+      FE[frontend_Deployment]
+      API[api_Deployment]
+      subgraph data [Data_Plane]
+        NJ[neo4j]
+        QD[qdrant]
+        RD[redis]
+        MN[minio]
+        PG[postgres_deployed_unused]
+      end
+    end
+    subgraph compose [Compose_Side_Stack]
+      OL[ollama_profile_llm]
+      OBS[tempo_loki_alloy_prom_grafana]
+    end
+    GPU[vLLM_GPU_pending]
+  end
+  ING --> FE
+  ING --> API
+  API --> NJ
+  API --> QD
+  API --> RD
+  API --> MN
+  API -.->|DSN_unused| PG
+  API -->|host_docker_internal| OL
+  API -->|OTLP| OBS
+  API -.->|submission_profile_pending| GPU

@@ -1,0 +1,33 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+flowchart TD
+	__start__([__start__]):::first
+	guard_input(guard_input)
+	route(route)
+	graph_retrieve(graph_retrieve)
+	vector_retrieve(vector_retrieve)
+	refine_retrieve(refine_retrieve)
+	label_recognize(label_recognize)
+	policy_check(policy_check)
+	synthesize(synthesize)
+	guard_output(guard_output)
+	__end__([__end__]):::last
+	__start__ --> guard_input
+	graph_retrieve --> vector_retrieve
+	guard_input --> route
+	label_recognize --> policy_check
+	policy_check --> synthesize
+	refine_retrieve --> synthesize
+	route -.  chat  .-> graph_retrieve
+	route -.  blocked  .-> guard_output
+	route -.  label  .-> label_recognize
+	synthesize --> guard_output
+	vector_retrieve -.  refine  .-> refine_retrieve
+	vector_retrieve -.-> synthesize
+	guard_output --> __end__
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

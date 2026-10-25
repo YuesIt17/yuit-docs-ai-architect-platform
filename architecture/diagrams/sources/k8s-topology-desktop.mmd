@@ -1,0 +1,39 @@
+%% profile: desktop
+%% note: Declared Helm topology not live cluster. NetworkPolicy omitted.
+flowchart TB
+  subgraph ns_kp [Namespace_kp]
+    dep_api[Deploy_api]
+    svc_api[Svc_api]
+    svc_api --> dep_api
+    dep_frontend[Deploy_frontend]
+    svc_frontend[Svc_frontend]
+    svc_frontend --> dep_frontend
+    dep_minio[Deploy_minio]
+    svc_minio[Svc_minio]
+    svc_minio --> dep_minio
+    dep_neo4j[Deploy_neo4j]
+    svc_neo4j[Svc_neo4j]
+    svc_neo4j --> dep_neo4j
+    dep_postgres[Deploy_postgres]
+    svc_postgres[Svc_postgres]
+    svc_postgres --> dep_postgres
+    dep_qdrant[Deploy_qdrant]
+    svc_qdrant[Svc_qdrant]
+    svc_qdrant --> dep_qdrant
+    dep_redis[Deploy_redis]
+    svc_redis[Svc_redis]
+    svc_redis --> dep_redis
+    pvc_kp_minio_data[(PVC_kp-minio-data)]
+    pvc_kp_neo4j_data[(PVC_kp-neo4j-data)]
+    pvc_kp_postgres_data[(PVC_kp-postgres-data)]
+    pvc_kp_qdrant_data[(PVC_kp-qdrant-data)]
+    ing_kp_api[Ingress_kp-api]
+    ing_kp_ui[Ingress_kp-ui]
+    secret_kp[Secret_kp_secrets]
+  end
+  ing_kp_api --> svc_api
+  ing_kp_ui --> svc_frontend
+  dep_minio --> pvc_kp_minio_data
+  dep_neo4j --> pvc_kp_neo4j_data
+  dep_postgres --> pvc_kp_postgres_data
+  dep_qdrant --> pvc_kp_qdrant_data

@@ -36,5 +36,5 @@ RetailPartnerX обрабатывает сканы этикеток (PDF/PNG и 
 
 ## Ссылки
 
-- Sequence: [sequence-label.md](../sequence-label.md)
+- Sequence: [sequence-label.md](../docs/sequence-label.md)
 - ADR-009 (MinIO prefixes)

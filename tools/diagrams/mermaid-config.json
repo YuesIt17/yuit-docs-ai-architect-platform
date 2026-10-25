@@ -1,0 +1,16 @@
+{
+  "theme": "neutral",
+  "securityLevel": "loose",
+  "flowchart": {
+    "htmlLabels": false,
+    "useMaxWidth": true
+  },
+  "sequence": {
+    "useMaxWidth": true,
+    "showSequenceNumbers": false
+  },
+  "er": {
+    "useMaxWidth": true
+  },
+  "fontFamily": "DejaVu Sans, Noto Sans, Arial, sans-serif"
+}

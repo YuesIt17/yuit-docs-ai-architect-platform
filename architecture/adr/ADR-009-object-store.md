@@ -34,5 +34,5 @@ On-prem **MinIO** с префиксами `raw/`, `normalized/`, `recognized/`, 
 
 ## Ссылки
 
-- Data Flow: [data-flow.md](../data-flow.md)
+- Data Flow: [data-flow.md](../docs/data-flow.md)
 - MinIO in Helm (K8s) ports 9000/9001; Compose uses `STORE_BACKEND=memory`

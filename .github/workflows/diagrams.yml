@@ -1,0 +1,84 @@
+name: diagrams
+
+on:
+  pull_request:
+    paths:
+      - "app/backend/**"
+      - "app/infra/**"
+      - "architecture/**"
+      - "tools/diagrams/**"
+      - ".github/workflows/diagrams.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/backend/**"
+      - "app/infra/**"
+      - "architecture/**"
+      - "tools/diagrams/**"
+      - ".github/workflows/diagrams.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagrams:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: "22.14.0"
+          cache: npm
+          cache-dependency-path: tools/diagrams/package-lock.json
+
+      - name: Install Graphviz and Helm
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends graphviz fonts-dejavu-core
+          curl -fsSL -o /tmp/helm.tgz https://get.helm.sh/helm-v3.16.4-linux-amd64.tar.gz
+          tar -xzf /tmp/helm.tgz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          helm version
+
+      - name: Backend venv + diagram deps
+        run: |
+          python -m venv app/backend/.venv
+          app/backend/.venv/bin/pip install -U pip
+          app/backend/.venv/bin/pip install -e "app/backend[dev]"
+          app/backend/.venv/bin/pip install -r tools/diagrams/requirements.txt
+          # KubeDiagrams Windows layout fix is a no-op on Linux (bin next to script)
+
+      - name: npm Mermaid CLI
+        working-directory: tools/diagrams
+        run: npm ci
+
+      - name: Pull Structurizr CLI
+        run: docker pull structurizr/cli:2025.05.28
+
+      - name: Architecture unit tests
+        run: |
+          export PYTHONPATH=tools/diagrams:app/backend
+          app/backend/.venv/bin/pytest -q tests/architecture
+
+      - name: diagrams-check (drift)
+        env:
+          DIAGRAMS_INCLUDE_GIT_SHA: "1"
+        run: app/backend/.venv/bin/python tools/diagrams/build.py --profile desktop --check
+
+      - name: Upload diagram artifacts
+        if: always()
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: architecture-diagrams
+          path: |
+            architecture/diagrams/images/
+            architecture/diagrams/provenance.json
+            architecture/diagrams/inventory.json
+          if-no-files-found: warn

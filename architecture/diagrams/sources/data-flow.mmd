@@ -1,0 +1,43 @@
+%% status: curated-from-code
+%% profile: desktop
+%% Ingest vs query data movement; OCR MOCK/planned
+flowchart TB
+  subgraph ingest [Ingest_path]
+    U1[Upload_or_seed]
+    Norm[Normalize_metadata]
+    OCR[OCR_MOCK_planned]
+    Emb[EmbeddingService]
+    GWrite[Neo4j_write]
+    VWrite[Qdrant_upsert]
+    Obj[ObjectStore]
+    U1 --> Norm
+    Norm --> OCR
+    OCR --> Emb
+    Emb --> VWrite
+    Norm --> GWrite
+    U1 --> Obj
+  end
+  subgraph query [Query_path_chat]
+    Q[User_question]
+    Auth[Demo_Bearer_RBAC]
+    IG[input_guard]
+    Cache[SemanticCache]
+    GR[graph_resolve]
+    VR[vector_retrieve_ACL]
+    RR[refine_optional]
+    Syn[LLM_synthesize]
+    OG[output_guard]
+    Resp[Response_citations]
+    Q --> Auth
+    Auth --> IG
+    IG --> Cache
+    Cache -->|miss| GR
+    GR --> VR
+    VR --> RR
+    RR --> Syn
+    Syn --> OG
+    OG --> Resp
+    Cache -->|hit| Resp
+  end
+  VWrite -.->|index| VR
+  GWrite -.->|doc_ids| GR

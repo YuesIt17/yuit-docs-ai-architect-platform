@@ -1,0 +1,25 @@
+%% status: curated-from-code
+%% view: current-containers
+%% profile: desktop
+flowchart TB
+  user[Users]
+  subgraph kp [Knowledge_Platform]
+    frontend[Frontend]
+    backend[Backend_API]
+    neo4j[(Neo4j)]
+    qdrant[(Qdrant)]
+    redis[(Redis)]
+    minio[(MinIO)]
+    postgres[(Postgres_deployed_unused)]
+  end
+  ollama[Ollama_host]
+  obs[Obs_stack]
+  user --> frontend
+  frontend -->|HTTPS_api| backend
+  backend --> neo4j
+  backend --> qdrant
+  backend --> redis
+  backend --> minio
+  backend -.->|unused| postgres
+  backend --> ollama
+  backend --> obs

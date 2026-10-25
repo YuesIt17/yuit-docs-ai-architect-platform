@@ -39,5 +39,5 @@ Accepted
 
 ## Ссылки
 
-- ER: [er-diagram.md](../er-diagram.md)
+- ER: [er-diagram.md](../docs/er-diagram.md)
 - `app/backend/kp/repositories/memory_store.py`, `pipelines/sync_neo4j.py`

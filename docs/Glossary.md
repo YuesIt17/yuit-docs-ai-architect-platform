@@ -4,11 +4,11 @@
 
 ### GraphRAG
 
-Гибридный retrieval: сначала resolve сущностей и связей в графе знаний (Neo4j / in-memory mirror), затем векторный поиск по чанкам с фильтром ACL. Цель — меньше галлюцинаций и потери контекста, чем у «мешка эмбеддингов». См. [ADR-003](../architecture/adr/ADR-003-graph-db.md), [data-flow](../architecture/data-flow.md).
+Гибридный retrieval: сначала resolve сущностей и связей в графе знаний (Neo4j / in-memory mirror), затем векторный поиск по чанкам с фильтром ACL. Цель — меньше галлюцинаций и потери контекста, чем у «мешка эмбеддингов». См. [ADR-003](../architecture/adr/ADR-003-graph-db.md), [data-flow](../architecture/docs/data-flow.md).
 
 ### Control Plane
 
-Слой управления запросом: AuthN/RBAC, Input/Output Guardrails, LangGraph-оркестратор, политики и semantic cache. Не хранит сырые knowledge-blobs — решает, *кому* и *как* отвечать. См. [c4-container](../architecture/c4-container.md).
+Слой управления запросом: AuthN/RBAC, Input/Output Guardrails, LangGraph-оркестратор, политики и semantic cache. Не хранит сырые knowledge-blobs — решает, *кому* и *как* отвечать. См. [c4-container](../architecture/docs/c4-container.md).
 
 ### Data Plane
 
@@ -44,8 +44,8 @@
 
 ### Outbox
 
-Таблица/поток событий (например `label.recognized`) для надёжной передачи результата в PIM/ERP без прямой синхронной связи. См. [ADR-009](../architecture/adr/ADR-009-object-store.md), [data-flow](../architecture/data-flow.md).
+Таблица/поток событий (например `label.recognized`) для надёжной передачи результата в PIM/ERP без прямой синхронной связи. См. [ADR-009](../architecture/adr/ADR-009-object-store.md), [data-flow](../architecture/docs/data-flow.md).
 
 ### Trust boundary
 
-Граница доверия BFF ↔ Knowledge Platform: снаружи только OpenAPI (и SSE chat); внутренние stores и LLM не торчат в DMZ. См. [c4-context](../architecture/c4-context.md), [deployment](../architecture/deployment.md).
+Граница доверия BFF ↔ Knowledge Platform: снаружи только OpenAPI (и SSE chat); внутренние stores и LLM не торчат в DMZ. См. [c4-context](../architecture/docs/c4-context.md), [deployment](../architecture/docs/deployment.md).

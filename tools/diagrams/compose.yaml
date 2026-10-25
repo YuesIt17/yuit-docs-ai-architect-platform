@@ -1,0 +1,21 @@
+# Diagrams toolchain (Docker Desktop / Linux).
+# Structurizr CLI as separate pinned service; renderer image for mmdc/pyreverse/kube-diagrams.
+services:
+  structurizr:
+    image: structurizr/cli:2025.05.28
+    volumes:
+      - ../..:/workspace
+    working_dir: /workspace
+    profiles: ["structurizr"]
+
+  diagrams:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kp-diagrams-toolchain:0.1.0
+    volumes:
+      - ../..:/workspace
+    working_dir: /workspace
+    environment:
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    profiles: ["render"]

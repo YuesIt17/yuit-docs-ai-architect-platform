@@ -1,0 +1,5 @@
+# Pinned for diagrams export only — not the platform runtime.
+pylint==3.3.7
+# Prefer binary wheels; avoid forcing a source build on bleeding-edge CPython.
+PyYAML>=6.0.2
+KubeDiagrams==0.5.0

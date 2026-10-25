@@ -1,11 +1,11 @@
 ﻿# Kubernetes — архитектура (Docker Desktop + Helm)
 
-**Схема:** [k8s-topology.png](../../architecture/diagrams/k8s-topology.png) · [k8s-topology.drawio](../../architecture/diagrams/k8s-topology.drawio)
+**Схема:** [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg)
 
 Источник правды: Helm chart [`app/infra/helm/knowledge-platform/`](../../app/infra/helm/knowledge-platform/), [`app/scripts/k8s/k8s-up.ps1`](../../app/scripts/k8s/k8s-up.ps1).  
 Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).  
 Что такое сущности K8s / Helm и как катить фичи: [k8s-primer.md](k8s-primer.md).  
-Логические сегменты: [architecture/deployment.md](../../architecture/deployment.md).
+Логические сегменты: [architecture/docs/deployment.md](../../architecture/docs/deployment.md).
 
 ## Nodes
 

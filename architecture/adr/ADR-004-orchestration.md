@@ -40,4 +40,4 @@ Accepted
 ## Ссылки
 
 - `app/backend/kp/agent/graph.py`, `app/backend/kp/agent/state.py`
-- Sequence: [sequence-chat.md](../sequence-chat.md)
+- Sequence: [sequence-chat.md](../docs/sequence-chat.md)

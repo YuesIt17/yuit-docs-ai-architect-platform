@@ -1,0 +1,207 @@
+# Maps Structurizr element IDs to implementation facts.
+# Validation: tools/diagrams/check_consistency.py
+# Do not bind exclusively to line numbers.
+
+version: 1
+profile: desktop
+
+elements:
+  - id: frontend
+    type: container
+    status: current
+    source:
+      path: app/frontend/package.json
+      kind: package
+    k8s:
+      kind: Deployment
+      name: frontend
+    notes: Vite React SPA
+
+  - id: backend
+    type: container
+    status: current
+    source:
+      path: app/backend/kp/main.py
+      symbol: create_app
+    k8s:
+      kind: Deployment
+      name: api
+    notes: FastAPI process hosting components below
+
+  - id: apiRouter
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/api/router.py
+      symbol: router
+    notes: API router module
+
+  - id: chatService
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/application/chat.py
+      symbol: ChatService
+
+  - id: visionService
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/application/vision.py
+      symbol: VisionServiceApp
+
+  - id: inputGuard
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/security/guardrails.py
+      symbol: input_guard
+
+  - id: outputGuard
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/security/guardrails.py
+      symbol: output_guard
+
+  - id: rbac
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/security/rbac.py
+      symbol: can_access
+
+  - id: agent
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/agent/graph.py
+      symbol: KnowledgeAgent
+    notes: Topology also exported via build_graph > agent-workflow.mmd
+
+  - id: hybridStore
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/repositories/hybrid_store.py
+      symbol: HybridKnowledgeStore
+
+  - id: llmClient
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/infrastructure/llm.py
+      symbol: LLMClient
+
+  - id: objectStore
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/infrastructure/object_store.py
+      symbol: ObjectStore
+
+  - id: audit
+    type: component
+    status: curated-from-code
+    source:
+      path: app/backend/kp/application/audit.py
+      symbol: record_request_audit
+
+  - id: neo4j
+    type: container
+    status: current
+    source:
+      path: app/backend/kp/infrastructure/neo4j_graph.py
+      symbol: Neo4jGraphRepository
+    k8s:
+      kind: Service
+      name: neo4j
+
+  - id: qdrant
+    type: container
+    status: current
+    source:
+      path: app/backend/kp/infrastructure/qdrant_vectors.py
+      symbol: QdrantVectorRepository
+    k8s:
+      kind: Service
+      name: qdrant
+
+  - id: redis
+    type: container
+    status: current
+    k8s:
+      kind: Service
+      name: redis
+
+  - id: minio
+    type: container
+    status: current
+    k8s:
+      kind: Service
+      name: minio
+
+  - id: postgres
+    type: container
+    status: current
+    runtime: deployed-unused
+    source:
+      path: app/infra/postgres/init.sql
+      kind: ddl
+    k8s:
+      kind: Service
+      name: postgres
+    notes: Helm deploys Postgres; app metadata plane is in-memory. ER diagram is intended schema.
+
+  - id: ollama
+    type: softwareSystem
+    status: current
+    source:
+      path: app/infra/docker-compose.yml
+      kind: compose-service
+    notes: Compose profile llm
+
+  - id: obsStack
+    type: softwareSystem
+    status: current
+    source:
+      path: app/infra/docker-compose.yml
+      kind: compose-service
+    notes: Compose profile obs
+
+  - id: corporateIdp
+    type: softwareSystem
+    status: target
+
+  - id: vault
+    type: softwareSystem
+    status: target
+
+  - id: vllmHost
+    type: softwareSystem
+    status: target
+    notes: values-submission-vllm.yaml exists; GPU runtime often unverified; no values-gpu.yaml
+
+  - id: realOcr
+    type: softwareSystem
+    status: target
+
+scenarios:
+  sequence-chat:
+    status: curated-from-code
+    participants:
+      - path: app/backend/kp/application/chat.py
+        symbol: ChatService
+      - path: app/backend/kp/security/guardrails.py
+        symbol: input_guard
+      - path: app/backend/kp/agent/graph.py
+        symbol: KnowledgeAgent
+      - path: app/backend/kp/security/guardrails.py
+        symbol: output_guard
+      - path: app/backend/kp/application/audit.py
+        symbol: null
+
+limitations:
+  - Mapping validation checks concrete paths/symbols/k8s names, not full architectural truth.
+  - Static imports do not prove runtime calls.
+  - Helm network access does not prove actual data exchange.

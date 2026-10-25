@@ -36,7 +36,7 @@
 | Критерий | Статус | Проверка | Evidence |
 |----------|--------|----------|----------|
 | Нет облачных inference API | done | ADR-001; MOCK/OLLAMA/VLLM only | [ADR-001](architecture/adr/ADR-001-llm-serving.md) |
-| Deployment + Data Flow | done | docs + diagrams | [deployment](architecture/deployment.md) |
+| Deployment + Data Flow | done | docs + diagrams | [deployment](architecture/docs/deployment.md) |
 | GraphRAG path | done | `pytest tests/test_rag_graph_on_off.py` | graph-on/off |
 | ACL secret deny | done | `pytest tests/test_acl.py tests/test_sec_*` | manager↛secret |
 | Cache ACL revoke | done | `pytest tests/test_sec_cache_acl.py` | — |
@@ -65,9 +65,23 @@
 | ---- | ---------- |
 | [`app/`](app/) | `backend/`, `frontend/`, `infra/`, `datasets/`, `scripts/` |
 | [`architecture/`](architecture/) | C4 L1–L4, ADR, diagrams |
+| [`architecture/diagrams/`](architecture/diagrams/) | Канонические SVG из кода |
 | [`docs/`](docs/) | SETUP, SRE, infra, demo, evidence, model-card |
+| [`tools/diagrams/`](tools/diagrams/) | Toolchain генерации схем |
 | [`data/`](data/) | **Runtime-only** object-store (создаётся при запуске; не исходники) |
 | [`tasks/`](tasks/) | Cursor fixes + video script |
+
+## Архитектура из кода
+
+Канонические схемы собираются из реализации (Structurizr, LangGraph, Pyreverse, Helm→KubeDiagrams), а не перерисовкой Draw.io.
+
+```powershell
+python tools/diagrams/build.py --bootstrap
+python tools/diagrams/build.py --profile desktop
+python tools/diagrams/build.py --profile desktop --check
+```
+
+Документация: **[docs/DIAGRAMS.md](docs/DIAGRAMS.md)** · SVG: [architecture/diagrams/images/](architecture/diagrams/images/) · workflow · C4 · code view · K8s topology.
 
 ## Быстрый старт
 

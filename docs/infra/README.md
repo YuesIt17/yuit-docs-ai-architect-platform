@@ -2,7 +2,7 @@
 
 | Путь | Когда | Документ | Схема |
 |------|-------|----------|-------|
-| **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology.png](../../architecture/diagrams/k8s-topology.png) |
+| **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg) |
 | **K8s + Helm primer** | Сущности кластера, схема связей, поставка фич | [k8s-primer.md](k8s-primer.md) | mermaid в документе |
 | **DevSecOps lab** | Аудит `kp` (Trivy / Semgrep / Nmap / ZAP / Nuclei / Checkov / kube-bench) | [sec-ops.md](sec-ops.md) | — |
 
@@ -48,4 +48,4 @@ bash app/scripts/sec/sec-scan.sh
 | DevSecOps / Security Engineer lab | [sec-ops.md](sec-ops.md) |
 | Chart / compose | [`app/infra/`](../../app/infra/) |
 
-Логические DMZ / Control / Data / GPU: [architecture/deployment.md](../../architecture/deployment.md).
+Логические DMZ / Control / Data / GPU: [architecture/docs/deployment.md](../../architecture/docs/deployment.md).
