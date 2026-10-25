@@ -45,7 +45,7 @@ spec:
               value: minio:9000
             - name: POSTGRES_DSN
               value: postgresql+asyncpg://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}
-            # Compose Jaeger on host; app wires OTLP/HTTP traces. Disable OTel metrics push (Prom scrapes /metrics).
+            # Compose Tempo on host; app wires OTLP/HTTP traces. Logs → Loki via Alloy (stdout JSON). Prom scrapes /metrics.
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.api.env.OTEL_EXPORTER_OTLP_ENDPOINT | default "http://host.docker.internal:4318" | quote }}
             - name: OTEL_METRICS_EXPORTER

@@ -1,6 +1,6 @@
 # Hybrid side-stack only — no overlap with Helm/K8s platform.
 # K8s owns: api, frontend, postgres, neo4j, qdrant, redis, minio
-# Compose owns: ollama, prometheus, grafana, jaeger
+# Compose owns: ollama, prometheus, grafana, tempo, loki, alloy
 name: retailpartnerx-kp
 
 networks:
@@ -11,18 +11,50 @@ networks:
 
 volumes:
   ollama_data:
+  tempo_data:
+  loki_data:
 
 services:
-  jaeger:
-    image: jaegertracing/all-in-one:1.60.0
+  tempo:
+    image: grafana/tempo:2.6.1
     profiles: ["obs"]
-    environment:
-      COLLECTOR_OTLP_ENABLED: "true"
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo_data:/var/tempo
     ports:
-      - "16686:16686"
+      - "3200:3200"
       - "4317:4317"
       - "4318:4318"
     networks: [control]
+
+  loki:
+    image: grafana/loki:3.2.1
+    profiles: ["obs"]
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks: [control]
+
+  alloy:
+    image: grafana/alloy:v1.5.1
+    profiles: ["obs"]
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "12345:12345"
+    networks: [control]
+    depends_on:
+      - loki
 
   prometheus:
     image: prom/prometheus:v2.55.1
@@ -46,6 +78,8 @@ services:
     networks: [control]
     depends_on:
       - prometheus
+      - loki
+      - tempo
 
   # Default pull: qwen2.5:0.5b. Do not use 7B on a laptop with K8s.
   ollama:

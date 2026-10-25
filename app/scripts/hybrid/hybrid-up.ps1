@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 Set-Location $Root
 
-Write-Host "==> Compose side-stack (ollama + prometheus/grafana/jaeger)"
+Write-Host "==> Compose side-stack (ollama + prometheus/grafana/tempo/loki)"
 docker compose -f app/infra/docker-compose.yml --profile llm --profile obs up -d --remove-orphans
 & "$Root\app\scripts\ollama\ollama-pull.ps1" -Model "qwen2.5:0.5b"
 
@@ -17,7 +17,8 @@ Hybrid ready (no Compose↔K8s duplicates):
   UI     http://kp.local:8088
   API    http://kp.local:8088/api/health
   Ollama http://127.0.0.1:11434/v1/models
-  Jaeger http://127.0.0.1:16686
+  Graf   http://127.0.0.1:3000  (Explore: Tempo + Loki)
   Prom   http://127.0.0.1:9090
-  Graf   http://127.0.0.1:3000
+  Tempo  http://127.0.0.1:3200
+  Loki   http://127.0.0.1:3100
 "@

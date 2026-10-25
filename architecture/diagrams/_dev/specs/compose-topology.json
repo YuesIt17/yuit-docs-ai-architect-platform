@@ -1,11 +1,11 @@
 {
   "title": "Compose — hybrid side-stack (no platform)",
   "pageWidth": 1100,
-  "pageHeight": 640,
+  "pageHeight": 720,
   "nodes": [
     {
       "id": "note",
-      "label": "Compose = side-stack only.\nK8s owns api/frontend/stores/minio.\nZero overlap.",
+      "label": "Compose = side-stack only.\nK8s owns api/frontend/stores/minio.\nZero overlap. LGTM obs.",
       "style": "note",
       "x": 40,
       "y": 20,
@@ -17,18 +17,18 @@
       "label": "control (obs)",
       "style": "boundary",
       "x": 40,
-      "y": 120,
+      "y": 110,
       "w": 280,
-      "h": 340
+      "h": 480
     },
     {
       "id": "prom",
       "label": "prometheus\n:9090",
       "style": "container",
       "x": 40,
-      "y": 50,
+      "y": 40,
       "w": 180,
-      "h": 60,
+      "h": 55,
       "parent": "ctrl"
     },
     {
@@ -36,19 +36,39 @@
       "label": "grafana\n:3000",
       "style": "container",
       "x": 40,
-      "y": 140,
+      "y": 110,
       "w": 180,
-      "h": 60,
+      "h": 55,
       "parent": "ctrl"
     },
     {
-      "id": "jaeger",
-      "label": "jaeger\n:16686",
+      "id": "tempo",
+      "label": "tempo\n:3200 OTLP",
       "style": "container",
       "x": 40,
-      "y": 230,
+      "y": 180,
       "w": 180,
-      "h": 60,
+      "h": 55,
+      "parent": "ctrl"
+    },
+    {
+      "id": "loki",
+      "label": "loki\n:3100",
+      "style": "container",
+      "x": 40,
+      "y": 250,
+      "w": 180,
+      "h": 55,
+      "parent": "ctrl"
+    },
+    {
+      "id": "alloy",
+      "label": "alloy\nlogs→loki",
+      "style": "container",
+      "x": 40,
+      "y": 320,
+      "w": 180,
+      "h": 55,
       "parent": "ctrl"
     },
     {
@@ -82,8 +102,11 @@
   ],
   "edges": [
     { "from": "graf", "to": "prom", "label": "", "exitX": 0.5, "exitY": 0, "entryX": 0.5, "entryY": 1 },
+    { "from": "graf", "to": "tempo", "label": "", "dashed": true, "exitX": 0.5, "exitY": 1, "entryX": 0.5, "entryY": 0 },
+    { "from": "graf", "to": "loki", "label": "", "dashed": true, "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.3 },
+    { "from": "alloy", "to": "loki", "label": "push", "dashed": true, "exitX": 0.5, "exitY": 0, "entryX": 0.5, "entryY": 1 },
     { "from": "k8s", "to": "ollama", "label": "LLM host.docker.internal", "dashed": true, "exitX": 0, "exitY": 0.35, "entryX": 1, "entryY": 0.5 },
-    { "from": "k8s", "to": "jaeger", "label": "OTLP :4317", "dashed": true, "exitX": 0, "exitY": 0.65, "entryX": 1, "entryY": 0.5 },
-    { "from": "prom", "to": "k8s", "label": "scrape /api/metrics", "dashed": true, "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 }
+    { "from": "k8s", "to": "tempo", "label": "OTLP :4318", "dashed": true, "exitX": 0, "exitY": 0.65, "entryX": 1, "entryY": 0.5 },
+    { "from": "prom", "to": "k8s", "label": "scrape /metrics", "dashed": true, "exitX": 1, "exitY": 0.5, "entryX": 0, "entryY": 0.5 }
   ]
 }

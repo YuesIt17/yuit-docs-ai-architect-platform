@@ -120,8 +120,10 @@ curl -s -H "Host: kp.local" http://127.0.0.1:8088/api/v1/llm/health
 ```
 
 Prometheus targets: http://127.0.0.1:9090/targets (`kp-api-k8s` UP).  
-Grafana: http://127.0.0.1:3000 → **Knowledge Platform / KP Overview**.  
-Jaeger: http://127.0.0.1:16686 → service `kp-api` после chat.
+Grafana: http://127.0.0.1:3000 → **Knowledge Platform / KP Overview** + Explore Tempo/Loki.  
+Tempo: http://127.0.0.1:3200 → service `kp-api` после chat (UI через Grafana Explore).  
+Loki: http://127.0.0.1:3100 → JSON logs API (Alloy).  
+Схема: [ADR-006](../architecture/adr/ADR-006-observability.md).
 
 Ожидание в `/health`: `llm_provider`, `llm_reachable`, `store_backend`.
 
@@ -184,7 +186,8 @@ curl -s -X PUT http://127.0.0.1:8088/api/v1/llm/config \
 make obs
 curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:9090/-/healthy
 curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:3000/api/health
-curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:16686
+curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:3200/ready
+curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:3100/ready
 
 kubectl -n kp port-forward svc/minio 9000:9000 9001:9001
 curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:9000/minio/health/live
@@ -196,7 +199,8 @@ curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:9000/minio/health/live
 make obs
 curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9090/-/healthy
 curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/health
-curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:16686
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3200/ready
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3100/ready
 
 kubectl -n kp port-forward svc/minio 9000:9000 9001:9001
 curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/live

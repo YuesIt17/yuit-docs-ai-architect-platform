@@ -19,7 +19,7 @@ HTTP Control Plane RetailPartnerX: GraphRAG-чат с ACL, распознава�
 | **MinIO** | Сырьё и recognized JSON этикеток при `live` (иначе локальный FS) |
 | **Pillow / pypdfium2** | Нормализация картинок/PDF перед mock OCR |
 | **Prometheus** | Метрики API/RAG/vision/cache/ACL → Grafana KP Overview |
-| **OpenTelemetry** | Трейсы запросов → Jaeger (Compose `:4318`) |
+| **OpenTelemetry** | Трейсы запросов → Tempo (Compose `:4318`); логи JSON → Loki via Alloy |
 
 Elasticsearch **не используем** — полнотекст/векторы закрывает Qdrant + lexical rerank в store.
 
@@ -111,7 +111,7 @@ flowchart TB
   end
   subgraph obs [observability]
     Prom[Prometheus]
-    OTel[OpenTelemetry]
+    OTel[OTel_to_Tempo]
   end
   Routers --> ChatUC
   Routers --> VisionUC
@@ -142,7 +142,7 @@ flowchart TB
 | `security/` | Demo Bearer RBAC + input/output/vision guards |
 | `repositories/` | Протоколы + memory + hybrid facade |
 | `infrastructure/` | Neo4j, Qdrant, Redis, MinIO, **LLMClient**, embeddings, vision |
-| `observability/` | Prometheus metrics + OTel tracing |
+| `observability/` | Prometheus metrics + OTel→Tempo + JSON logs→Loki |
 
 ### `memory` vs `live`
 
@@ -166,7 +166,7 @@ app/backend/
 │   ├── security/            # RBAC + guardrails
 │   ├── repositories/        # memory + hybrid store
 │   ├── infrastructure/      # Neo4j, Qdrant, Redis, MinIO, LLM, vision
-│   └── observability/       # Prometheus + OTel
+│   └── observability/       # Prometheus + OTel/Tempo + JSON logs
 ├── pipelines/               # CLI seed / sync / ingest
 ├── scripts/
 ├── tests/

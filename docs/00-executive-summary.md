@@ -24,7 +24,7 @@ On-premise **GraphRAG Knowledge Platform**:
 
 1. `category_manager` не получает secret promo; `compliance_officer` — получает  
 2. Upload этикетки → OCR extract → policy citations  
-3. Jaeger/OTel + Prometheus + Neo4j Browser  
+3. Grafana LGTM (Tempo/Loki/Prom) + OTel + Neo4j Browser  
 
 ## Карта артефактов
 

@@ -1,4 +1,4 @@
-"""OpenTelemetry / Jaeger wiring for FastAPI."""
+"""OpenTelemetry / Tempo wiring for FastAPI."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ logger = logging.getLogger("kp")
 
 
 def setup_otel(app: FastAPI, settings) -> None:
-    """Wire OTLP/HTTP traces → Jaeger (Compose :4318/v1/traces). Failures are non-fatal."""
+    """Wire OTLP/HTTP traces → Tempo (Compose :4318/v1/traces). Failures are non-fatal."""
     try:
         from opentelemetry import trace
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter

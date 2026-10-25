@@ -86,7 +86,7 @@ GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/y
 | ACL: User B не видит секретный документ | [ADR-005](architecture/adr/ADR-005-security.md) · demo: manager vs compliance |
 | Control Plane / Data Plane | [c4-container](architecture/c4-container.md) |
 | LangGraph (state machine), не линейный скрипт | [ADR-004](architecture/adr/ADR-004-orchestration.md) · `app/backend/kp/agent/graph.py` |
-| Observability | [ADR-006](architecture/adr/ADR-006-observability.md) · Jaeger / Prometheus / Grafana |
+| Observability | [ADR-006](architecture/adr/ADR-006-observability.md) · Grafana / Prometheus / Loki / Tempo |
 | Желательно: streaming | SSE в chat API (см. sequence) |
 | Желательно: тесты | `cd app/backend; pytest -q` |
 
@@ -113,7 +113,7 @@ bash app/scripts/hybrid/hybrid-up.sh   # или: make demo
 | UI / API | K8s | http://kp.local:8088 |
 | MinIO / stores | K8s | port-forward при необходимости |
 | Ollama | Compose | :11434 |
-| Jaeger / Prom / Grafana | Compose | :16686 / :9090 / :3000 |
+| Tempo / Loki / Prom / Grafana | Compose | :3200 / :3100 / :9090 / :3000 |
 
 Демо-токены (Role switcher): `guest` | `associate` | `manager` | `compliance`
 

@@ -82,6 +82,13 @@ helm upgrade --install kp app/infra/helm/knowledge-platform `
   @extra `
   --wait --timeout 5m
 
+# Mutable tags (kp-*:dev) + imagePullPolicy Never: Helm spec unchanged → pods keep old digest.
+# Force recreate so Docker Desktop / kind pick up the images we just built.
+Write-Host "==> Rollout restart api/frontend (pick up rebuilt :dev images)"
+kubectl -n kp rollout restart deploy/api deploy/frontend
+kubectl -n kp rollout status deploy/api --timeout=120s
+kubectl -n kp rollout status deploy/frontend --timeout=120s
+
 Write-Host @"
 
 Done (mode=$mode).
@@ -93,5 +100,5 @@ Docker Desktop:
   Or: curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
 
 Hybrid LLM: make llm-ollama; then `$env:KP_LLM='compose-ollama'; .\app\scripts\k8s\k8s-up.ps1
-Observability: make obs  (Prometheus / Grafana / Jaeger — Compose only)
+Observability: make obs  (Prometheus / Grafana / Loki / Tempo — Compose only)
 "@

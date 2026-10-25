@@ -3,7 +3,7 @@
 **Схема:** [compose-topology.png](../../architecture/diagrams/compose-topology.png) · [compose-topology.drawio](../../architecture/diagrams/compose-topology.drawio)
 
 Источник: [`app/infra/docker-compose.yml`](../../app/infra/docker-compose.yml), [`Makefile`](../../Makefile).  
-Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).
+Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md) · ADR: [ADR-006](../../architecture/adr/ADR-006-observability.md).
 
 Project: `retailpartnerx-kp`.
 
@@ -13,13 +13,13 @@ Project: `retailpartnerx-kp`.
 |------|-----|
 | Platform (api, frontend, postgres, neo4j, qdrant, redis, **minio**) | **только Kubernetes** |
 | LLM (**ollama**) | **только Compose** |
-| Observability (prometheus, grafana, jaeger) | **только Compose** |
+| Observability (prometheus, grafana, tempo, loki, alloy) | **только Compose** |
 
 ## Profiles
 
 | Profile | Сервисы |
 |---------|---------|
-| `obs` | jaeger, prometheus, grafana |
+| `obs` | tempo, loki, alloy, prometheus, grafana |
 | `llm` | ollama |
 
 Сканеры безопасности (отдельный файл, ephemeral): [sec-ops.md](sec-ops.md) · `make sec-scan` · [`docker-compose.sec-ops.yml`](../../app/infra/docker-compose.sec-ops.yml).
@@ -35,13 +35,38 @@ Project: `retailpartnerx-kp`.
 | Сервис | Порт |
 |--------|------|
 | ollama | **11434** |
-| jaeger | **16686**, 4317/4318 |
+| tempo | **3200**, OTLP **4317/4318** |
+| loki | **3100** |
+| alloy | 12345 (UI) |
 | prometheus | **9090** |
 | grafana | **3000** |
 
 Prometheus scrape (hybrid): `host.docker.internal:30080/metrics` (API NodePort).
 
-Grafana provisioning: `app/infra/grafana/provisioning/` → datasource Prometheus + dashboard **KP Overview** (folder Knowledge Platform).
+Grafana provisioning: `app/infra/grafana/provisioning/` → datasources Prometheus + Tempo + Loki + dashboard **KP Overview** (folder Knowledge Platform).
+
+## LGTM flow
+
+```mermaid
+flowchart LR
+  subgraph k8s [K8s]
+    API[kp-api]
+  end
+  subgraph compose [Compose obs]
+    Tempo[Tempo]
+    Loki[Loki]
+    Prom[Prometheus]
+    Graf[Grafana]
+    Alloy[Grafana Alloy]
+  end
+  API -->|"OTLP traces :4318"| Tempo
+  API -->|"stdout JSON"| Alloy
+  Alloy -->|push| Loki
+  Prom -->|scrape :30080/metrics| API
+  Graf --> Prom
+  Graf --> Tempo
+  Graf --> Loki
+```
 
 ## Hybrid flow
 
@@ -60,8 +85,9 @@ bash app/scripts/hybrid/hybrid-up.sh
 ```
 
 API в K8s → Ollama: `http://host.docker.internal:11434/v1`  
-API → Jaeger: `http://host.docker.internal:4318` (OTLP/HTTP, Helm env).
+API → Tempo: `http://host.docker.internal:4318` (OTLP/HTTP, Helm env).  
+Logs → Loki через Alloy (Docker socket + JSON stdout).
 
-После chat: Jaeger service `kp-api`, Grafana panels (requests / RAG p95 / tokens).
+После chat: Grafana Explore → Tempo service `kp-api`, Loki по `trace_id`, panels **KP Overview** (requests / RAG p95 / tokens).
 
 Подробности K8s: [k8s-architecture.md](k8s-architecture.md).

@@ -20,7 +20,7 @@ api:
   env:
     STORE_BACKEND: memory
     EMBEDDING_PROVIDER: MOCK
-    # Compose Jaeger (make obs) via Docker Desktop host gateway
+    # Compose Tempo (make obs) via Docker Desktop host gateway
     OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
 
 frontend:

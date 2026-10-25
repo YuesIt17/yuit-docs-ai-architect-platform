@@ -1,0 +1,80 @@
+// Grafana Alloy — scrape Docker container logs → Loki (hybrid desktop)
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_io_kubernetes_container_name"]
+    target_label  = "k8s_container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_io_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_io_kubernetes_pod_namespace"]
+    target_label  = "namespace"
+  }
+
+  rule {
+    source_labels = ["container"]
+    target_label  = "job"
+  }
+
+  // Prefer Kubernetes container name when present (e.g. api)
+  rule {
+    source_labels = ["k8s_container"]
+    regex         = "(.+)"
+    target_label  = "job"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  forward_to    = [loki.process.json.receiver]
+  relabel_rules = discovery.relabel.containers.rules
+}
+
+loki.process "json" {
+  forward_to = [loki.write.local.receiver]
+
+  stage.json {
+    expressions = {
+      level    = "level",
+      msg      = "msg",
+      service  = "service",
+      trace_id = "trace_id",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level   = "",
+      service = "",
+    }
+  }
+
+  stage.structured_metadata {
+    values = {
+      trace_id = "",
+    }
+  }
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

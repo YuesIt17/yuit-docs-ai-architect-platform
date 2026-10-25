@@ -4,7 +4,7 @@
 |---------|------------|
 | `backend/` | FastAPI, LangGraph, GraphRAG, pipelines, tests — [README](backend/README.md) |
 | `frontend/` | Vite + React UI |
-| `infra/` | Docker Compose, Helm, kind, Grafana/Prometheus |
+| `infra/` | Docker Compose, Helm, kind, Grafana/Prometheus/Loki/Tempo |
 | `datasets/` | Seed и fixtures |
 | `scripts/` | hybrid / k8s / ollama / sec |
 | `evals/` | Eval stubs |

@@ -13,7 +13,7 @@
 | api, frontend | — |
 | postgres, neo4j, qdrant, redis, **minio** | — |
 | — | **ollama** (`make llm-ollama`) |
-| — | prometheus, grafana, jaeger (`make obs`) |
+| — | prometheus, grafana, tempo, loki, alloy (`make obs`) |
 | — | Trivy, Semgrep, Nmap, ZAP, Nuclei, kube-bench, Checkov (ephemeral, `make sec-scan`) |
 
 **Windows**

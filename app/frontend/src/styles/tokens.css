@@ -27,6 +27,13 @@ body {
 }
 
 a { color: inherit; text-decoration: none; }
+a.ops-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+a.ops-link:hover { opacity: 0.85; }
 button, select, input, textarea {
   font: inherit;
 }
@@ -153,6 +160,20 @@ textarea { min-height: 110px; resize: vertical; width: 100%; }
 .badge.good { border-color: #9dceb0; color: var(--good); }
 .badge.warn { border-color: #e2cb7a; color: var(--warn); }
 .badge.bad { border-color: #e0a0a0; color: var(--bad); }
+
+.ops-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.ops-links li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 
 .pill-dot {
   width: 0.55rem;

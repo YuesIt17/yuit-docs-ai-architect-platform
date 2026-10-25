@@ -13,6 +13,7 @@ from kp import __version__
 from kp.api.router import router
 from kp.config import get_settings
 from kp.deps import get_container
+from kp.observability.logging_json import setup_json_logging
 from kp.observability.tracing import setup_otel
 from pipelines.seed_all import seed_store
 
@@ -21,7 +22,10 @@ logger = logging.getLogger("kp")
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
+    setup_json_logging(
+        level=getattr(logging, settings.log_level.upper(), logging.INFO),
+        service_name=settings.otel_service_name,
+    )
 
     app = FastAPI(
         title="RetailPartnerX Knowledge Platform",

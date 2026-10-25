@@ -527,7 +527,7 @@ indicator | type        | source finding      | first_seen | last_seen | confide
 | Слой | Где |
 |------|-----|
 | Platform (api, stores, …) | Kubernetes `kp` |
-| Ollama + Prometheus/Grafana/Jaeger | Compose `docker-compose.yml` |
+| Ollama + Prometheus/Grafana/Loki/Tempo | Compose `docker-compose.yml` |
 | Trivy, Semgrep, Nmap, ZAP, Nuclei, kube-bench, Checkov | Compose `docker-compose.sec-ops.yml` (ephemeral) |
 
 Сканеры **не** дублируют postgres/api и не держат долгоживущие контейнеры — только `compose run --rm`.

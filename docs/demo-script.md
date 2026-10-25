@@ -10,7 +10,7 @@
 | 2:20 | ACL allow | Роль `compliance`, тот же вопрос | Citations по secret документу |
 | 3:20 | Labels | `/labels`: upload fixture как `label.png` | Extract JSON + S3 URI + policy notes |
 | 4:20 | Graph | Graph page / Neo4j port-forward | Узлы Document/Chunk/Entity |
-| 5:00 | Ops / traces | Jaeger :16686, Prometheus :9090, `/ops` audit | Span chat; метрики; audit row |
+| 5:00 | Ops / traces | Grafana Explore (Tempo/Loki), Prometheus :9090, `/ops` audit | Span chat; логи; метрики; audit row |
 | 5:40 | (опц.) Ollama | Apply OLLAMA `host.docker.internal:11434/v1` | `llm_provider=OLLAMA` |
 
 **Запись видео:** пройти таблицу сверху вниз, держать фокус на ACL и трейсах.

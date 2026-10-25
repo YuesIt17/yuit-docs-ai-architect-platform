@@ -11,7 +11,7 @@
 | Сегмент | Состав |
 | ------- | ------ |
 | DMZ / Edge | Load Balancer → `kp-api` |
-| Internal Control | Prometheus, Grafana, Jaeger, Vault (stub) |
+| Internal Control | Prometheus, Grafana, Tempo, Loki, Vault (stub) |
 | Data | Postgres, Neo4j, Qdrant, Redis, MinIO |
 | LLM (Compose) | Ollama (`qwen2.5:0.5b`) / MOCK |
 
@@ -19,6 +19,7 @@
 
 - **Secrets:** Vault file stub / env — никогда в образах.
 - **LLM:** Ollama на хосте (hybrid) или MOCK ([ADR-001](adr/ADR-001-llm-serving.md)).
+- **Observability:** [ADR-006](adr/ADR-006-observability.md) (LGTM).
 
 ```mermaid
 flowchart TB
@@ -29,7 +30,8 @@ flowchart TB
   subgraph internal [Internal_Control]
     Prom[Prometheus]
     Graf[Grafana]
-    Jaeger[Jaeger]
+    Tempo[Tempo]
+    Loki[Loki]
     Vault[Vault_Stub]
   end
   subgraph dataplane [Data_Segment]
@@ -49,9 +51,12 @@ flowchart TB
   API --> RD
   API --> S3
   API --> Ollama
-  API --> Jaeger
+  API --> Tempo
+  API --> Loki
   Prom --> API
   Graf --> Prom
+  Graf --> Tempo
+  Graf --> Loki
   API --> Vault
 ```
 

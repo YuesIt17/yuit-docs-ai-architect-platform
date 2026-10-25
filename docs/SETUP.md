@@ -14,7 +14,7 @@
 | `make k8s-up` / `make k8s-down` | Только Kubernetes (поднять / снести) |
 | `make side` | Compose side-stack: Ollama + observability |
 | `make llm-ollama` | Ollama + pull `qwen2.5:0.5b` |
-| `make obs` | Prometheus / Grafana / Jaeger |
+| `make obs` | Prometheus / Grafana / Loki / Tempo |
 | `make up` | То же, что `make side` |
 | `make down` | Снести Compose (`obs` + `llm`, с volumes) |
 | `make sec-scan` | DevSecOps lab (Trivy / Semgrep / kubectl); alias: `sec-ops` |
@@ -25,7 +25,7 @@
 | `make test` | Pytest backend |
 | `make load-smoke` | Лёгкий нагрузочный smoke |
 
-**Hybrid zero-overlap:** K8s = api/frontend/stores/**minio**; Compose = **ollama** + prometheus/grafana/jaeger.
+**Hybrid zero-overlap:** K8s = api/frontend/stores/**minio**; Compose = **ollama** + prometheus/grafana/loki/tempo. Схема: [ADR-006](../architecture/adr/ADR-006-observability.md) · [compose-dev](infra/compose-dev.md).
 
 Архитектура: **[docs/infra/](infra/)** · ops: **[SRE.md](SRE.md)** · security lab: **[infra/sec-ops.md](infra/sec-ops.md)**.
 
@@ -84,9 +84,10 @@ bash app/scripts/hybrid/hybrid-up.sh
 | UI | http://kp.local:8088 |
 | API health | http://kp.local:8088/api/health |
 | Ollama | http://127.0.0.1:11434/v1/models |
-| Jaeger | http://127.0.0.1:16686 |
+| Grafana | http://127.0.0.1:3000 (admin / admin) → **KP Overview** + Explore Tempo/Loki |
 | Prometheus | http://127.0.0.1:9090 |
-| Grafana | http://127.0.0.1:3000 (admin / admin) → dashboard **KP Overview** |
+| Tempo | http://127.0.0.1:3200 (OTLP :4317/:4318) |
+| Loki | http://127.0.0.1:3100 |
 | MinIO Console | http://127.0.0.1:30901 (NodePort, minioadmin / minioadmin) |
 | Neo4j Browser | http://127.0.0.1:30474 (NodePort) |
 | API /metrics | http://127.0.0.1:30080/metrics (NodePort) |
@@ -226,7 +227,7 @@ manager не видит secret promo (`42%`); compliance видит.
 | `ollama pull` TLS timeout | `ollama-pull.ps1` / `ollama-pull.sh` |
 | MinIO 9000 на хосте пусто | MinIO в K8s → Console NodePort `:30901` |
 | Grafana пустой | Dashboards: Knowledge Platform → **KP Overview**; `docker compose -f app/infra/docker-compose.yml --profile obs up -d` |
-| Jaeger пустой | Нужен chat traffic; OTel `host.docker.internal:4318`; rebuild `kp-api:dev` |
+| Tempo / Loki пустые | Нужен chat traffic; OTel `host.docker.internal:4318`; Grafana Explore; rebuild `kp-api:dev` |
 | Prometheus target DOWN | Scrape `host.docker.internal:30080/metrics` |
 
 ---
@@ -237,6 +238,6 @@ manager не видит secret promo (`42%`); compliance видит.
 2. Chat MOCK/OLLAMA → citations
 3. ACL manager vs compliance
 4. Labels upload (MinIO in-cluster)
-5. Observability: Prometheus `kp-api-k8s` UP → Grafana **KP Overview** → Jaeger `kp-api` после chat
+5. Observability: Prometheus `kp-api-k8s` UP → Grafana **KP Overview** → Explore Tempo `kp-api` / Loki после chat
 6. (Опционально) Graph Neo4j Browser :30474
 7. (Опционально) `make sec-scan` → отчёты в `tmp/sec-ops/`

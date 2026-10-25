@@ -171,26 +171,30 @@ def center(box, side):
 
 
 def render_compose():
-    img = Image.new("RGB", (1100, 640), BG)
+    img = Image.new("RGB", (1100, 720), BG)
     d = ImageDraw.Draw(img)
     draw_note(
         d,
         (40, 20, 360, 70),
-        "Compose = side-stack only.\nK8s owns api/frontend/stores/minio.\nZero overlap.",
+        "Compose = side-stack only.\nK8s owns api/frontend/stores/minio.\nZero overlap. LGTM obs.",
     )
 
-    ctrl = (40, 120, 280, 340)
+    ctrl = (40, 110, 280, 480)
     data = (400, 120, 320, 280)
     for box, title in ((ctrl, "control (obs)"), (data, "data (llm)")):
         dashed_rect(d, box)
         d.text((box[0] + 8, box[1] + 6), title, font=font_b, fill=DARK)
 
-    prom = (ctrl[0] + 40, ctrl[1] + 50, 180, 60)
-    graf = (ctrl[0] + 40, ctrl[1] + 140, 180, 60)
-    jaeger = (ctrl[0] + 40, ctrl[1] + 230, 180, 60)
+    prom = (ctrl[0] + 40, ctrl[1] + 40, 180, 55)
+    graf = (ctrl[0] + 40, ctrl[1] + 110, 180, 55)
+    tempo = (ctrl[0] + 40, ctrl[1] + 180, 180, 55)
+    loki = (ctrl[0] + 40, ctrl[1] + 250, 180, 55)
+    alloy = (ctrl[0] + 40, ctrl[1] + 320, 180, 55)
     draw_container(d, prom, "prometheus\n:9090")
     draw_container(d, graf, "grafana\n:3000")
-    draw_container(d, jaeger, "jaeger\n:16686")
+    draw_container(d, tempo, "tempo\n:3200 OTLP")
+    draw_container(d, loki, "loki\n:3100")
+    draw_container(d, alloy, "alloy\nlogs→loki")
 
     oll = (data[0] + 40, data[1] + 80, 200, 80)
     draw_container(d, oll, "ollama\n:11434 mem 3g")
@@ -200,7 +204,7 @@ def render_compose():
 
     arrow(d, center(graf, "t"), center(prom, "b"))
     arrow(d, center(k8s, "l"), center(oll, "r"), dashed=True, label="LLM")
-    arrow(d, center(k8s, "l"), center(jaeger, "r"), dashed=True, label="OTLP")
+    arrow(d, center(k8s, "l"), center(tempo, "r"), dashed=True, label="OTLP")
     arrow(d, center(prom, "r"), center(k8s, "l"), dashed=True, label="scrape")
 
     path = OUT / "compose-topology.png"

@@ -1,4 +1,4 @@
-"""Observability: Prometheus metrics and OpenTelemetry tracing."""
+"""Observability: Prometheus metrics, OpenTelemetry tracing, JSON logs."""
 
 from kp.observability import metrics
 
