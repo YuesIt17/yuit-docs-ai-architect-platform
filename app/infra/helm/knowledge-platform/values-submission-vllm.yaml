@@ -1,0 +1,27 @@
+# Submission profile: OpenAI-compatible vLLM (GPU). Desktop Ollama remains values-desktop-compose-ollama.yaml.
+# Without an NVIDIA GPU on the host: keep this file for static review — status "runtime не проверен".
+llm:
+  provider: VLLM
+  baseUrl: http://host.docker.internal:8000/v1
+  model: Qwen/Qwen2.5-1.5B-Instruct-AWQ
+
+api:
+  env:
+    STORE_BACKEND: live
+    STORE_STRICT_LIVE: "true"
+    EMBEDDING_PROVIDER: LOCAL
+    EMBEDDING_MODEL: intfloat/multilingual-e5-small
+    EMBEDDING_DIM: "384"
+    DEMO_AUTH_ENABLED: "true"
+    ENABLE_SEMANTIC_CACHE: "false"
+    LLM_ALLOW_RUNTIME_URL_OVERRIDE: "false"
+    ENABLE_GRAPH_RESOLVE: "true"
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
+
+persistence:
+  enabled: true
+
+networkPolicy:
+  enabled: true
+
+# Secrets stay in Secret object (kp-secrets); do not paste production credentials here.

@@ -30,7 +30,14 @@ class AppContainer:
         if use_live:
             neo4j = Neo4jGraphRepository(settings)
             qdrant = QdrantVectorRepository(settings)
-        self.store = HybridKnowledgeStore(memory, neo4j=neo4j, qdrant=qdrant, use_live=use_live)
+        self.store = HybridKnowledgeStore(
+            memory,
+            neo4j=neo4j,
+            qdrant=qdrant,
+            use_live=use_live,
+            strict_live=settings.store_strict_live,
+            enable_graph_resolve=settings.enable_graph_resolve,
+        )
         self.object_store = ObjectStore(settings)
         self.llm = LLMClient(settings)
         self.vision = VisionService(settings)

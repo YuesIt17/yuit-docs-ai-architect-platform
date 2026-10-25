@@ -8,6 +8,7 @@ from kp.api.deps import container_dep, principal_dep
 from kp.deps import AppContainer
 from kp.domain.schemas import LLMConfigResponse, LLMConfigUpdate
 from kp.infrastructure.llm import provider_presets
+from kp.security.rbac import LLM_ADMIN_ROLES
 
 router = APIRouter(prefix="/v1/llm", tags=["llm"])
 
@@ -26,7 +27,10 @@ def _config_response(c: AppContainer, probe: dict) -> LLMConfigResponse:
 
 
 @router.get("/config", response_model=LLMConfigResponse)
-async def get_llm_config(c: AppContainer = Depends(container_dep)):
+async def get_llm_config(
+    principal=Depends(principal_dep),
+    c: AppContainer = Depends(container_dep),
+):
     return _config_response(c, await c.llm.probe())
 
 
@@ -36,8 +40,12 @@ async def put_llm_config(
     principal=Depends(principal_dep),
     c: AppContainer = Depends(container_dep),
 ):
-    if principal.role not in {"category_manager", "compliance_officer"}:
-        raise HTTPException(status_code=403, detail="ACL deny: only manager/compliance can change LLM config")
+    # Data-plane roles cannot change serving URL; only LLM admin roles.
+    if principal.role not in LLM_ADMIN_ROLES:
+        raise HTTPException(
+            status_code=403,
+            detail="ACL deny: only compliance_officer can change LLM serving config",
+        )
     try:
         c.llm.apply_config(body.provider, body.base_url, body.model)
     except ValueError as exc:

@@ -77,19 +77,72 @@ ALLOWED_LABEL_MIME = {
 }
 
 MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+MAX_PDF_PAGES = 10
+
+# Magic-byte hints (not full format validation).
+_SIGNATURES: list[tuple[bytes, str]] = [
+    (b"\x89PNG\r\n\x1a\n", "png"),
+    (b"\xff\xd8\xff", "jpg"),
+    (b"%PDF", "pdf"),
+    (b"RIFF", "webp"),  # WEBP is RIFF....WEBP
+]
 
 
-def vision_input_guard(filename: str, content_type: str | None, size: int) -> GuardResult:
+def sniff_image_or_pdf(data: bytes) -> str | None:
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    for magic, kind in _SIGNATURES:
+        if data.startswith(magic):
+            return kind
+    # TIFF little/big endian
+    if data[:4] in (b"II*\x00", b"MM\x00*"):
+        return "tiff"
+    return None
+
+
+def vision_input_guard(
+    filename: str,
+    content_type: str | None,
+    size: int,
+    data: bytes | None = None,
+    *,
+    allow_text_fixtures: bool = False,
+) -> GuardResult:
     reasons: list[str] = []
     if size > MAX_UPLOAD_BYTES:
         reasons.append("file_too_large")
+    # Reject path traversal / absolute names in the declared filename.
+    lowered_name = (filename or "").replace("\\", "/")
+    if lowered_name.startswith("/") or ".." in lowered_name.split("/"):
+        reasons.append("unsafe_filename")
     ct = (content_type or "").split(";")[0].strip().lower()
-    ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
+    base = lowered_name.split("/")[-1]
+    ext = base.lower().rsplit(".", 1)[-1] if "." in base else ""
     ok_ext = ext in {"png", "jpg", "jpeg", "webp", "tif", "tiff", "pdf"}
     if ct and ct not in ALLOWED_LABEL_MIME and not ok_ext:
         reasons.append(f"mime_not_allowed:{ct}")
     if not ok_ext and ct not in ALLOWED_LABEL_MIME:
         reasons.append("extension_not_allowed")
+    if data is not None and len(data) > 0:
+        sniffed = sniff_image_or_pdf(data)
+        if sniffed is None:
+            # Text/mock OCR fixtures (deterministic demo) only when explicitly allowed.
+            looks_text = False
+            try:
+                sample = data[:2048]
+                sample.decode("utf-8")
+                looks_text = b"\x00" not in sample
+            except UnicodeDecodeError:
+                looks_text = False
+            if allow_text_fixtures and looks_text:
+                pass
+            else:
+                reasons.append("content_signature_mismatch")
+        elif ok_ext:
+            ext_norm = "jpg" if ext in {"jpg", "jpeg"} else ("tiff" if ext == "tif" else ext)
+            sniff_norm = sniffed
+            if ext_norm != sniff_norm:
+                reasons.append("mime_ext_signature_mismatch")
     if reasons:
         return GuardResult(ok=False, text="", reasons=reasons)
     return GuardResult(ok=True, text=filename, reasons=[])

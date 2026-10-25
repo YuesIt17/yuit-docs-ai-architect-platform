@@ -66,13 +66,23 @@ class HybridKnowledgeStore:
         qdrant: QdrantVectorRepository | None = None,
         *,
         use_live: bool = False,
+        strict_live: bool = True,
+        enable_graph_resolve: bool = True,
     ):
         self._memory = memory
         self._neo4j = neo4j
         self._qdrant = qdrant
+        self._strict_live = strict_live
+        self._enable_graph_resolve = enable_graph_resolve
+        self._want_live = bool(use_live)
         self._use_live = bool(
             use_live and neo4j is not None and neo4j.available and qdrant is not None and qdrant.available
         )
+        if self._want_live and not self._use_live and self._strict_live:
+            logger.error(
+                "STORE_BACKEND=live but Neo4j/Qdrant unavailable (strict mode). "
+                "Retrieval will raise instead of silent memory fallback."
+            )
 
     @property
     def documents(self):
@@ -117,6 +127,8 @@ class HybridKnowledgeStore:
         try:
             assert self._neo4j and self._qdrant
             self._neo4j.upsert_document(doc)
+            # Drop stale chunk points for this doc before re-upsert.
+            self._qdrant.delete_by_doc_id(doc.doc_id)
             for chunk in self._memory.chunks.values():
                 if chunk.doc_id == doc.doc_id:
                     self._qdrant.upsert_chunk(chunk, doc)
@@ -128,7 +140,7 @@ class HybridKnowledgeStore:
         if self._use_live and self._neo4j:
             try:
                 ent = self._memory.entities[eid]
-                self._neo4j.upsert_entity(ent)
+                self._neo4j.upsert_entity(ent, self._memory.documents)
             except Exception as exc:
                 logger.warning("live upsert_entity failed: %s", exc)
         return eid
@@ -136,30 +148,81 @@ class HybridKnowledgeStore:
     def link_topic(self, topic: str, doc_id: str) -> None:
         self._memory.link_topic(topic, doc_id)
 
-    def graph_resolve_doc_ids(self, query: str) -> list[str]:
+    def graph_resolve_doc_ids(self, query: str, principal: Principal | None = None) -> list[str]:
+        if not self._enable_graph_resolve:
+            return []
         if self._use_live and self._neo4j:
             try:
-                ids = self._neo4j.graph_resolve_doc_ids(query)
+                ids = self._neo4j.graph_resolve_doc_ids(query, principal)
                 if ids:
                     return ids
             except Exception as exc:
                 logger.warning("live graph_resolve failed: %s", exc)
-        return self._memory.graph_resolve_doc_ids(query)
+        return self._memory.graph_resolve_doc_ids(query, principal)
 
-    def hybrid_retrieve(self, query: str, principal: Principal, top_k: int = 5) -> list[RetrievedChunk]:
+    def hybrid_retrieve(
+        self,
+        query: str,
+        principal: Principal,
+        top_k: int = 5,
+        *,
+        graph_doc_ids: list[str] | None = None,
+        vector_only: bool = False,
+    ) -> list[RetrievedChunk]:
+        if self._want_live and not self._use_live and self._strict_live:
+            raise RuntimeError("live storage unavailable (strict mode): Neo4j/Qdrant not ready")
         if self._use_live and self._qdrant:
             try:
-                return self._live_hybrid_retrieve(query, principal, top_k)
+                return self._live_hybrid_retrieve(
+                    query, principal, top_k, graph_doc_ids=graph_doc_ids, vector_only=vector_only
+                )
             except Exception as exc:
+                if self._strict_live:
+                    raise
                 logger.warning("live hybrid_retrieve failed, memory fallback: %s", exc)
+        if vector_only or not self._enable_graph_resolve:
+            hits = self._memory.vector_search(query, principal, top_k=max(top_k * 3, 15))
+            return self._memory._rerank_and_filter(query, hits, top_k)
+        if graph_doc_ids is not None:
+            # Agent already resolved graph — do not recompute.
+            if graph_doc_ids:
+                graph_hits = self._memory.vector_search(
+                    query, principal, top_k=top_k, doc_allowlist=graph_doc_ids
+                )
+                for h in graph_hits:
+                    h.via = "hybrid"
+                vec_hits = self._memory.vector_search(query, principal, top_k=top_k)
+                merged: dict[str, RetrievedChunk] = {h.chunk.chunk_id: h for h in graph_hits}
+                for h in vec_hits:
+                    if h.chunk.chunk_id not in merged:
+                        merged[h.chunk.chunk_id] = h
+                    else:
+                        merged[h.chunk.chunk_id].score = max(merged[h.chunk.chunk_id].score, h.score) + 0.05
+                hits = sorted(merged.values(), key=lambda x: x.score, reverse=True)[: max(top_k * 3, 15)]
+                return self._memory._rerank_and_filter(query, hits, top_k)
+            hits = self._memory.vector_search(query, principal, top_k=max(top_k * 3, 15))
+            return self._memory._rerank_and_filter(query, hits, top_k)
         return self._memory.hybrid_retrieve(query, principal, top_k)
 
     def _live_hybrid_retrieve(
-        self, query: str, principal: Principal, top_k: int
+        self,
+        query: str,
+        principal: Principal,
+        top_k: int,
+        *,
+        graph_doc_ids: list[str] | None = None,
+        vector_only: bool = False,
     ) -> list[RetrievedChunk]:
         assert self._qdrant is not None
-        qvec = self._memory.embeddings.embed(query)
-        graph_ids = self.graph_resolve_doc_ids(query)
+        qvec = self._memory.embeddings.embed(query, is_query=True)
+        if vector_only or not self._enable_graph_resolve:
+            hits = self._qdrant.search(qvec, principal, top_k=max(top_k * 3, 15))
+            return self._rerank_and_filter(query, hits, top_k)
+        graph_ids = (
+            graph_doc_ids
+            if graph_doc_ids is not None
+            else self.graph_resolve_doc_ids(query, principal)
+        )
         if graph_ids:
             graph_hits = self._qdrant.search(qvec, principal, top_k=top_k, doc_allowlist=graph_ids)
             for h in graph_hits:

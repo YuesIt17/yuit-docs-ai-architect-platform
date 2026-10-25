@@ -29,7 +29,10 @@ export function LabelsPage() {
     <div className="grid-2">
       <section className="panel stack">
         <h2>Label recognition</h2>
-        <p>PDF / PNG / JPEG / WEBP / TIFF → OCR extract → GraphRAG policy check (same LLM).</p>
+        <p>
+          PDF / PNG / JPEG / WEBP / TIFF → <strong>OCR provider=MOCK</strong> (pipeline contract demo, not real
+          scan recognition) → GraphRAG policy check.
+        </p>
         <div
           className={`dropzone ${drag ? "active" : ""}`}
           onDragOver={(e) => {
@@ -63,6 +66,7 @@ export function LabelsPage() {
         {result && (
           <>
             <div className="row">
+              <span className="badge">OCR {result.ocr_provider || "MOCK"}</span>
               <span className="badge">{result.llm_provider}</span>
               <span className="badge">{result.model_uri}</span>
               {result.degraded && <span className="badge warn">degraded</span>}

@@ -27,15 +27,20 @@ RetailPartnerX требует on-prem инференс без SaaS OpenAI/Anthro
 
 ## Решение
 
-- Runtime MVP: **Ollama** (laptop) + **MOCK** (CI / стабильное демо)
-- Модель демо: `qwen2.5:0.5b` (лёгкая); крупнее — по желанию в Ollama
-- Клиент: единый адаптер `LLMClient` через OpenAI-compatible API
-- **vLLM** остаётся в таблице альтернатив (prod GPU throughput), в runtime MVP **не** подключается
+- **Desktop:** Ollama + `qwen2.5:0.5b` (`compose` profile `llm`)
+- **CI / unit tests:** MOCK
+- **Submission profile:** vLLM OpenAI-compatible
+  - Image: `vllm/vllm-openai:v0.6.6`
+  - Model: `Qwen/Qwen2.5-1.5B-Instruct-AWQ` (AWQ, context 4096, max-num-seqs 2)
+  - Compose profile `vllm`, Helm overlay `values-submission-vllm.yaml`
+  - Docs: [docs/infra/vllm-profile.md](../../docs/infra/vllm-profile.md)
+- Клиент: единый `LLMClient` (`MOCK` \| `OLLAMA` \| `VLLM`) с allowlist `base_url`
+- Если GPU недоступен: конфигурация проверяется статически; статус **«runtime не проверен»**
 
 ## Последствия
 
-- (+) Data residency, простой closed loop на ноутбуке, единый контракт клиента
-- (−) Ollama 0.5B слабее по качеству ответа; prod throughput — отдельный этап (hw-7 / vLLM вне MVP)
+- (+) Data residency, laptop demo, submission path aligned with course serving engines
+- (−) vLLM GPU runtime may remain unverified on CPU-only machines; Ollama is not claimed as vLLM
 
 ## Ссылки
 

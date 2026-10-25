@@ -94,23 +94,64 @@ class MemoryKnowledgeStore:
         for did in doc_ids:
             self.edges.append((eid, "ABOUT", did))
             if entity_type == "allergen":
-                self.edges.append((did, "HAS_ALLERGEN", eid))
+                doc = self.documents.get(did)
+                if doc is not None and doc.corpus == "policy":
+                    self.edges.append((did, "GOVERNS", eid))
+                else:
+                    self.edges.append((did, "HAS_ALLERGEN", eid))
         return eid
 
     def link_topic(self, topic: str, doc_id: str) -> None:
         self.topics.setdefault(topic.lower(), set()).add(doc_id)
         self.edges.append((doc_id, "ABOUT", f"topic:{topic.lower()}"))
 
-    def graph_resolve_doc_ids(self, query: str) -> list[str]:
+    def graph_resolve_doc_ids(
+        self,
+        query: str,
+        principal: Principal | None = None,
+        *,
+        max_candidates: int = 24,
+    ) -> list[str]:
+        """Entity/topic match + one-hop allergen→product/policy expansion with optional ACL."""
         q = query.lower()
-        hits: set[str] = set()
+        hits: list[str] = []
+        seen: set[str] = set()
+
+        def _add(doc_id: str) -> None:
+            if doc_id in seen:
+                return
+            doc = self.documents.get(doc_id)
+            if not doc:
+                return
+            if principal is not None and not can_access(principal, doc.classification, doc.allowed_roles):
+                return
+            seen.add(doc_id)
+            hits.append(doc_id)
+
+        matched_allergens: list[str] = []
         for ent in self.entities.values():
             if ent.name.lower() in q or any(tok in q for tok in ent.name.lower().split() if len(tok) > 3):
-                hits.update(ent.linked_doc_ids)
+                for did in ent.linked_doc_ids:
+                    _add(did)
+                if ent.entity_type == "allergen":
+                    matched_allergens.append(ent.entity_id)
+            if len(hits) >= max_candidates:
+                return hits[:max_candidates]
+
+        # One-hop: product —HAS_ALLERGEN→ allergen ←GOVERNS— policy
+        for src, rel, dst in self.edges:
+            if rel == "HAS_ALLERGEN" and dst in matched_allergens:
+                _add(src)
+            if rel == "GOVERNS" and dst in matched_allergens:
+                _add(src)
+            if len(hits) >= max_candidates:
+                break
+
         for topic, doc_ids in self.topics.items():
             if topic in q:
-                hits.update(doc_ids)
-        return list(hits)
+                for did in doc_ids:
+                    _add(did)
+        return hits[:max_candidates]
 
     def vector_search(
         self,
@@ -135,7 +176,7 @@ class MemoryKnowledgeStore:
         return scored[:top_k]
 
     def hybrid_retrieve(self, query: str, principal: Principal, top_k: int = 5) -> list[RetrievedChunk]:
-        graph_ids = self.graph_resolve_doc_ids(query)
+        graph_ids = self.graph_resolve_doc_ids(query, principal)
         if graph_ids:
             graph_hits = self.vector_search(query, principal, top_k=top_k, doc_allowlist=graph_ids)
             for h in graph_hits:

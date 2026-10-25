@@ -46,6 +46,11 @@ class LabelAssetNode:
     s3_uri_normalized: str | None
     etag: str | None
     extract: dict[str, Any] = field(default_factory=dict)
+    # Demo uploads use a fixed classification; allowed_roles mirrors product docs.
+    allowed_roles: list[str] = field(
+        default_factory=lambda: ["store_associate", "category_manager", "compliance_officer"]
+    )
+    original_filename: str | None = None
 
 
 @dataclass

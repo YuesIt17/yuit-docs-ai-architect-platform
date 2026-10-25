@@ -12,6 +12,9 @@ ROLE_CLEARANCE: dict[str, set[str]] = {
     "compliance_officer": {"public", "internal", "secret"},
 }
 
+# Roles allowed to change LLM serving config (admin-ish for MVP).
+LLM_ADMIN_ROLES = frozenset({"compliance_officer"})
+
 DEMO_USERS: dict[str, dict[str, str]] = {
     "guest": {"user_id": "u-guest", "role": "guest", "name": "Guest Shopper"},
     "associate": {"user_id": "u-assoc", "role": "store_associate", "name": "Store Associate"},
@@ -31,6 +34,10 @@ class Principal:
         return ROLE_CLEARANCE.get(self.role, {"public"})
 
 
+class AuthDisabledError(Exception):
+    """Raised when demo-auth is off and no real IdP is configured."""
+
+
 def can_access(principal: Principal, classification: str, allowed_roles: Iterable[str] | None = None) -> bool:
     if classification not in principal.allowed_classifications:
         return False
@@ -39,8 +46,18 @@ def can_access(principal: Principal, classification: str, allowed_roles: Iterabl
     return True
 
 
-def resolve_principal(token_or_role: str | None) -> Principal:
-    """MVP auth: Bearer <demo_key> or raw role name. Replace with real JWT in prod."""
+def resolve_principal(token_or_role: str | None, *, demo_auth_enabled: bool = True) -> Principal:
+    """MVP auth: Bearer <demo_key> or raw role name. Not production authentication.
+
+    When demo_auth_enabled is False, unknown/missing tokens raise AuthDisabledError
+    (no silent guest fallback for protected operations).
+    """
+    if not demo_auth_enabled:
+        if not token_or_role:
+            raise AuthDisabledError("demo auth disabled; real IdP not configured")
+        # Still accept demo keys only when explicitly enabled; otherwise reject.
+        raise AuthDisabledError("demo auth disabled; real IdP not configured")
+
     if not token_or_role:
         return Principal(**DEMO_USERS["guest"])
     key = token_or_role.removeprefix("Bearer ").strip().lower()

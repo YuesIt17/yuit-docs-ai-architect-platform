@@ -25,12 +25,14 @@ RetailPartnerX обрабатывает сканы этикеток (PDF/PNG и 
 
 ## Решение
 
-Принимать **PDF, PNG, JPEG, WEBP, TIFF**. Пайплайн: MIME → rasterize PDF → OCR/VLM extract → structured JSON → policy_check (GraphRAG). Raw + recognized в MinIO. CI — детерминированные fixtures / mock OCR; profile `vision` для реального OCR/VLM.
+Принимать **PDF, PNG, JPEG, WEBP, TIFF**. Пайплайн: MIME → rasterize PDF → **OCR provider=MOCK** extract → structured JSON → policy_check (GraphRAG). Raw + recognized в MinIO. CI — детерминированные fixtures.
+
+**Реальный OCR** сложных сканов/чертежей — **вне текущего MVP** (known deviation; требует отдельного согласования). API/UI явно возвращают `ocr_provider=MOCK`. Не позиционировать mock как распознавание реального документа.
 
 ## Последствия
 
-- (+) Демо multimodal path; handoff через exports/outbox
-- (−) Качество OCR зависит от железа; mock ≠ prod accuracy
+- (+) Демо контракта multimodal path; handoff через exports/outbox
+- (−) Нет prod OCR accuracy; соответствие общей цели курса по OCR — риск до согласования
 
 ## Ссылки
 

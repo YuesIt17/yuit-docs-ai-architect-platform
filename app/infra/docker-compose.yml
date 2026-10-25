@@ -11,6 +11,7 @@ networks:
 
 volumes:
   ollama_data:
+  vllm_data:
   tempo_data:
   loki_data:
 
@@ -102,3 +103,36 @@ services:
     mem_limit: 3g
     cpus: 2.0
     mem_reservation: 512m
+
+  # Submission serving profile (GPU). Desktop convenience remains Ollama above.
+  # If no NVIDIA GPU: configs are static — mark "runtime не проверен" in docs/evidence.
+  vllm:
+    image: vllm/vllm-openai:v0.6.6
+    profiles: ["vllm"]
+    ports:
+      - "8000:8000"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    volumes:
+      - vllm_data:/root/.cache/huggingface
+    command:
+      - --model
+      - Qwen/Qwen2.5-1.5B-Instruct-AWQ
+      - --quantization
+      - awq
+      - --max-model-len
+      - "4096"
+      - --gpu-memory-utilization
+      - "0.85"
+      - --max-num-seqs
+      - "2"
+      - --enforce-eager
+    networks: [data]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Health: GET http://localhost:8000/v1/models after GPU start (may take minutes).

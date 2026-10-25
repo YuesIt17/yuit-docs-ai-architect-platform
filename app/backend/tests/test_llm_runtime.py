@@ -25,6 +25,11 @@ async def test_probe_mock(seeded):
 @pytest.mark.asyncio
 async def test_switch_provider_runtime(seeded):
     c = seeded
+    # Ensure allowlist includes the desktop Ollama URL used in hybrid profile.
+    c.settings.llm_allowed_base_urls = (
+        "http://127.0.0.1:11434/v1,http://localhost:11434/v1,"
+        "http://host.docker.internal:11434/v1"
+    )
     c.llm.apply_config("OLLAMA", "http://host.docker.internal:11434/v1", "qwen2.5:0.5b")
     cfg = c.llm.get_config()
     assert cfg.provider == "OLLAMA"

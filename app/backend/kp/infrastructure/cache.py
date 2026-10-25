@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 from kp.config import Settings
 from kp.infrastructure.embeddings import EmbeddingService
@@ -17,10 +17,14 @@ class CacheEntry:
     answer: str
     citations: list[dict]
     index_version: str
+    policy_version: str = "v1"
+    prompt_version: str = "v1"
+    model_uri: str = ""
+    source_doc_ids: list[str] = field(default_factory=list)
 
 
 class InProcessSemanticCache:
-    """Original process-local cosine cache (CI / memory backend)."""
+    """Process-local cosine cache (CI / memory backend)."""
 
     def __init__(self, settings: Settings, embeddings: EmbeddingService):
         self.settings = settings
@@ -30,14 +34,31 @@ class InProcessSemanticCache:
         self.misses = 0
         self.threshold = 0.92
 
-    def get(self, query: str, role: str, index_version: str) -> CacheEntry | None:
+    def get(
+        self,
+        query: str,
+        role: str,
+        index_version: str,
+        *,
+        policy_version: str,
+        prompt_version: str,
+        model_uri: str,
+    ) -> CacheEntry | None:
         if not self.settings.enable_semantic_cache:
             self.misses += 1
             return None
         q = self.embeddings.embed(f"{role}::{query}")
         best: tuple[float, CacheEntry] | None = None
         for vec, r, entry in self._entries:
-            if r != role or entry.index_version != index_version:
+            if r != role:
+                continue
+            if entry.index_version != index_version:
+                continue
+            if entry.policy_version != policy_version:
+                continue
+            if entry.prompt_version != prompt_version:
+                continue
+            if entry.model_uri != model_uri:
                 continue
             score = EmbeddingService.cosine(q, vec)
             if best is None or score > best[0]:
@@ -61,14 +82,9 @@ class InProcessSemanticCache:
 
 
 class RedisSemanticCache:
-    """
-    Shared semantic cache stored in Redis.
+    """Shared semantic cache stored in Redis (cosine match in-process)."""
 
-    Entries are kept as a JSON list under one key; cosine matching stays in-process
-    so behaviour matches the memory cache without Redis Stack vector search.
-    """
-
-    KEY = "kp:semantic_cache:v1"
+    KEY = "kp:semantic_cache:v2"
 
     def __init__(self, settings: Settings, embeddings: EmbeddingService):
         self.settings = settings
@@ -99,14 +115,19 @@ class RedisSemanticCache:
             items = json.loads(raw)
             out: list[tuple[list[float], str, CacheEntry]] = []
             for item in items:
+                e = item["entry"]
                 out.append(
                     (
                         item["vec"],
                         item["role"],
                         CacheEntry(
-                            answer=item["entry"]["answer"],
-                            citations=item["entry"]["citations"],
-                            index_version=item["entry"]["index_version"],
+                            answer=e["answer"],
+                            citations=e["citations"],
+                            index_version=e["index_version"],
+                            policy_version=e.get("policy_version", "v1"),
+                            prompt_version=e.get("prompt_version", "v1"),
+                            model_uri=e.get("model_uri", ""),
+                            source_doc_ids=list(e.get("source_doc_ids") or []),
                         ),
                     )
                 )
@@ -126,12 +147,28 @@ class RedisSemanticCache:
         except Exception as exc:
             logger.warning("Redis cache save failed: %s", exc)
 
-    def get(self, query: str, role: str, index_version: str) -> CacheEntry | None:
+    def get(
+        self,
+        query: str,
+        role: str,
+        index_version: str,
+        *,
+        policy_version: str,
+        prompt_version: str,
+        model_uri: str,
+    ) -> CacheEntry | None:
         if not self.settings.enable_semantic_cache:
             self.misses += 1
             return None
         if not self._redis:
-            entry = self._fallback.get(query, role, index_version)
+            entry = self._fallback.get(
+                query,
+                role,
+                index_version,
+                policy_version=policy_version,
+                prompt_version=prompt_version,
+                model_uri=model_uri,
+            )
             self.hits = self._fallback.hits
             self.misses = self._fallback.misses
             return entry
@@ -139,7 +176,15 @@ class RedisSemanticCache:
         best: tuple[float, CacheEntry] | None = None
         try:
             for vec, r, entry in self._load():
-                if r != role or entry.index_version != index_version:
+                if r != role:
+                    continue
+                if entry.index_version != index_version:
+                    continue
+                if entry.policy_version != policy_version:
+                    continue
+                if entry.prompt_version != prompt_version:
+                    continue
+                if entry.model_uri != model_uri:
                     continue
                 score = EmbeddingService.cosine(q, vec)
                 if best is None or score > best[0]:
@@ -181,5 +226,4 @@ def build_semantic_cache(settings: Settings, embeddings: EmbeddingService):
     return InProcessSemanticCache(settings, embeddings)
 
 
-# Back-compat name used by application layer.
 SemanticCache = InProcessSemanticCache

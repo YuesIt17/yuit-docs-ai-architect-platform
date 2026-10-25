@@ -1,0 +1,57 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kp-postgres-data
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    kp.retailpartnerx.io/plane: data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.persistence.postgresSize | default "5Gi" | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kp-neo4j-data
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    kp.retailpartnerx.io/plane: data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.persistence.neo4jSize | default "5Gi" | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kp-qdrant-data
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    kp.retailpartnerx.io/plane: data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.persistence.qdrantSize | default "5Gi" | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kp-minio-data
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    kp.retailpartnerx.io/plane: data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.persistence.minioSize | default "10Gi" | quote }}
+{{- end }}

@@ -50,7 +50,17 @@ class VisionServiceApp:
         """
         started = time.perf_counter()
         request_id = str(uuid.uuid4())
-        guard = vision_input_guard(filename or "upload.bin", content_type, len(data))
+        allow_fixtures = self.settings.app_env in {"development", "test", "ci"} or (
+            self.settings.llm_provider.upper() == "MOCK"
+            and self.settings.embedding_provider.upper() == "MOCK"
+        )
+        guard = vision_input_guard(
+            filename or "upload.bin",
+            content_type,
+            len(data),
+            data,
+            allow_text_fixtures=allow_fixtures,
+        )
         if not guard.ok:
             metrics.REQUESTS.labels(endpoint="vision", status="guard_deny").inc()
             raise HTTPException(status_code=400, detail={"reasons": guard.reasons})
@@ -58,11 +68,15 @@ class VisionServiceApp:
         asset_id = str(uuid.uuid4())
         etag = self.c.object_store.content_hash(data)
         vision = self.c.vision.recognize(filename or "label.png", data, page_limit=page_limit)
+        # Server-generated storage name; client filename kept as metadata only (SEC-03).
+        storage_name = self.c.object_store.safe_storage_name(
+            filename, default_ext=vision.source_format or "bin"
+        )
 
         s3_raw = self.c.object_store.put_bytes(
             "raw",
             asset_id,
-            filename or f"label.{vision.source_format}",
+            storage_name,
             data,
             content_type or "application/octet-stream",
         )
@@ -113,7 +127,10 @@ class VisionServiceApp:
                 asset_id=asset_id,
                 source_format=vision.source_format,
                 page_count=vision.page_count,
+                # Fixed demo classification — not automatic secrecy detection.
                 classification="internal",
+                allowed_roles=["store_associate", "category_manager", "compliance_officer"],
+                original_filename=filename,
                 s3_uri_raw=s3_raw,
                 s3_uri_recognized=s3_rec,
                 s3_uri_normalized=f"s3://{self.settings.minio_bucket}/normalized/{asset_id}/",
@@ -147,7 +164,9 @@ class VisionServiceApp:
         record_request_audit(self.c, self.settings, request_id, principal, state, started, "label")
         metrics.REQUESTS.labels(endpoint="vision", status="ok").inc()
 
-        warnings = []
+        warnings = [
+            "OCR provider=MOCK — demo of pipeline contract, not real scan recognition",
+        ]
         if vision.allergens:
             warnings.append(f"Detected allergens: {', '.join(vision.allergens)}")
         cfg = self.c.llm.get_config()
@@ -163,4 +182,5 @@ class VisionServiceApp:
             degraded=state.get("degraded", False),
             model_uri=state.get("model_uri") or cfg.model_uri,
             llm_provider=cfg.provider,
+            ocr_provider="MOCK",
         )

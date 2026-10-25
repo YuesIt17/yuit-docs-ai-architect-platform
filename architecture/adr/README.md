@@ -4,7 +4,7 @@
 
 | # | Тема | Статус |
 | - | ---- | ------ |
-| [ADR-001](ADR-001-llm-serving.md) | LLM Serving (Ollama / MOCK) | Accepted |
+| [ADR-001](ADR-001-llm-serving.md) | LLM Serving (Ollama / vLLM / MOCK) | Accepted |
 | [ADR-002](ADR-002-vector-db.md) | Vector DB (Qdrant + in-memory MVP) | Accepted |
 | [ADR-003](ADR-003-graph-db.md) | Graph DB (Neo4j + онтология GraphRAG) | Accepted |
 | [ADR-004](ADR-004-orchestration.md) | Orchestration (LangGraph) | Accepted |

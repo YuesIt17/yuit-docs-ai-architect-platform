@@ -60,6 +60,7 @@ export type LabelResponse = {
   degraded: boolean;
   model_uri?: string | null;
   llm_provider?: string | null;
+  ocr_provider?: string;
 };
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");

@@ -6,7 +6,7 @@ C4, data-flow, sequences, ER, deployment, ADR и диаграммы.
 
 | Раздел | Путь |
 |--------|------|
-| C4 / flows / ER / sequences | этот каталог (`*.md`) |
+| C4 L1–L3 + L4 code | `c4-context.md`, `c4-container.md`, `c4-component.md`, `c4-code.md` |
 | ADR | [`adr/`](adr/) |
 | Draw.io + PNG | [`diagrams/`](diagrams/) |
 | Infra how-to / DevSec | [`docs/infra/`](../docs/infra/) |

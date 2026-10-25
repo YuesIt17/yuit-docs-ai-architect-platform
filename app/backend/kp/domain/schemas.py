@@ -57,6 +57,8 @@ class LabelResponse(BaseModel):
     degraded: bool = False
     model_uri: str | None = None
     llm_provider: str | None = None
+    # Honest MVP marker — real OCR is out of scope for this delivery.
+    ocr_provider: str = "MOCK"
 
 
 class JobCreateRequest(BaseModel):
@@ -87,7 +89,7 @@ class HealthResponse(BaseModel):
 
 
 class LLMConfigUpdate(BaseModel):
-    provider: Literal["MOCK", "OLLAMA"]
+    provider: Literal["MOCK", "OLLAMA", "VLLM"]
     base_url: str | None = None
     model: str | None = None
 

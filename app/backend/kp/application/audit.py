@@ -42,6 +42,7 @@ def record_request_audit(
     c.store.audit.append(
         {
             "request_id": request_id,
+            "trace_id": state.get("trace_id"),
             "user_id": principal.user_id,
             "role": principal.role,
             "modality": modality,
@@ -50,6 +51,10 @@ def record_request_audit(
             "policy_version": settings.policy_version,
             "tokens_in": tin,
             "tokens_out": tout,
+            "tokens_estimated": state.get("acl_decision") != "allow_cache" and (
+                # Mark word-split estimates when serving did not return usage
+                tin > 0 and state.get("tokens_source") != "serving"
+            ),
             "cost_est": round((tin + tout) * 0.000002, 6),
             "acl_decision": state.get("acl_decision", "allow"),
             "degraded": state.get("degraded", False),

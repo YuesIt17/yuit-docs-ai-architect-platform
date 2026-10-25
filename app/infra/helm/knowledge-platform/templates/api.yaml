@@ -35,6 +35,12 @@ spec:
               value: {{ .Values.api.env.STORE_BACKEND | quote }}
             - name: EMBEDDING_PROVIDER
               value: {{ .Values.api.env.EMBEDDING_PROVIDER | quote }}
+            - name: DEMO_AUTH_ENABLED
+              value: {{ .Values.api.env.DEMO_AUTH_ENABLED | default "true" | quote }}
+            - name: ENABLE_SEMANTIC_CACHE
+              value: {{ .Values.api.env.ENABLE_SEMANTIC_CACHE | default "false" | quote }}
+            - name: LLM_ALLOW_RUNTIME_URL_OVERRIDE
+              value: {{ .Values.api.env.LLM_ALLOW_RUNTIME_URL_OVERRIDE | default "false" | quote }}
             - name: NEO4J_URI
               value: bolt://neo4j:7687
             - name: QDRANT_URL

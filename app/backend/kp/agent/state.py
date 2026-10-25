@@ -15,6 +15,8 @@ class AgentState(TypedDict, total=False):
     guard_ok: bool
     guard_reasons: list[str]
     retrieved: list[dict[str, Any]]
+    graph_doc_ids: list[str]
+    refine_count: int
     label_extract: dict[str, Any]
     answer: str
     citations: list[dict[str, Any]]

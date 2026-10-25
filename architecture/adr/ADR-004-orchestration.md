@@ -6,7 +6,7 @@ Accepted
 
 ## Контекст
 
-Курс запрещает линейные цепочки («скрипт из вызовов LLM»). Нужен stateful агент: guard → route → retrieve/label → synthesize → output guard, с возможностью ветвлений и tool nodes (ReAct-стиль).
+Курс запрещает линейные цепочки («скрипт из вызовов LLM»). Нужен stateful агент: guard → route → retrieve/label → synthesize → output guard, с ветвлениями. Это **фиксированная state machine**, а не автономный ReAct / Plan-and-Solve.
 
 ## Критерии выбора
 
@@ -28,9 +28,9 @@ Accepted
 
 **LangGraph** state machine:
 
-`guard_input → route → (graph_retrieve → vector_retrieve | label_recognize → policy_check) → synthesize → guard_output`
+`guard_input → route → (graph_retrieve → vector_retrieve [→ optional refine] | label_recognize → policy_check) → synthesize → guard_output`
 
-Наследует SRP из hw-3: policy_check как tool узла (аналог Policy Analyst).
+`graph_retrieve` передаёт `graph_doc_ids` в `vector_retrieve` (без повторного «театрального» resolve). Опциональный bounded refine (`RETRIEVAL_REFINE_MAX`). Checkpoint / session memory — planned.
 
 ## Последствия
 

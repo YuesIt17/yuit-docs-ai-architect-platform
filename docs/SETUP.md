@@ -13,8 +13,9 @@
 | `make demo` | Hybrid: side-stack (Ollama + obs) + `k8s-up` |
 | `make k8s-up` / `make k8s-down` | Только Kubernetes (поднять / снести) |
 | `make side` | Compose side-stack: Ollama + observability |
-| `make llm-ollama` | Ollama + pull `qwen2.5:0.5b` |
-| `make obs` | Prometheus / Grafana / Loki / Tempo |
+| `make llm-ollama` | Ollama + pull `qwen2.5:0.5b` (desktop) |
+| Compose `--profile vllm` | Submission vLLM AWQ profile — see [infra/vllm-profile.md](infra/vllm-profile.md); GPU **runtime не проверен** without NVIDIA |
+| `make obs` | Prometheus / Grafana / Loki / Tempo / Alloy |
 | `make up` | То же, что `make side` |
 | `make down` | Снести Compose (`obs` + `llm`, с volumes) |
 | `make sec-scan` | DevSecOps lab (Trivy / Semgrep / kubectl); alias: `sec-ops` |

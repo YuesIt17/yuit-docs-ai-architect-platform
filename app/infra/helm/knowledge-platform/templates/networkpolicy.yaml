@@ -1,0 +1,65 @@
+{{- if .Values.networkPolicy.enabled }}
+# Minimum NetworkPolicies for Control vs Data plane. Requires a CNI that enforces NetPol
+# (e.g. Calico). On Docker Desktop default CNI may not enforce — treat as documented intent.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-data-plane-ingress
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    kp.retailpartnerx.io/plane: data
+spec:
+  podSelector:
+    matchLabels:
+      kp.retailpartnerx.io/plane: data
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              kp.retailpartnerx.io/plane: control
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 6333
+        - protocol: TCP
+          port: 7474
+        - protocol: TCP
+          port: 7687
+        - protocol: TCP
+          port: 9000
+  egress:
+    - {} # DNS + intra-cluster; tighten per CNI in production
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-control-plane-egress
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    kp.retailpartnerx.io/plane: control
+spec:
+  podSelector:
+    matchLabels:
+      kp.retailpartnerx.io/plane: control
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              kp.retailpartnerx.io/plane: data
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # host.docker.internal Ollama/Tempo (desktop hybrid) — not expressible as podSelector;
+    # document as known desktop exception when networkPolicy.enabled=true on Docker Desktop.
+{{- end }}

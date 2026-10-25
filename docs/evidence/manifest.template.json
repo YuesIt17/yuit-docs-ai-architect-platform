@@ -1,0 +1,16 @@
+{
+  "commit_sha": "FILL",
+  "run_date": "FILL",
+  "os_cpu_ram": "FILL",
+  "gpu_vram_or_cpu_only": "FILL",
+  "serving_engine_version": "FILL (Ollama or vLLM)",
+  "model_id_revision": "FILL",
+  "quantization_context": "FILL",
+  "embedding_model_dim": "intfloat/multilingual-e5-small / 384 or MOCK",
+  "store_backend_strict": "FILL",
+  "cache_mode": "ENABLE_SEMANTIC_CACHE=false recommended",
+  "ocr_provider": "MOCK",
+  "demo_auth": true,
+  "video_url": "pending",
+  "defense_date_submit_by": "FILL (submit ≥8 days before defense)"
+}

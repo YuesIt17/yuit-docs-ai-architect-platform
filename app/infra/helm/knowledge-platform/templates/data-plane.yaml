@@ -25,11 +25,25 @@ spec:
             - name: POSTGRES_USER
               value: {{ .Values.postgres.user | quote }}
             - name: POSTGRES_PASSWORD
-              value: {{ .Values.postgres.password | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: kp-secrets
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               value: {{ .Values.postgres.database | quote }}
           ports:
             - containerPort: 5432
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kp-postgres-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -76,6 +90,17 @@ spec:
           ports:
             - containerPort: 7474
             - containerPort: 7687
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kp-neo4j-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -121,6 +146,17 @@ spec:
           image: {{ .Values.qdrant.image }}
           ports:
             - containerPort: 6333
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /qdrant/storage
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kp-qdrant-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -200,14 +236,31 @@ spec:
           {{- end }}
           env:
             - name: MINIO_ROOT_USER
-              value: {{ .Values.minio.rootUser | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: kp-secrets
+                  key: MINIO_ROOT_USER
             - name: MINIO_ROOT_PASSWORD
-              value: {{ .Values.minio.rootPassword | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: kp-secrets
+                  key: MINIO_ROOT_PASSWORD
             - name: MINIO_DEFAULT_BUCKETS
               value: knowledge-platform
           ports:
             - containerPort: 9000
             - containerPort: 9001
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/minio/data
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kp-minio-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

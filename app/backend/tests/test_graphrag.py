@@ -16,9 +16,13 @@ def seeded():
 def test_hybrid_uses_graph_entities(seeded):
     c = seeded
     principal = Principal(user_id="u-assoc", role="store_associate")
-    hits = c.store.hybrid_retrieve("gluten allergen shelf labeling", principal, top_k=5)
+    graph_ids = c.store.graph_resolve_doc_ids("gluten allergen shelf labeling", principal)
+    assert graph_ids, "GraphRAG requires a non-empty graph resolve path"
+    hits = c.store.hybrid_retrieve(
+        "gluten allergen shelf labeling", principal, top_k=5, graph_doc_ids=graph_ids
+    )
     assert hits
-    assert any(h.via in {"hybrid", "vector"} for h in hits)
+    assert any(h.via == "hybrid" or h.document.doc_id in graph_ids for h in hits)
     assert any("allergen" in h.document.text.lower() or h.document.corpus == "policy" for h in hits)
 
 

@@ -8,7 +8,7 @@ images:
 # Ollama is Compose-only (`make llm-ollama`); use values-desktop-compose-ollama.yaml for hybrid.
 # baseUrl / model are injected as OPENAI_BASE_URL / LLM_MODEL (source of truth — not hardcoded in app).
 llm:
-  provider: MOCK # MOCK | OLLAMA
+  provider: MOCK # MOCK | OLLAMA | VLLM
   baseUrl: http://host.docker.internal:11434/v1
   model: qwen2.5:0.5b
 
@@ -20,6 +20,9 @@ api:
   env:
     STORE_BACKEND: memory
     EMBEDDING_PROVIDER: MOCK
+    DEMO_AUTH_ENABLED: "true"
+    ENABLE_SEMANTIC_CACHE: "false"
+    LLM_ALLOW_RUNTIME_URL_OVERRIDE: "false"
     # Compose Tempo (make obs) via Docker Desktop host gateway
     OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
 
@@ -64,6 +67,16 @@ minio:
   args: []
   serviceType: ClusterIP
   consoleNodePort: null
+
+persistence:
+  enabled: true
+  postgresSize: 5Gi
+  neo4jSize: 5Gi
+  qdrantSize: 5Gi
+  minioSize: 10Gi
+
+networkPolicy:
+  enabled: true
 
 resources:
   api:

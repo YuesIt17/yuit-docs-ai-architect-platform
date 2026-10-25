@@ -1,126 +1,99 @@
-﻿# Итоговый проект — RetailPartnerX Knowledge Platform
+﻿# RetailPartnerX Knowledge Platform (учебный MVP)
 
-**Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)**
+**Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)** для курса «ИИ-архитектор».
 
-> **Сокращения:** [Глоссарий](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Ops:** [docs/](docs/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Runbook:** [docs/SRE.md](docs/SRE.md) · **DevSecOps:** [docs/infra/sec-ops.md](docs/infra/sec-ops.md)
+> **Глоссарий:** [docs/Glossary.md](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Ops:** [docs/](docs/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Evidence:** [docs/evidence/](docs/evidence/) · **Видео:** pending
 
-## Цель
+## Что решает MVP и для кого
 
-Спроектировать и реализовать **MVP производственного конвейера (End-to-End Pipeline)** для извлечения знаний из неструктурированных данных (сканы этикеток, PDF, политики) в **закрытом контуре** (On-premise / Air-gapped), без внешних API OpenAI/Anthropic.
+Сотрудники магазина, category managers и compliance RetailPartnerX получают grounded-ответы по Product/Policy KB и демо-этикеткам **в закрытом контуре** (без SaaS OpenAI/Anthropic), с ролевым ACL на уровне документов/чанков и проверяемым GraphRAG-путём (товар → аллерген → политика).
 
-Роль: **Platform Engineer & AI Architect**. Снижение «галлюцинаций» и потери контекста через **GraphRAG** (нейро-символический подход) и **Security-by-Design** (разграничение прав на уровне чанков / узлов графа). Кейс демонстрирует готовность к внедрению AI в enterprise-ритейле РФ (паттерны применимы к банковскому / промышленному контуру).
+## Current vs planned
+
+| Область | Current | Planned |
+|---------|---------|---------|
+| Auth | Demo Bearer roles (`DEMO_AUTH_ENABLED`) | Корпоративный IdP / JWT |
+| LLM desktop | Ollama `qwen2.5:0.5b` | — |
+| LLM submission | vLLM AWQ profile (см. ниже) | GPU runtime verification |
+| Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
+| OCR | **MOCK** pipeline contract | Real vision OCR (out of this MVP) |
+| Vault | Stub README | Live Vault agent |
+| Session memory | `session_id` only | Dialog persistence |
+| Video | Script ready | Owner recording |
+
+## Режимы запуска
+
+| Режим | STORE | LLM | Embeddings | Cache | Когда |
+|-------|-------|-----|------------|-------|-------|
+| CI / unit | memory | MOCK | MOCK | off | `pytest` |
+| Desktop hybrid | memory/live | OLLAMA | MOCK/LOCAL | off default | `hybrid-up` |
+| Submission | live strict | VLLM | LOCAL e5-small | off default | [vllm-profile](docs/infra/vllm-profile.md) |
+
+**vLLM GPU:** если NVIDIA GPU нет — конфигурация статическая, статус **«runtime не проверен»**.
+
+## Requirements matrix (проверяемые критерии)
+
+| Критерий | Статус | Проверка | Evidence |
+|----------|--------|----------|----------|
+| Нет облачных inference API | done | ADR-001; MOCK/OLLAMA/VLLM only | [ADR-001](architecture/adr/ADR-001-llm-serving.md) |
+| Deployment + Data Flow | done | docs + diagrams | [deployment](architecture/deployment.md) |
+| GraphRAG path | done | `pytest tests/test_rag_graph_on_off.py` | graph-on/off |
+| ACL secret deny | done | `pytest tests/test_acl.py tests/test_sec_*` | manager↛secret |
+| Cache ACL revoke | done | `pytest tests/test_sec_cache_acl.py` | — |
+| Asset ACL | done | `pytest tests/test_sec_assets_store.py` | guest↛internal |
+| Path traversal blocked | done | same | tmp object-store |
+| LangGraph state machine | done | `kp/agent/graph.py` | not ReAct |
+| Observability | partial | Tempo/Loki/Alloy + domain spans | [ADR-006](architecture/adr/ADR-006-observability.md) |
+| Load smoke | smoke only | `python scripts/load_smoke.py` | [load-report](docs/load-report.md) |
+| Video | **pending** | [AI_PLATFORM_VIDEO_SCRIPT](tasks/AI_PLATFORM_VIDEO_SCRIPT.md) | no URL yet |
+| Real OCR | **deferred** | known deviation | mock only |
+
+Сдача: **минимум за 8 дней до защиты** (дата защиты — у владельца). Не считать MVP «готовым к сдаче», пока обязательные evidence не заполнены в `docs/evidence/`.
+
+## Hardware / models
+
+| Component | Default |
+|-----------|---------|
+| Chat desktop | Ollama `qwen2.5:0.5b` |
+| Chat submission | `Qwen/Qwen2.5-1.5B-Instruct-AWQ` via vLLM (AWQ, ctx 4096) — runtime may be unverified |
+| Embeddings | `intfloat/multilingual-e5-small` (384) or MOCK |
+| OCR | MOCK (`provider=MOCK`) |
 
 ## Структура репозитория
 
 | Путь | Что внутри |
 | ---- | ---------- |
-| [`app/`](app/) | Runnable-платформа: `backend/`, `frontend/`, `infra/` (Compose/Helm), `datasets/`, `scripts/`, `evals/` |
-| [`architecture/`](architecture/) | ADD: C4 / flows / ER / sequences, ADR, [`diagrams/`](architecture/diagrams/) (drawio+png) |
-| [`docs/`](docs/) | Онбординг и ops: SETUP, SRE, [`infra/`](docs/infra/) (how-to + DevSec), demo, glossary, model-card |
-| [`data/`](data/) | Локальный runtime/state (object-store и т.п.), не исходники |
-| Корень | `Makefile`, `.env.example` — точки входа |
-
-**Куда идти**
-
-- Защита / ADD → [`architecture/`](architecture/)
-- Запуск стенда → [`docs/SETUP.md`](docs/SETUP.md)
-- Инфра / сканеры → [`docs/infra/`](docs/infra/)
-- Код и оркестрация → [`app/`](app/)
-
-## Контекст и преемственность
-
-Единый кейс **RetailPartnerX** (FMCG-ритейлер). Этот репозиторий — отдельный итоговый MVP; ниже — преемственность с ДЗ курса (hw-1…hw-10).
-
-### Домашние задания (курс)
-
-| ДЗ | Артефакт | Связь с проектом |
-| -- | -------- | ---------------- |
-| [hw-1](../yuit-docs-ai-architect/hw-1/) | Риски, 152-ФЗ, roadmap | Контур безопасности и residency |
-| [hw-2](../yuit-docs-ai-architect/hw-2/) | C4, Sequence, API | Паттерн границ BFF ↔ AI Service |
-| [hw-3](../yuit-docs-ai-architect/hw-3/) | Multi-agent + LangGraph | SRP агентов → оркестратор Knowledge Platform |
-| [hw-4](../yuit-docs-ai-architect/hw-4/) | ADR SaaS LLM | **Инверсия:** self-hosted Ollama для closed loop |
-| [hw-5](../yuit-docs-ai-architect/hw-5/) | Data pipeline | Ingest → chunk → embed → index |
-| [hw-6](../yuit-docs-ai-architect/hw-6/) | Guardrails, eval, obs | Input/Output guards + OTel/Prometheus |
-| [hw-7](../yuit-docs-ai-architect/hw-7/) | Inference sizing | GPU / квантование AWQ/GGUF |
-| [hw-8](../yuit-docs-ai-architect/hw-8/) | CI/CD + K8s | Helm / kind deployment |
-| [hw-9](../yuit-docs-ai-architect/hw-9/) | High-load, cache | Semantic cache, sync/async |
-| [hw-10](../yuit-docs-ai-architect/hw-10/) | Model Card / FinOps | [docs/model-card.md](docs/model-card.md) |
-
-### Финальный проект
-
-**Задача:** для RetailPartnerX закрыть контур **корпоративной базы знаний** (политики, НПА-выдержки, этикетки, секретные promo) с GraphRAG, ACL и on-prem LLM.
-
-Тема курса сохранена; формулировки «банк / пром» адаптированы под RetailPartnerX (FMCG, policies / labels / promo, 152-ФЗ).
-
-## Шаги выполнения (артефакты решения)
-
-| Шаг | Артефакт |
-| --- | -------- |
-| 1. Architecture & Design (C4 L1–L3, Deployment, Sequence, ER, Data Flow) | [architecture/](architecture/) · [diagrams/](architecture/diagrams/) |
-| 1b. Infra topology (Compose / K8s) | [docs/infra/](docs/infra/) · [compose-topology](architecture/diagrams/compose-topology.png) · [k8s-topology](architecture/diagrams/k8s-topology.png) |
-| 2. ADR со trade-off (LLM, Vector, Graph, Orchestration, Security, Obs, …) | [architecture/adr/](architecture/adr/) |
-| 3. MVP: GraphRAG + LangGraph + Guardrails + multimodal labels | [app/backend/](app/backend/) · [app/frontend/](app/frontend/) |
-| 4. Infra: Compose + Helm (Data Plane + Control Plane) | [app/infra/](app/infra/) |
-| 5. Демо-скрипт 5–7 мин | [docs/demo-script.md](docs/demo-script.md) |
-| 6. Нагрузочный отчёт | [docs/load-report.md](docs/load-report.md) |
-
-## Формат сдачи
-
-| Артефакт | Путь |
-| -------- | ---- |
-| Monorepo `app/` + `architecture/` + `docs/` | корень репозитория |
-| Архитектурная документация (ADD) | [architecture/](architecture/) |
-| Диаграммы Draw.io + PNG | [architecture/diagrams/](architecture/diagrams/) |
-| Видео-демо (Deep Dive) | запись по [demo-script](docs/demo-script.md) (вручную) |
-| Нагрузочный отчёт | [docs/load-report.md](docs/load-report.md) |
-
-GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/yuit-docs-ai-architect-platform)
-
-## Критерии самопроверки
-
-| Критерий | Как закрыто |
-| -------- | ----------- |
-| Нет облачных API (OpenAI/Anthropic) | [ADR-001](architecture/adr/ADR-001-llm-serving.md); runtime MOCK / Ollama |
-| Есть Deployment и Data Flow | [deployment](architecture/deployment.md) · [data-flow](architecture/data-flow.md) · [docs/infra/](docs/infra/) · [diagrams/](architecture/diagrams/) |
-| GraphRAG (не только векторный поиск) | [ADR-003](architecture/adr/ADR-003-graph-db.md) · `app/backend/kp/repositories/memory_store.py` · `app/backend/kp/agent/graph.py` |
-| ACL: User B не видит секретный документ | [ADR-005](architecture/adr/ADR-005-security.md) · demo: manager vs compliance |
-| Control Plane / Data Plane | [c4-container](architecture/c4-container.md) |
-| LangGraph (state machine), не линейный скрипт | [ADR-004](architecture/adr/ADR-004-orchestration.md) · `app/backend/kp/agent/graph.py` |
-| Observability | [ADR-006](architecture/adr/ADR-006-observability.md) · Grafana / Prometheus / Loki / Tempo |
-| Желательно: streaming | SSE в chat API (см. sequence) |
-| Желательно: тесты | `cd app/backend; pytest -q` |
-
-Статус «Принято», если критичные критерии выполнены с evidence выше.
+| [`app/`](app/) | `backend/`, `frontend/`, `infra/`, `datasets/`, `scripts/` |
+| [`architecture/`](architecture/) | C4 L1–L4, ADR, diagrams |
+| [`docs/`](docs/) | SETUP, SRE, infra, demo, evidence, model-card |
+| [`data/`](data/) | **Runtime-only** object-store (создаётся при запуске; не исходники) |
+| [`tasks/`](tasks/) | Cursor fixes + video script |
 
 ## Быстрый старт
 
-Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**. Инфра: **[docs/infra/](docs/infra/)**. Runbook: **[docs/SRE.md](docs/SRE.md)**. Аудит K8s / сканеры: **[docs/infra/sec-ops.md](docs/infra/sec-ops.md)** (`make sec-scan`).
-
-**Windows**
+Полная инструкция: **[docs/SETUP.md](docs/SETUP.md)**.
 
 ```powershell
-.\app\scripts\hybrid\hybrid-up.ps1   # hybrid: Compose (ollama+obs) + K8s
+.\app\scripts\hybrid\hybrid-up.ps1
 ```
-
-**macOS**
 
 ```bash
-bash app/scripts/hybrid/hybrid-up.sh   # или: make demo
+bash app/scripts/hybrid/hybrid-up.sh
+cd app/backend && .venv/Scripts/python -m pytest -q   # Windows venv
 ```
 
-| Сервис | Где | URL / порт |
-|--------|-----|------------|
-| UI / API | K8s | http://kp.local:8088 |
-| MinIO / stores | K8s | port-forward при необходимости |
-| Ollama | Compose | :11434 |
-| Tempo / Loki / Prom / Grafana | Compose | :3200 / :3100 / :9090 / :3000 |
+Demo auth (не production IdP): Bearer `guest` | `associate` | `manager` | `compliance`.
 
-Демо-токены (Role switcher): `guest` | `associate` | `manager` | `compliance`
+## Известные отклонения
 
-```bash
-cd app/backend && pytest -q
-```
+1. **OCR = MOCK** — демонстрация контракта пайплайна, не распознавание реального скана. Согласование real OCR с преподавателем — отдельно.
+2. **Demo-auth** — учебные Bearer-токены.
+3. **vLLM runtime** — может быть «не проверен» без GPU.
+4. **Vault** — planned stub.
+5. **Видео** — pending до записи владельцем.
 
 ## Автор
 
 **Евгений Юлов** — Platform Engineer / AI Architect (учебный case study).
+
+GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/yuit-docs-ai-architect-platform)
