@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 
-from kp.api.deps import container_dep
+from kp.api.deps import container_dep, principal_dep
 from kp.config import Settings, get_settings
 from kp.deps import AppContainer
 from kp.domain.schemas import HealthResponse
@@ -57,3 +57,14 @@ async def readiness(
 @router.get("/v1/graph/stats")
 async def graph_stats(c: AppContainer = Depends(container_dep)):
     return c.store.graph_stats()
+
+
+@router.get("/v1/graph/subgraph")
+async def graph_subgraph(
+    seed: str = Query("gluten", min_length=1, max_length=64),
+    limit: int = Query(40, ge=1, le=100),
+    c: AppContainer = Depends(container_dep),
+    principal=Depends(principal_dep),
+):
+    """Read-only demo subgraph (Product→allergen←Policy), ACL-filtered."""
+    return c.store.graph_subgraph(seed, principal, limit=limit)

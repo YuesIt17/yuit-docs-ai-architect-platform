@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-10-26T10:09:43.107304+00:00",
+  "base_url": "http://127.0.0.1:30080",
+  "scenario": "cache_miss",
+  "count": 10,
+  "concurrency": 1,
+  "seed": 42,
+  "note": "smoke only — not a capacity / scaling limit test",
+  "health": {
+    "status": "ok",
+    "store_backend": "live",
+    "llm_provider": "OLLAMA",
+    "llm_model": "qwen2.5:0.5b",
+    "llm_reachable": true,
+    "index_version": "v1"
+  },
+  "success_rate": 0.5,
+  "error_rate": 0.5,
+  "rps_approx": 0.010687569266438076,
+  "latency_ms": {
+    "p50": 1277.2314000176266,
+    "p95": 14117.41899990011,
+    "p99": 14117.41899990011,
+    "avg": 7120.523439976387,
+    "max": 20076.0543999495
+  },
+  "results": [
+    {
+      "latency_ms": 1277.2314000176266,
+      "ok": true,
+      "status": 200,
+      "error": null,
+      "acl_decision": "allow",
+      "llm_provider": "OLLAMA",
+      "message": "Какие аллергены у FreshFarm oats?"
+    },
+    {
+      "latency_ms": 14117.41899990011,
+      "ok": true,
+      "status": 200,
+      "error": null,
+      "acl_decision": "allow",
+      "llm_provider": "OLLAMA",
+      "message": "Что говорит политика про gluten и nuts?"
+    },
+    {
+      "latency_ms": 20076.0543999495,
+      "ok": true,
+      "status": 200,
+      "error": null,
+      "acl_decision": "allow",
+      "llm_provider": "OLLAMA",
+      "message": "Расскажи про творог Простоквашино"
+    },
+    {
+      "latency_ms": 75.47969999723136,
+      "ok": true,
+      "status": 200,
+      "error": null,
+      "acl_decision": "allow",
+      "llm_provider": "OLLAMA",
+      "message": "Какие требования к маркировке молока?"
+    },
+    {
+      "latency_ms": 180017.32210000046,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Shelf labeling policy allergens"
+    },
+    {
+      "latency_ms": 180010.9748999821,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Какие аллергены у FreshFarm oats?"
+    },
+    {
+      "latency_ms": 180015.51689999178,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Что говорит политика про gluten и nuts?"
+    },
+    {
+      "latency_ms": 180015.9373000497,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Расскажи про творог Простоквашино"
+    },
+    {
+      "latency_ms": 56.43270001746714,
+      "ok": true,
+      "status": 200,
+      "error": null,
+      "acl_decision": "allow",
+      "llm_provider": "OLLAMA",
+      "message": "Какие требования к маркировке молока?"
+    },
+    {
+      "latency_ms": 180004.08210000023,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Shelf labeling policy allergens"
+    }
+  ]
+}

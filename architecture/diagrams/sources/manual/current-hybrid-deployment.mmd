@@ -1,0 +1,37 @@
+%% status: curated-from-code
+%% view: current-hybrid-deployment
+%% profile: desktop
+%% declared: Helm desktop + Compose llm/obs; GPU/vLLM pending (dashed)
+%% note: flat sibling subgraphs only — nested host/k8s + direction breaks Cursor Mermaid layout
+flowchart TB
+  ING[Ingress_kp_api_kp_ui]
+  subgraph apps [Apps_k8s]
+    FE[frontend_Deployment]
+    API[api_Deployment]
+  end
+  subgraph data [Data_Plane]
+    RD[redis]
+    NJ[neo4j]
+    QD[qdrant]
+    MN[minio]
+    PG[postgres_deployed_unused]
+  end
+  subgraph side [Compose_and_egress]
+    HDI[host.docker.internal]
+    OTLP[OTLP]
+    OL[ollama_profile_llm]
+    OBS[tempo_loki_alloy_prom_grafana]
+    GPU[vLLM_GPU_pending]
+  end
+  ING --> FE
+  ING --> API
+  API --> RD
+  API --> NJ
+  API --> QD
+  API --> MN
+  API -.->|DSN_unused| PG
+  API --> HDI
+  HDI --> OL
+  API --> OTLP
+  OTLP --> OBS
+  API -.->|submission_profile_pending| GPU

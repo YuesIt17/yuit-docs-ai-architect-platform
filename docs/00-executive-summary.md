@@ -16,7 +16,7 @@ On-premise **GraphRAG Knowledge Platform**:
 - **Модальности:** text chat + распознавание этикеток (PDF/PNG/…)
 - **Handoff:** JSON в MinIO `exports/` + outbox `label.recognized` → PIM/ERP
 
-## Continuity
+## Преемственность
 
 Развитие кейса из `yuit-docs-ai-architect` (hw-1…hw-10) и pointer [hw-11](../../yuit-docs-ai-architect/hw-11/): dual KB, LangGraph, security layer, inference sizing, sync/async, FinOps/Model Card. **Инверсия hw-4:** self-hosted Ollama вместо SaaS.
 
@@ -32,8 +32,9 @@ On-premise **GraphRAG Knowledge Platform**:
 | ------ | ---- |
 | Задание / критерии | [README](../README.md) |
 | C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagrams SVG](../architecture/diagrams/images/) · [DIAGRAMS.md](DIAGRAMS.md) |
+| Capacity Planning (VRAM / CPU / RAM) | [capacity-planning.md](capacity-planning.md) |
 | ADR | [adr/](../architecture/adr/) |
-| Демо / нагрузка | [AI_PLATFORM_VIDEO_SCRIPT](../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) · [load-report.md](load-report.md) |
+| Демо / нагрузка | [AI_PLATFORM_VIDEO_SCRIPT](../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) · [load-report.md](load-report.md) · [evidence/](evidence/) |
 | Model Card | [model-card.md](model-card.md) |
 
 Учебный MVP: runtime GraphRAG — in-memory mirror онтологии; Neo4j/Qdrant в compose для Browser и sync.

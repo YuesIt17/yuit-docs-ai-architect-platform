@@ -83,6 +83,16 @@ async def test_manager_cannot_presign_secret_asset(seeded):
     assert resp.url
 
 
+def test_default_object_store_root_resolves_under_repo():
+    from kp.infrastructure.object_store import _default_object_store_root
+
+    root = _default_object_store_root("kp-assets")
+    assert root.name == "kp-assets"
+    assert "object-store" in root.parts
+    # Must not raise IndexError (container layout uses shorter path depth)
+    assert root.is_absolute()
+
+
 def test_object_store_rejects_traversal(tmp_path):
     settings = Settings(store_backend="memory", minio_bucket="test-bucket")
     store = ObjectStore(settings, local_root=tmp_path)

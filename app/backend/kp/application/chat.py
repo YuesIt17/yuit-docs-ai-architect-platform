@@ -194,6 +194,9 @@ class ChatService:
                 "errors": [],
             }
         )
+        # Attach active OTel trace for audit / Loki↔Tempo correlation
+        if not state.get("trace_id"):
+            state["trace_id"] = current_trace_id()
         record_request_audit(self.c, self.settings, request_id, principal, state, started, "chat")
         citations = [Citation(**x) for x in state.get("citations") or []]
         self._maybe_put_cache(message, principal, state)
@@ -306,4 +309,6 @@ class ChatService:
             "llm_provider": cfg.provider,
         }
         yield f"event: final\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+        if not state.get("trace_id"):
+            state["trace_id"] = current_trace_id()
         record_request_audit(self.c, self.settings, request_id, principal, state, started, "chat")

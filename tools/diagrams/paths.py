@@ -10,14 +10,13 @@ ARCH = REPO_ROOT / "architecture"
 # Everything diagram-related lives under architecture/diagrams/
 GENERATED = ARCH / "diagrams"
 MODEL = GENERATED / "model"
-CURATED = GENERATED / "curated"
 GEN_SOURCES = GENERATED / "sources"
+SRC_GEN = GEN_SOURCES / "gen"
+SRC_MANUAL = GEN_SOURCES / "manual"
 GEN_IMAGES = GENERATED / "images"
 INVENTORY = GENERATED / "inventory.json"
 PROVENANCE = GENERATED / "provenance.json"
 SOURCE_MAP = MODEL / "source-map.yaml"
-# Back-compat alias used by build.py
-SOURCES = CURATED
 HELM_CHART = REPO_ROOT / "app" / "infra" / "helm" / "knowledge-platform"
 COMPOSE_FILE = REPO_ROOT / "app" / "infra" / "docker-compose.yml"
 BACKEND = REPO_ROOT / "app" / "backend"

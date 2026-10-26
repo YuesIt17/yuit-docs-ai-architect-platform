@@ -15,7 +15,6 @@ import yaml
 from normalize import stable_json_dumps
 from paths import (
     COMPOSE_FILE,
-    GEN_SOURCES,
     HELM_CHART,
     INVENTORY,
     REPO_ROOT,
@@ -228,7 +227,7 @@ def write_inventory(profile: str = "desktop", out_dir: Path | None = None) -> di
     inv, sanitized = build_inventory(profile)
     inv_path = out / "inventory.json"
     inv_path.write_text(stable_json_dumps(inv), encoding="utf-8")
-    man_path = out / "sources" / f"k8s-manifests-{profile}.sanitized.yaml"
+    man_path = out / "sources" / "gen" / f"k8s-manifests-{profile}.sanitized.yaml"
     man_path.parent.mkdir(parents=True, exist_ok=True)
     man_path.write_text(sanitized, encoding="utf-8")
     # Guard: no userinfo URIs or raw secret-looking env in public inventory

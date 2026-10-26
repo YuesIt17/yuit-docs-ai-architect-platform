@@ -94,38 +94,41 @@ _PACKAGE_LAYERS: list[tuple[str, str, tuple[str, ...]]] = [
 
 
 def _flowchart_layered_packages(names: list[str], title: str) -> str:
-    """Stack package layers TB; modules LR within each layer."""
+    """Stack package layers as sibling subgraphs (no outer wrap / direction).
+
+    Cursor Mermaid preview breaks on nested subgraphs + direction + cross edges
+    (arrows stretch horizontally). Match the flat style of c4-container.mmd:
+    one-level subgraphs, node→node hubs only.
+    """
     remaining = list(names)
     used: set[str] = set()
     lines = [
         "%% status: generated-from-code",
         "%% converted: classDiagram -> layered flowchart for editor preview",
+        "%% note: flat sibling subgraphs; node hubs (Cursor-safe)",
         "flowchart TB",
-        f"  subgraph {_safe_id(title)} [{title}]",
     ]
-    layer_ids: list[str] = []
+    hubs: list[str] = []
     for lid, label, members in _PACKAGE_LAYERS:
         present = [n for n in members if n in remaining and n not in used]
         if not present:
             continue
-        layer_ids.append(lid)
-        lines.append(f"    subgraph {lid} [{label}]")
-        lines.append("      direction LR")
+        hub_name = label if label in present else present[0]
+        hubs.append(_safe_id(hub_name))
+        lines.append(f"  subgraph {lid} [{label}]")
         for n in present:
-            lines.append(f"      {_safe_id(n)}[{n}]")
+            lines.append(f"    {_safe_id(n)}[{n}]")
             used.add(n)
-        lines.append("    end")
+        lines.append("  end")
     other = [n for n in remaining if n not in used]
     if other:
         lid = "layer_other"
-        layer_ids.append(lid)
-        lines.append(f"    subgraph {lid} [other]")
-        lines.append("      direction LR")
+        hubs.append(_safe_id(other[0]))
+        lines.append(f"  subgraph {lid} [other]")
         for n in other:
-            lines.append(f"      {_safe_id(n)}[{n}]")
-        lines.append("    end")
-    lines.append("  end")
-    for a, b in zip(layer_ids, layer_ids[1:]):
+            lines.append(f"    {_safe_id(n)}[{n}]")
+        lines.append("  end")
+    for a, b in zip(hubs, hubs[1:]):
         lines.append(f"  {a} --> {b}")
     return "\n".join(lines) + "\n"
 

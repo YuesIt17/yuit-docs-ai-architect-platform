@@ -7,6 +7,7 @@ C4, data-flow, sequences, ER, deployment, ADR и диаграммы.
 | Раздел | Путь |
 |--------|------|
 | Описания views (C4 L1–L4, sequences, …) | [`docs/`](docs/) |
+| Capacity Planning (VRAM / CPU / RAM) | [`../docs/capacity-planning.md`](../docs/capacity-planning.md) |
 | ADR | [`adr/`](adr/) |
 | Диаграммы (модель + SVG) | [`diagrams/`](diagrams/) · [docs/DIAGRAMS.md](../docs/DIAGRAMS.md) |
 | Infra how-to / DevSec | [`docs/infra/`](../docs/infra/) |

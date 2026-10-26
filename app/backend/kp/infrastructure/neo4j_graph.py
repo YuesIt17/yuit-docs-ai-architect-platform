@@ -176,6 +176,68 @@ class Neo4jGraphRepository:
                         return hits
             return hits
 
+    def graph_subgraph(
+        self,
+        seed: str,
+        principal: Principal | None = None,
+        *,
+        limit: int = 40,
+    ) -> dict[str, Any]:
+        """Product —HAS_ALLERGEN→ allergen ←GOVERNS— Policy (ACL-filtered)."""
+        if not self._driver:
+            return {"seed": seed, "source": "neo4j", "nodes": [], "edges": [], "available": False}
+        seed_l = (seed or "gluten").lower().strip() or "gluten"
+        nodes: dict[str, dict[str, Any]] = {}
+        edges: list[dict[str, str]] = []
+        with self._driver.session() as session:
+            rows = session.run(
+                """
+                MATCH (prod:Document)-[r:HAS_ALLERGEN|GOVERNS]->(a:Entity)
+                WHERE toLower(a.name) CONTAINS $seed OR $seed CONTAINS toLower(a.name)
+                RETURN prod.doc_id AS doc_id, prod.title AS title, prod.corpus AS corpus,
+                       prod.classification AS classification, prod.allowed_roles AS allowed_roles,
+                       a.entity_id AS entity_id, a.name AS entity_name, a.type AS entity_type,
+                       type(r) AS rel
+                LIMIT $limit
+                """,
+                seed=seed_l,
+                limit=limit,
+            )
+            for row in rows:
+                if principal is not None:
+                    roles = row["allowed_roles"] or []
+                    if not can_access(principal, row["classification"] or "public", roles):
+                        continue
+                doc_id = row["doc_id"]
+                eid = row["entity_id"]
+                if not doc_id or not eid:
+                    continue
+                dn = f"doc:{doc_id}"
+                en = f"ent:{eid}"
+                if dn not in nodes:
+                    nodes[dn] = {
+                        "id": dn,
+                        "label": row["title"] or doc_id,
+                        "kind": "document",
+                        "corpus": row["corpus"],
+                        "classification": row["classification"],
+                    }
+                if en not in nodes:
+                    nodes[en] = {
+                        "id": en,
+                        "label": row["entity_name"] or eid,
+                        "kind": "entity",
+                        "entity_type": row["entity_type"],
+                    }
+                edges.append({"source": dn, "target": en, "type": row["rel"] or "RELATED"})
+        return {
+            "seed": seed_l,
+            "source": "neo4j",
+            "available": True,
+            "nodes": list(nodes.values()),
+            "edges": edges,
+        }
+
     def push_all(
         self,
         documents: dict[str, DocumentNode],

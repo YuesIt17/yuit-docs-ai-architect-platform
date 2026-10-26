@@ -179,6 +179,29 @@ export async function graphStats(role: RoleKey): Promise<Record<string, number>>
   return res.json();
 }
 
+export type GraphSubgraphNode = {
+  id: string;
+  label: string;
+  kind: string;
+  corpus?: string;
+  classification?: string;
+  entity_type?: string;
+};
+
+export type GraphSubgraph = {
+  seed: string;
+  source: string;
+  nodes: GraphSubgraphNode[];
+  edges: { source: string; target: string; type: string }[];
+};
+
+export async function graphSubgraph(role: RoleKey, seed = "gluten"): Promise<GraphSubgraph> {
+  const q = new URLSearchParams({ seed });
+  const res = await fetch(`${API_BASE}/v1/graph/subgraph?${q}`, { headers: headers(role) });
+  if (!res.ok) await parseError(res);
+  return res.json();
+}
+
 export async function getOutbox(role: RoleKey): Promise<{ events: unknown[] }> {
   const res = await fetch(`${API_BASE}/v1/outbox`, { headers: headers(role) });
   if (!res.ok) await parseError(res);

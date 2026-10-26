@@ -1,4 +1,7 @@
-"""Parameterized load smoke (not a capacity test). Writes docs/load-report.md + raw JSON."""
+"""Parameterized load smoke (not a capacity test). Writes raw JSON under docs/evidence/load/.
+
+Optionally refreshes a markdown fragment; the curated docs/load-report.md is maintained by hand.
+"""
 
 from __future__ import annotations
 
@@ -73,10 +76,26 @@ async def main() -> None:
         help="cache_hit reuses one question; cache_miss rotates questions",
     )
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument(
+        "--label",
+        default="",
+        help="Filename tag (e.g. mock, ollama); default = scenario name",
+    )
+    p.add_argument(
+        "--write-report-fragment",
+        action="store_true",
+        help="Also write docs/evidence/load/last_run.md (does not overwrite load-report.md)",
+    )
+    p.add_argument(
+        "--timeout",
+        type=float,
+        default=120.0,
+        help="HTTP timeout seconds (raise for Ollama on CPU)",
+    )
     args = p.parse_args()
 
     results: list[dict] = []
-    async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
+    async with httpx.AsyncClient(timeout=args.timeout, trust_env=False) as client:
         health = await client.get(f"{args.base_url}/health")
         health.raise_for_status()
         health_json = health.json()
@@ -125,33 +144,33 @@ async def main() -> None:
 
     raw_dir = ROOT / "docs" / "evidence" / "load"
     raw_dir.mkdir(parents=True, exist_ok=True)
-    raw_path = raw_dir / f"smoke_{args.scenario}_{args.count}x{args.concurrency}.json"
+    tag = (args.label or args.scenario).strip().replace(" ", "_")
+    provider = health_json.get("llm_provider", "unknown")
+    raw_path = raw_dir / f"smoke_{tag}_{args.count}x{args.concurrency}.json"
     raw_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    provider = health_json.get("llm_provider", "unknown")
-    report = ROOT / "docs" / "load-report.md"
-    report.write_text(
-        "# Load Report (smoke)\n\n"
-        "> 20 sequential (or low-concurrency) requests = **smoke**, not a capacity test. "
-        "Do not extrapolate scaling limits from this run.\n\n"
-        f"| Field | Value |\n|-------|-------|\n"
-        f"| Generated | {meta['generated_at']} |\n"
-        f"| Scenario | `{args.scenario}` |\n"
-        f"| Base URL | `{args.base_url}` |\n"
-        f"| Count / concurrency | {args.count} / {args.concurrency} |\n"
-        f"| Success rate | {success_rate:.2%} |\n"
-        f"| RPS (approx) | {rps:.2f} |\n"
-        f"| Latency p50 / p95 / p99 ms | "
-        f"{meta['latency_ms']['p50']:.1f} / {meta['latency_ms']['p95']:.1f} / {meta['latency_ms']['p99']:.1f} |\n"
-        f"| Effective LLM (from /health) | `{provider}` |\n"
-        f"| Store backend | `{health_json.get('store_backend')}` |\n"
-        f"| Index version | `{health_json.get('index_version')}` |\n"
-        f"| Raw results | `{raw_path.relative_to(ROOT).as_posix()}` |\n"
-        f"| Tokens/s / TTFT | not measured in this smoke |\n",
-        encoding="utf-8",
-    )
+    if args.write_report_fragment:
+        frag = raw_dir / "last_run.md"
+        frag.write_text(
+            "# Last load_smoke run\n\n"
+            f"| Field | Value |\n|-------|-------|\n"
+            f"| Generated | {meta['generated_at']} |\n"
+            f"| Label | `{tag}` |\n"
+            f"| Scenario | `{args.scenario}` |\n"
+            f"| Base URL | `{args.base_url}` |\n"
+            f"| Count / concurrency | {args.count} / {args.concurrency} |\n"
+            f"| Success rate | {success_rate:.2%} |\n"
+            f"| RPS (approx) | {rps:.2f} |\n"
+            f"| Latency p50 / p95 / p99 ms | "
+            f"{meta['latency_ms']['p50']:.1f} / {meta['latency_ms']['p95']:.1f} / {meta['latency_ms']['p99']:.1f} |\n"
+            f"| Effective LLM (from /health) | `{provider}` |\n"
+            f"| Store backend | `{health_json.get('store_backend')}` |\n"
+            f"| Raw | `{raw_path.relative_to(ROOT).as_posix()}` |\n",
+            encoding="utf-8",
+        )
+        print(f"wrote {frag}")
+
     print(json.dumps({k: meta[k] for k in ("scenario", "rps_approx", "success_rate", "latency_ms")}, indent=2))
-    print(f"wrote {report}")
     print(f"wrote {raw_path}")
 
 

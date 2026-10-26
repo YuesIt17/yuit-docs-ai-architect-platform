@@ -21,18 +21,30 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from paths import (
-    ARCH,
     BACKEND,
-    GEN_IMAGES,
-    GEN_SOURCES,
     GENERATED,
-    INVENTORY,
     MERMAID_CONFIG,
     MODEL,
-    PROVENANCE,
     REPO_ROOT,
-    SOURCES,
+    SRC_GEN,
+    SRC_MANUAL,
     TOOLS_DIR,
+)
+
+MANUAL_MMD = (
+    "c4-context.mmd",
+    "c4-container.mmd",
+    "c4-backend-components.mmd",
+    "current-hybrid-deployment.mmd",
+    "target-overview.mmd",
+    "sequence-chat.mmd",
+    "data-flow.mmd",
+    "er-conceptual.mmd",
+)
+
+GEN_STABLE_MMD = (
+    "agent-workflow.mmd",
+    "k8s-topology-desktop.mmd",
 )
 
 # Ensure sibling imports work when invoked as a script.
@@ -129,10 +141,28 @@ def render_mermaid(src: Path, dest: Path) -> None:
     _run(cmd)
 
 
+def _gen_dir(out_dir: Path) -> Path:
+    d = out_dir / "sources" / "gen"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _manual_dir(out_dir: Path) -> Path:
+    """Committed manual sources live under architecture/diagrams; copy into temp builds."""
+    committed = SRC_MANUAL
+    dest = out_dir / "sources" / "manual"
+    if dest.resolve() == committed.resolve():
+        return dest
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(committed, dest)
+    return dest
+
+
 def export_langgraph(out_dir: Path) -> None:
     from export_langgraph import write_export
 
-    write_export(out_dir / "sources" / "agent-workflow.mmd", block_network=True)
+    write_export(_gen_dir(out_dir) / "agent-workflow.mmd", block_network=True)
 
 
 def export_pyreverse(out_dir: Path) -> None:
@@ -174,9 +204,7 @@ def export_pyreverse(out_dir: Path) -> None:
     )
     # pyreverse names files packages_kp.mmd / classes_kp.mmd
     packages = list(tmp.glob("packages*.mmd"))
-    classes = list(tmp.glob("classes*.mmd"))
-    src_dir = out_dir / "sources"
-    src_dir.mkdir(parents=True, exist_ok=True)
+    src_dir = _gen_dir(out_dir)
     from normalize import classdiagram_to_flowchart, normalize_mermaid
 
     if packages:
@@ -229,21 +257,17 @@ def export_pyreverse(out_dir: Path) -> None:
     shutil.rmtree(tmp, ignore_errors=True)
 
 
-def export_structurizr(out_dir: Path) -> None:
-    """Validate Structurizr DSL; render views from curated flowcharts.
-
-    Structurizr Mermaid export embeds HTML <div> labels that break Cursor preview
-    and produce one-line / void-arrow SVGs. DSL remains the C4 model source of truth;
-    `model/mermaid/*.mmd` are the committed render views (flowchart TB).
-    """
-    from normalize import normalize_mermaid
-
+def validate_structurizr() -> None:
+    """Validate Structurizr DSL. Mermaid C4 views live in sources/manual (not DSL export)."""
     workspace = MODEL / "workspace.dsl"
     if not workspace.exists():
         raise RuntimeError(f"missing {workspace}")
 
     dsl = MODEL / "workspace.dsl"
-    dsl.write_text(dsl.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n"), encoding="utf-8")
+    dsl.write_text(
+        dsl.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n"),
+        encoding="utf-8",
+    )
 
     docker = _which("docker")
     if docker:
@@ -267,36 +291,15 @@ def export_structurizr(out_dir: Path) -> None:
         except RuntimeError as exc:
             print(f"WARN: Structurizr validate failed ({exc})")
 
-    src_dir = out_dir / "sources"
-    src_dir.mkdir(parents=True, exist_ok=True)
-    mapping = [
-        "c4-context.mmd",
-        "c4-container.mmd",
-        "c4-backend-components.mmd",
-        "current-hybrid-deployment.mmd",
-        "target-overview.mmd",
-    ]
-    curated_dir = MODEL / "mermaid"
-    for dest_name in mapping:
-        curated = curated_dir / dest_name
-        if not curated.exists():
-            raise RuntimeError(f"missing curated Mermaid view {curated}")
-        body = normalize_mermaid(curated.read_text(encoding="utf-8"))
-        (src_dir / dest_name).write_text(body, encoding="utf-8")
 
-
-def copy_curated_sources(out_dir: Path) -> None:
-    from normalize import normalize_mermaid
-
-    src_dir = out_dir / "sources"
-    src_dir.mkdir(parents=True, exist_ok=True)
-    for name in ("sequence-chat.mmd", "data-flow.mmd", "er-conceptual.mmd"):
-        src = SOURCES / name
-        if not src.exists():
-            raise RuntimeError(f"missing curated source {src}")
-        (src_dir / name).write_text(
-            normalize_mermaid(src.read_text(encoding="utf-8")), encoding="utf-8"
-        )
+def ensure_manual_sources(out_dir: Path) -> Path:
+    """Ensure sources/manual exists (copy into temp builds) and required files are present."""
+    manual = _manual_dir(out_dir)
+    for name in MANUAL_MMD:
+        path = manual / name
+        if not path.exists():
+            raise RuntimeError(f"missing manual Mermaid view {path}")
+    return manual
 
 
 def _kube_diagram_input(sanitized: Path, diagram_yaml: Path) -> None:
@@ -422,12 +425,13 @@ def export_kube_diagrams(out_dir: Path, profile: str) -> None:
 
     _fix_kube_diagrams_windows_layout()
     inv = write_inventory(profile, out_dir)
-    man = out_dir / "sources" / f"k8s-manifests-{profile}.sanitized.yaml"
-    diagram_in = out_dir / "sources" / f"k8s-manifests-{profile}.diagram.yaml"
+    gen = _gen_dir(out_dir)
+    man = gen / f"k8s-manifests-{profile}.sanitized.yaml"
+    diagram_in = gen / f"k8s-manifests-{profile}.diagram.yaml"
     _kube_diagram_input(man, diagram_in)
 
     # Canonical readable view (Mermaid) — opens cleanly in Cursor without remote icons
-    mmd_path = out_dir / "sources" / f"k8s-topology-{profile}.mmd"
+    mmd_path = gen / f"k8s-topology-{profile}.mmd"
     mmd_path.write_text(
         _k8s_topology_mermaid(inv.get("k8s_resources") or [], profile),
         encoding="utf-8",
@@ -469,19 +473,23 @@ def render_all_mermaid(out_dir: Path) -> list[str]:
     images = out_dir / "images"
     images.mkdir(parents=True, exist_ok=True)
     rendered = []
-    for mmd in sorted((out_dir / "sources").glob("*.mmd")):
-        if mmd.name.endswith(".sanitized.yaml"):
+    roots = [
+        out_dir / "sources" / "gen",
+        out_dir / "sources" / "manual",
+    ]
+    for root in roots:
+        if not root.exists():
             continue
-        if "manifest" in mmd.name:
-            continue
-        dest = images / (mmd.stem + ".svg")
-        try:
-            render_mermaid(mmd, dest)
-            rendered.append(dest.name)
-        except RuntimeError as exc:
-            print(f"WARN: mermaid render failed for {mmd.name}: {exc}")
-            # Still keep source; check will fail if SVG required
-            raise
+        for mmd in sorted(root.glob("*.mmd")):
+            if "manifest" in mmd.name:
+                continue
+            dest = images / (mmd.stem + ".svg")
+            try:
+                render_mermaid(mmd, dest)
+                rendered.append(dest.name)
+            except RuntimeError as exc:
+                print(f"WARN: mermaid render failed for {mmd.name}: {exc}")
+                raise
     return rendered
 
 
@@ -518,6 +526,7 @@ def write_provenance(out_dir: Path, profile: str, outputs: list[str]) -> None:
             "target-design": ["target-overview", "er-conceptual"],
         },
         "limitations": [
+            "sources/gen = codegen; sources/manual = hand-edited Mermaid.",
             "k8s-topology-*.svg is Mermaid from Helm inventory; *-kube.svg is KubeDiagrams with embedded icons.",
             "KubeDiagrams / Mermaid show declared Helm topology, not live cluster state.",
             "Structurizr Mermaid export does not preserve all native renderer features.",
@@ -546,19 +555,21 @@ def build(profile: str, out_dir: Path) -> None:
         )
     if out_dir.exists() and out_dir.resolve() != GENERATED.resolve():
         shutil.rmtree(out_dir)
-    (out_dir / "sources").mkdir(parents=True, exist_ok=True)
+    (out_dir / "sources" / "gen").mkdir(parents=True, exist_ok=True)
     (out_dir / "images").mkdir(parents=True, exist_ok=True)
 
+    ensure_manual_sources(out_dir)
     export_langgraph(out_dir)
     export_pyreverse(out_dir)
-    export_structurizr(out_dir)
-    copy_curated_sources(out_dir)
+    validate_structurizr()
     export_kube_diagrams(out_dir, profile)
     rendered = render_all_mermaid(out_dir)
-    # kube svg already there
-    outputs = [p.name for p in (out_dir / "sources").iterdir()] + [
-        p.name for p in (out_dir / "images").iterdir()
-    ]
+    outputs: list[str] = []
+    for sub in ("gen", "manual"):
+        d = out_dir / "sources" / sub
+        if d.exists():
+            outputs.extend(f"{sub}/{p.name}" for p in d.iterdir())
+    outputs.extend(p.name for p in (out_dir / "images").iterdir())
     write_provenance(out_dir, profile, outputs)
     print(f"build OK profile={profile} mermaid_svgs={len(rendered)}")
 
@@ -568,38 +579,33 @@ def _file_hash(path: Path) -> str:
 
 
 def check(profile: str) -> int:
-    """Regenerate to temp dir; compare normalized sources + inventory; do not overwrite."""
+    """Regenerate gen/ to temp; compare with committed sources/gen + inventory; do not overwrite."""
     with tempfile.TemporaryDirectory(prefix="kp-diagrams-") as tmp:
         tmp_path = Path(tmp) / "generated"
         build(profile, tmp_path)
         errors: list[str] = []
-        # Compare stable generated sources (skip layout-volatile Structurizr/Pyreverse mermaid if needed)
-        committed_sources = GENERATED / "sources"
-        temp_sources = tmp_path / "sources"
-        stable = {
-            "agent-workflow.mmd",
-            "sequence-chat.mmd",
-            "data-flow.mmd",
-            "er-conceptual.mmd",
-        }
-        if not committed_sources.exists():
-            errors.append("committed architecture/diagrams/sources missing")
+        committed_gen = SRC_GEN
+        temp_gen = tmp_path / "sources" / "gen"
+        if not committed_gen.exists():
+            errors.append("committed architecture/diagrams/sources/gen missing")
         else:
-            for name in sorted(stable):
-                tfile = temp_sources / name
-                cfile = committed_sources / name
+            for name in GEN_STABLE_MMD:
+                tfile = temp_gen / name
+                cfile = committed_gen / name
                 if not tfile.exists():
-                    errors.append(f"missing regenerated source: {name}")
+                    errors.append(f"missing regenerated gen source: {name}")
                     continue
                 if not cfile.exists():
-                    errors.append(f"missing committed source: {name}")
+                    errors.append(f"missing committed gen source: {name}")
                     continue
                 if tfile.read_text(encoding="utf-8") != cfile.read_text(encoding="utf-8"):
-                    errors.append(f"stale source (drift): {name}")
-            # Presence check for other expected outputs
-            for tfile in temp_sources.glob("*.mmd"):
-                if not (committed_sources / tfile.name).exists():
-                    errors.append(f"missing committed source: {tfile.name}")
+                    errors.append(f"stale gen source (drift): {name}")
+            for tfile in temp_gen.glob("*.mmd"):
+                if not (committed_gen / tfile.name).exists():
+                    errors.append(f"missing committed gen source: {tfile.name}")
+            for name in MANUAL_MMD:
+                if not (SRC_MANUAL / name).exists():
+                    errors.append(f"missing committed manual source: {name}")
         # inventory
         c_inv = GENERATED / "inventory.json"
         t_inv = tmp_path / "inventory.json"
@@ -609,7 +615,6 @@ def check(profile: str) -> int:
             for volatile in ("sanitized_manifest_sha256",):
                 cj.pop(volatile, None)
                 tj.pop(volatile, None)
-            # helm input hashes are content-addressed — should match if values unchanged
             if cj.get("k8s_resources") != tj.get("k8s_resources"):
                 errors.append("inventory k8s_resources drift")
             if cj.get("langgraph") != tj.get("langgraph"):

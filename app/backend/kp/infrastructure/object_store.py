@@ -18,18 +18,28 @@ class ObjectStoreError(ValueError):
     """Raised when an object key would escape the store root or is unsafe."""
 
 
+def _default_object_store_root(bucket: str) -> Path:
+    """Local FS fallback root for monorepo checkout and container image.
+
+    Dev:  ``.../app/backend/kp/infrastructure/`` → ``<repo>/data/object-store/<bucket>``
+    Image: ``/app/kp/infrastructure/`` → ``/app/data/object-store/<bucket>``
+    (Docker layout is flatter — ``parents[4]`` does not exist and used to crash startup.)
+    """
+    here = Path(__file__).resolve()
+    # parents[0]=infrastructure, [1]=kp, [2]=backend|/app
+    install_root = here.parents[2]
+    if install_root.name == "backend" and len(here.parents) > 4:
+        return here.parents[4] / "data" / "object-store" / bucket
+    return install_root / "data" / "object-store" / bucket
+
+
 class ObjectStore:
     """Stores raw + recognized artifacts. Uses local FS when MinIO unavailable."""
 
     def __init__(self, settings: Settings, local_root: Path | None = None):
         self.settings = settings
         self.bucket = settings.minio_bucket
-        # platform/infrastructure → repo root (parents[4]) / data/
-        self._local_root = (
-            local_root
-            if local_root is not None
-            else Path(__file__).resolve().parents[4] / "data" / "object-store" / self.bucket
-        )
+        self._local_root = local_root if local_root is not None else _default_object_store_root(self.bucket)
         self._local_root.mkdir(parents=True, exist_ok=True)
         self._client = None
         if settings.store_backend == "live":

@@ -1,16 +1,18 @@
 {
   "commit_sha": "FILL",
-  "run_date": "FILL",
-  "os_cpu_ram": "FILL",
-  "gpu_vram_or_cpu_only": "FILL",
-  "serving_engine_version": "FILL (Ollama or vLLM)",
-  "model_id_revision": "FILL",
-  "quantization_context": "FILL",
+  "run_date": "FILL ISO-8601",
+  "os_cpu_ram": "e.g. Windows 11 / Intel i7-8550U 4c8t / 32 GB RAM",
+  "gpu_vram_or_cpu_only": "cpu_only | or e.g. RTX 3060 12GB",
+  "serving_engine_version": "Ollama <version> | vLLM 0.6.6 (runtime unverified)",
+  "model_id_revision": "qwen2.5:0.5b | Qwen/Qwen2.5-1.5B-Instruct-AWQ",
+  "quantization_context": "GGUF Q4 desktop | AWQ ctx 4096 submission",
   "embedding_model_dim": "intfloat/multilingual-e5-small / 384 or MOCK",
-  "store_backend_strict": "FILL",
+  "store_backend_strict": "memory | live (strict=false/true)",
   "cache_mode": "ENABLE_SEMANTIC_CACHE=false recommended",
   "ocr_provider": "MOCK",
   "demo_auth": true,
   "video_url": "pending",
-  "defense_date_submit_by": "FILL (submit ≥8 days before defense)"
+  "defense_date_submit_by": "FILL (submit ≥8 days before defense)",
+  "capacity_doc": "docs/capacity-planning.md",
+  "load_raw_dir": "docs/evidence/load/"
 }

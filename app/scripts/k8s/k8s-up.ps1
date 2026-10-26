@@ -75,6 +75,12 @@ if ($env:KP_LLM -eq "compose-ollama") {
   $extra += @("-f", "app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml")
 }
 
+# Avoid SSA conflict when something else (e.g. kubectl scale / HPA remnant) owns .spec.replicas
+if (kubectl -n kp get deploy api -o name 2>$null) {
+  Write-Host "==> Align api replicas to chart (1) before Helm apply"
+  kubectl -n kp scale deploy/api --replicas=1 2>$null | Out-Null
+}
+
 Write-Host "==> Helm upgrade --install kp"
 helm upgrade --install kp app/infra/helm/knowledge-platform `
   -n kp --create-namespace `

@@ -281,6 +281,16 @@ class HybridKnowledgeStore:
         stats["live"] = 1 if self._use_live else 0
         return stats
 
+    def graph_subgraph(self, seed: str, principal=None, *, limit: int = 40) -> dict:
+        if self._use_live and self._neo4j and self._neo4j.available:
+            try:
+                sub = self._neo4j.graph_subgraph(seed, principal, limit=limit)
+                if sub.get("nodes"):
+                    return sub
+            except Exception as exc:
+                logger.warning("live graph_subgraph failed: %s", exc)
+        return self._memory.graph_subgraph(seed, principal, limit=limit)
+
 
 # Prefer this name in DI / agent typing.
 KnowledgeStore = HybridKnowledgeStore

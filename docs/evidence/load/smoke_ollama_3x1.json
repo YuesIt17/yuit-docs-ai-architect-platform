@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-10-26T10:21:20.968529+00:00",
+  "base_url": "http://127.0.0.1:30080",
+  "scenario": "cache_miss",
+  "count": 3,
+  "concurrency": 1,
+  "seed": 42,
+  "note": "smoke only — not a capacity / scaling limit test",
+  "health": {
+    "status": "ok",
+    "store_backend": "live",
+    "llm_provider": "OLLAMA",
+    "llm_model": "qwen2.5:0.5b",
+    "llm_reachable": true,
+    "index_version": "v1"
+  },
+  "success_rate": 0.0,
+  "error_rate": 1.0,
+  "rps_approx": 0.008332307001420085,
+  "latency_ms": {
+    "p50": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "avg": 0.0,
+    "max": 0.0
+  },
+  "results": [
+    {
+      "latency_ms": 120013.40920000803,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Какие аллергены у FreshFarm oats?"
+    },
+    {
+      "latency_ms": 120019.88499995787,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Что говорит политика про gluten и nuts?"
+    },
+    {
+      "latency_ms": 120011.04879996274,
+      "ok": false,
+      "status": 0,
+      "error": "ReadTimeout: ",
+      "acl_decision": null,
+      "llm_provider": null,
+      "message": "Расскажи про творог Простоквашино"
+    }
+  ]
+}

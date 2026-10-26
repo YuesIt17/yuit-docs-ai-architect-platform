@@ -12,7 +12,7 @@ from typing import Any
 
 import yaml
 
-from paths import BACKEND, GEN_IMAGES, GEN_SOURCES, INVENTORY, REPO_ROOT, SOURCE_MAP
+from paths import BACKEND, GEN_IMAGES, INVENTORY, REPO_ROOT, SOURCE_MAP, SRC_GEN, SRC_MANUAL
 
 SECRET_PATTERNS = [
     re.compile(r"://[^/\s]+:[^@/\s]+@"),  # userinfo in URI
@@ -127,9 +127,14 @@ def check_secrets_in_outputs(root: Path | None = None) -> list[str]:
 
 def check_expected_outputs() -> list[str]:
     errors: list[str] = []
-    expected_mmd = [
+    expected_gen = [
         "agent-workflow.mmd",
         "python-packages.mmd",
+        "python-classes-agent.mmd",
+        "python-classes-stores.mmd",
+        "k8s-topology-desktop.mmd",
+    ]
+    expected_manual = [
         "c4-context.mmd",
         "c4-container.mmd",
         "c4-backend-components.mmd",
@@ -138,16 +143,17 @@ def check_expected_outputs() -> list[str]:
         "sequence-chat.mmd",
         "data-flow.mmd",
         "er-conceptual.mmd",
-        "k8s-topology-desktop.mmd",
     ]
-    expected_svg = [p.replace(".mmd", ".svg") for p in expected_mmd] + [
-        "python-classes-agent.svg",
-        "python-classes-stores.svg",
-        "k8s-topology-desktop-kube.svg",
-    ]
-    for name in expected_mmd:
-        if not (GEN_SOURCES / name).exists():
-            errors.append(f"missing generated source: {name}")
+    expected_svg = (
+        [p.replace(".mmd", ".svg") for p in expected_gen + expected_manual]
+        + ["k8s-topology-desktop-kube.svg"]
+    )
+    for name in expected_gen:
+        if not (SRC_GEN / name).exists():
+            errors.append(f"missing gen source: {name}")
+    for name in expected_manual:
+        if not (SRC_MANUAL / name).exists():
+            errors.append(f"missing manual source: {name}")
     for name in expected_svg:
         if not (GEN_IMAGES / name).exists():
             errors.append(f"missing generated image: {name}")

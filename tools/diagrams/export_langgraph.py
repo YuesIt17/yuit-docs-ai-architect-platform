@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from normalize import normalize_mermaid
-from paths import BACKEND, GEN_SOURCES, REPO_ROOT
+from paths import BACKEND, REPO_ROOT, SRC_GEN
 
 
 class NetworkBlockedError(RuntimeError):
@@ -83,7 +83,7 @@ def write_export(out: Path | None = None, *, block_network: bool = True) -> Path
     if block_network:
         _block_network()
     text = export_mermaid()
-    target = out or (GEN_SOURCES / "agent-workflow.mmd")
+    target = out or (SRC_GEN / "agent-workflow.mmd")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     return target
@@ -95,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
         "-o",
         "--output",
         type=Path,
-        default=GEN_SOURCES / "agent-workflow.mmd",
+        default=SRC_GEN / "agent-workflow.mmd",
         help="Output .mmd path",
     )
     p.add_argument(

@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-10-26T10:23:47.219103+00:00",
+  "base_url": "http://127.0.0.1:30080",
+  "scenario": "cache_miss",
+  "count": 7,
+  "concurrency": 1,
+  "label": "ollama",
+  "note": "smoke from live /v1/audit ollama://qwen2.5:0.5b samples after hybrid-up (load_smoke hung on runaway long generations; metrics are real E2E chat latencies)",
+  "health": {
+    "status": "ok",
+    "store_backend": "live",
+    "llm_provider": "OLLAMA",
+    "llm_model": "qwen2.5:0.5b",
+    "llm_reachable": true,
+    "index_version": "v1"
+  },
+  "success_rate": 1.0,
+  "error_rate": 0.0,
+  "rps_approx": 0.10035554536070651,
+  "latency_ms": {
+    "p50": 9972,
+    "p95": 14104,
+    "p99": 14104,
+    "avg": 9964.57142857143,
+    "max": 20061,
+    "samples": [
+      20061,
+      14104,
+      1261,
+      4803,
+      7718,
+      9972,
+      11833
+    ]
+  },
+  "source": "GET /v1/audit?limit=20 Authorization Bearer compliance"
+}

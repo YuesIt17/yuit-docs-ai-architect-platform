@@ -1,0 +1,45 @@
+%% status: generated-from-code
+%% converted: classDiagram -> layered flowchart for editor preview
+%% note: one-level subgraphs only; node→node edges (Cursor Mermaid breaks on nested + direction)
+flowchart TB
+  subgraph layer_agent [agent]
+    agent[agent]
+    n_graph[graph]
+    state[state]
+  end
+  subgraph layer_api [api]
+    api[api]
+    chat[chat]
+    deps[deps]
+    health[health]
+    jobs[jobs]
+    llm[llm]
+    router[router]
+    vision[vision]
+  end
+  subgraph layer_app [application]
+    application[application]
+    audit[audit]
+  end
+  subgraph layer_domain [domain]
+    domain[domain]
+    nodes[nodes]
+    schemas[schemas]
+  end
+  subgraph layer_infra [infrastructure]
+    infrastructure[infrastructure]
+    cache[cache]
+    embeddings[embeddings]
+    neo4j_graph[neo4j_graph]
+    object_store[object_store]
+    qdrant_vectors[qdrant_vectors]
+  end
+  subgraph layer_obs [observability]
+    observability[observability]
+    logging_json[logging_json]
+  end
+  agent --> api
+  api --> application
+  application --> domain
+  domain --> infrastructure
+  infrastructure --> observability

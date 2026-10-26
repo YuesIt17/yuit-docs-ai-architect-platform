@@ -1,0 +1,20 @@
+{
+  "commit_sha": "c376b1a",
+  "run_date": "2026-10-26T08:30:00Z",
+  "os_cpu_ram": "Windows 11 / Intel Core i7-8550U 4c8t / ~32 GB RAM",
+  "gpu_vram_or_cpu_only": "cpu_only",
+  "serving_engine_version": "Ollama (Compose) + MOCK baseline",
+  "model_id_revision": "qwen2.5:0.5b (Q4_K_M) | mock-graph-rag for §1",
+  "quantization_context": "GGUF Q4 desktop; AWQ ctx 4096 submission (runtime unverified)",
+  "embedding_model_dim": "MOCK",
+  "store_backend_strict": "live (hybrid) / memory (MOCK smoke)",
+  "cache_mode": "ENABLE_SEMANTIC_CACHE=false",
+  "ocr_provider": "MOCK",
+  "demo_auth": true,
+  "video_url": "pending",
+  "defense_date_submit_by": "FILL (submit ≥8 days before defense)",
+  "capacity_doc": "docs/capacity-planning.md",
+  "load_raw_dir": "docs/evidence/load/",
+  "tempo_trace_id_chat": "ca1a2261f25b8dbca04cae601bb671d1",
+  "notes": "MOCK + Ollama load evidence; Tempo chat trace + Loki Ollama logs + kubectl API trace_id lines — see evidence/trace.md and loki.md"
+}

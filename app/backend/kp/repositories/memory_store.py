@@ -244,6 +244,91 @@ class MemoryKnowledgeStore:
             "labels": len(self.labels),
         }
 
+    def graph_subgraph(
+        self,
+        seed: str,
+        principal: Principal | None = None,
+        *,
+        limit: int = 40,
+    ) -> dict[str, Any]:
+        """Demo subgraph: Product —HAS_ALLERGEN→ allergen ←GOVERNS— Policy (ACL-filtered)."""
+        seed_l = (seed or "gluten").lower().strip() or "gluten"
+        nodes: dict[str, dict[str, Any]] = {}
+        edges: list[dict[str, str]] = []
+
+        def _add_doc(doc_id: str) -> bool:
+            doc = self.documents.get(doc_id)
+            if not doc:
+                return False
+            if principal is not None and not can_access(principal, doc.classification, doc.allowed_roles):
+                return False
+            nid = f"doc:{doc_id}"
+            if nid not in nodes:
+                nodes[nid] = {
+                    "id": nid,
+                    "label": doc.title or doc_id,
+                    "kind": "document",
+                    "corpus": doc.corpus,
+                    "classification": doc.classification,
+                }
+            return True
+
+        def _add_entity(eid: str) -> bool:
+            ent = self.entities.get(eid)
+            if not ent:
+                return False
+            nid = f"ent:{eid}"
+            if nid not in nodes:
+                nodes[nid] = {
+                    "id": nid,
+                    "label": ent.name,
+                    "kind": "entity",
+                    "entity_type": ent.entity_type,
+                }
+            return True
+
+        matched = [
+            e
+            for e in self.entities.values()
+            if e.entity_type == "allergen"
+            and (seed_l in e.name.lower() or e.name.lower() in seed_l)
+        ]
+        if not matched:
+            matched = [
+                e
+                for e in self.entities.values()
+                if seed_l in e.name.lower() or e.name.lower() in seed_l
+            ]
+
+        for ent in matched:
+            if not _add_entity(ent.entity_id):
+                continue
+            for src, rel, dst in self.edges:
+                if dst != ent.entity_id:
+                    continue
+                if rel not in ("HAS_ALLERGEN", "GOVERNS"):
+                    continue
+                if not _add_doc(src):
+                    continue
+                edges.append(
+                    {
+                        "source": f"doc:{src}",
+                        "target": f"ent:{ent.entity_id}",
+                        "type": rel,
+                    }
+                )
+                if len(edges) >= limit:
+                    break
+            if len(edges) >= limit:
+                break
+
+        return {
+            "seed": seed_l,
+            "source": "memory",
+            "nodes": list(nodes.values()),
+            "edges": edges[:limit],
+        }
+
 
 # Back-compat alias used in a few call sites / docs.
 KnowledgeStore = MemoryKnowledgeStore

@@ -1,0 +1,90 @@
+﻿{
+  "base_url": "http://127.0.0.1:8080",
+  "ok": true,
+  "checks": [
+    {
+      "path": "/health",
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "store_backend": "memory",
+        "llm_provider": "MOCK",
+        "llm_model": "mock-graph-rag",
+        "llm_reachable": true,
+        "index_version": "v1"
+      }
+    },
+    {
+      "path": "/ready",
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "store_backend": "memory",
+        "llm_provider": "MOCK",
+        "llm_model": "mock-graph-rag",
+        "llm_reachable": true,
+        "index_version": "v1"
+      }
+    },
+    {
+      "path": "/v1/llm/health",
+      "status": 200,
+      "body": {
+        "provider": "MOCK",
+        "base_url": "",
+        "model": "mock-graph-rag",
+        "model_uri": "mock://mock-graph-rag",
+        "reachable": true,
+        "detail": "mock provider always reachable",
+        "presets": {
+          "MOCK": {
+            "base_url": "",
+            "model": "mock-graph-rag"
+          },
+          "OLLAMA": {
+            "base_url": "http://127.0.0.1:11434/v1",
+            "model": "qwen2.5:0.5b"
+          },
+          "VLLM": {
+            "base_url": "http://127.0.0.1:8000/v1",
+            "model": "Qwen/Qwen2.5-1.5B-Instruct-AWQ"
+          }
+        }
+      }
+    },
+    {
+      "path": "/v1/graph/stats",
+      "status": 200,
+      "body": {
+        "documents": 9,
+        "chunks": 9,
+        "entities": 10,
+        "edges": 49,
+        "labels": 0,
+        "live": 0
+      }
+    }
+  ],
+  "llm_config": {
+    "provider": "MOCK",
+    "base_url": "",
+    "model": "mock-graph-rag",
+    "model_uri": "mock://mock-graph-rag",
+    "reachable": true,
+    "detail": "mock provider always reachable",
+    "presets": {
+      "MOCK": {
+        "base_url": "",
+        "model": "mock-graph-rag"
+      },
+      "OLLAMA": {
+        "base_url": "http://127.0.0.1:11434/v1",
+        "model": "qwen2.5:0.5b"
+      },
+      "VLLM": {
+        "base_url": "http://127.0.0.1:8000/v1",
+        "model": "Qwen/Qwen2.5-1.5B-Instruct-AWQ"
+      }
+    }
+  }
+}

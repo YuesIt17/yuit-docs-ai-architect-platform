@@ -1,16 +1,41 @@
-# Evidence folder
+# Папка evidence
 
-Place reproducible check outputs here (do not invent numbers or screenshots).
+Сюда кладём воспроизводимые результаты проверок (не придумывать цифры и скриншоты).
 
-Suggested layout after a real run:
+## Состав после реального прогона
 
-| Path | Content |
-|------|---------|
-| `manifest.json` | commit SHA, date, OS, providers, corpus size |
-| `pytest.txt` | `pytest -q` output |
-| `demo_check.json` | output of `scripts/demo_check.py` |
-| `load/` | raw JSON from load_smoke scenarios |
-| `trace.md` | Grafana Tempo trace id + span list for one chat request |
-| `loki.md` | confirmation that API pod/container logs appear in Loki (not only Docker socket narrative) |
+| Путь | Содержание |
+|------|------------|
+| `manifest.json` | commit SHA, дата, OS, провайдеры, размер корпуса |
+| `pytest.txt` | вывод `pytest -q` |
+| `demo_check.json` | вывод `scripts/demo_check.py` |
+| `load/` | сырые JSON из `load_smoke.py` (MOCK + Ollama) |
+| `trace.md` | Grafana Tempo: trace id + список span для одного chat-запроса |
+| `loki.md` | подтверждение, что логи API видны в Loki |
+| `manifest.template.json` | пустой шаблон с подсказками по полям |
 
-Video recording: **pending** (owner records later). Do not add a fake URL.
+## Как обновить
+
+```powershell
+# Из корня репозитория после hybrid-up (API на :8080 или :30080)
+cd app/backend
+.\.venv\Scripts\python -m pytest -q | Tee-Object -FilePath ..\..\docs\evidence\pytest.txt
+
+python ..\scripts\demo_check.py --base-url http://127.0.0.1:30080 `
+  | Out-File -Encoding utf8 ..\..\docs\evidence\demo_check.json
+
+python scripts/load_smoke.py --base-url http://127.0.0.1:30080 --count 20 --label mock
+# С OLLAMA в Helm/API:
+python scripts/load_smoke.py --base-url http://127.0.0.1:30080 --count 10 --concurrency 1 --label ollama
+```
+
+Заполнить `trace.md` / `loki.md` из Grafana Explore (deep links на Ops-странице). Скопировать `manifest.template.json` → `manifest.json` и указать железо (примеры в комментариях шаблона / capacity-planning).
+
+## Чеклист записи видео
+
+1. Следовать [tasks/AI_PLATFORM_VIDEO_SCRIPT.md](../../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) (5–7 мин).
+2. Бинарник видео **не** коммитить.
+3. После загрузки проставить `video_url` в `manifest.json`.
+4. Экраны: Chat ACL, Graph SVG + Neo4j Browser, Tempo spans, Loki logs, Grafana KP Overview.
+
+Запись видео: **ожидается** (владелец). Фейковый URL не добавлять.
