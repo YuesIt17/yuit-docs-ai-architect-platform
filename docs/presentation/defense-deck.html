@@ -4,1074 +4,666 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RetailPartnerX · Defense Deck</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f7f8fa;
-      --paper: #ffffff;
-      --ink: #0f1419;
-      --muted: #5c6672;
-      --faint: #8b949e;
-      --line: #e3e7ec;
-      --line-strong: #c9d0d8;
-      --accent: #0b5fff;
-      --accent-soft: rgba(11, 95, 255, 0.08);
-      --up: #0a7a3e;
-      --down: #b42318;
-      --cyan: #0a7ea4;
+      --bg: #f4f6f8; --paper: #ffffff; --ink: #12181f; --muted: #3d4754; --faint: #6b7582;
+      --line: #dde3ea; --line-strong: #b8c2ce; --accent: #0b5fff;
+      --accent-soft: rgba(11, 95, 255, 0.09); --up: #0a7a3e; --down: #b42318; --cyan: #0a7ea4;
+      --ctrl: #0b5fff; --data: #0a7a3e; --warn: #9a6700;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Archivo, system-ui, sans-serif;
-      background: #e8ebf0;
-      color: var(--ink);
-      line-height: 1.4;
-    }
+    html { scroll-behavior: smooth; }
+    body { font-family: "Segoe UI", "Helvetica Neue", sans-serif; background: #dce2e9; color: var(--ink); line-height: 1.4; }
     .bar {
-      position: sticky; top: 0; z-index: 30;
-      display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
-      padding: 0.65rem 1.2rem;
-      background: var(--ink);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.72rem; color: #c5ccd4;
+      position: sticky; top: 0; z-index: 40; display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;
+      padding: 0.55rem 1rem; background: var(--ink);
+      font-family: ui-monospace, Consolas, monospace; font-size: 0.72rem; color: #c5ccd4;
     }
     .bar strong { color: #fff; background: var(--accent); padding: 0.12rem 0.4rem; }
-    .bar a { color: #9ec5ff; text-decoration: none; }
-    .deck {
-      max-width: 1140px;
-      margin: 1.25rem auto 3rem;
-      display: grid; gap: 1.35rem;
-      padding: 0 1rem;
-    }
+    .bar a, .bar button { color: #9ec5ff; background: none; border: 0; cursor: pointer; font: inherit; text-decoration: none; padding: 0.2rem 0.35rem; }
+    .bar button:hover, .bar a:hover { color: #fff; }
+    .bar .sep { opacity: 0.35; }
+    .deck { max-width: 1140px; margin: 1rem auto 3rem; display: grid; gap: 1.2rem; padding: 0 1rem; }
     .slide {
-      aspect-ratio: 16 / 9;
-      position: relative;
-      overflow: hidden;
-      background: var(--paper);
-      border: 1px solid var(--line-strong);
-      box-shadow: 0 12px 32px rgba(15, 20, 25, 0.06);
-      display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      aspect-ratio: 16 / 9; position: relative; overflow: hidden; background: var(--paper);
+      border: 1px solid var(--line-strong); box-shadow: 0 10px 28px rgba(15, 20, 25, 0.07);
+      display: grid; grid-template-rows: auto 1fr auto;
     }
-    .masthead {
-      display: flex; align-items: stretch;
-      border-bottom: 1px solid var(--line);
-      background: var(--bg);
-    }
+    .masthead { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); background: var(--bg); }
     .brand {
-      background: var(--ink); color: #fff;
-      font-weight: 800; letter-spacing: -0.03em; font-size: 0.9rem;
-      padding: 0.5rem 0.85rem; text-transform: uppercase;
-      display: flex; align-items: center;
+      background: var(--ink); color: #fff; font-weight: 800; letter-spacing: -0.03em; font-size: 0.88rem;
+      padding: 0.48rem 0.85rem; text-transform: uppercase; display: flex; align-items: center;
     }
     .brand span { margin-left: 0.35rem; color: #9ec5ff; font-weight: 600; }
     .mast-meta {
-      flex: 1; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 1rem;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.65rem; color: var(--muted);
+      flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 1rem;
+      font-family: ui-monospace, Consolas, monospace; font-size: 0.65rem; color: var(--muted);
     }
-    .live-dot {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      color: var(--up); font-weight: 600;
-    }
-    .live-dot::before {
-      content: ""; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--up);
-    }
-    .ticker {
-      display: flex; overflow: hidden;
-      background: var(--bg); border-bottom: 1px solid var(--line);
-      font-family: "IBM Plex Mono", monospace; font-size: 0.65rem; white-space: nowrap;
-    }
-    .tick {
-      display: flex; gap: 0.45rem; align-items: center;
-      padding: 0.35rem 0.75rem; border-right: 1px solid var(--line);
-    }
-    .tick b { color: var(--ink); }
-    .tick .up { color: var(--up); }
-    .tick .down { color: var(--down); }
-    .tick .flat { color: var(--cyan); }
-    .body {
-      padding: 0.85rem 1.45rem 0.35rem;
-      min-height: 0; overflow: hidden;
-      display: flex; flex-direction: column; gap: 0.35rem;
-    }
-    .body > .fill { flex: 1 1 auto; min-height: 0; }
+    .body { padding: 0.75rem 1.35rem 0.35rem; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 0.4rem; }
     .kicker {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--accent); margin-bottom: 0;
-      flex: 0 0 auto;
+      font-family: ui-monospace, Consolas, monospace; font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); flex: 0 0 auto;
     }
-    h1 {
-      font-size: clamp(1.7rem, 3.4vw, 2.7rem);
-      font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; max-width: 18ch;
-      flex: 0 0 auto;
-    }
-    h1 .hl { color: var(--accent); }
-    h2 {
-      font-size: clamp(1.15rem, 2.1vw, 1.55rem);
-      font-weight: 800; letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 0;
-      flex: 0 0 auto;
-    }
-    .lede { margin-top: 0.7rem; max-width: 46ch; font-size: 0.98rem; color: var(--muted); }
+    h1 { font-size: clamp(1.8rem, 3.6vw, 2.85rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; }
+    h2 { font-size: clamp(1.15rem, 2.1vw, 1.55rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; }
+    .sub { font-size: 1.15rem; font-weight: 650; color: var(--muted); margin-top: -0.15rem; }
+    .lede { font-size: 0.98rem; color: var(--muted); max-width: 58ch; line-height: 1.4; }
     .flash {
-      display: inline-flex; margin-top: 0.9rem;
-      background: var(--accent-soft); border-left: 3px solid var(--accent);
-      padding: 0.4rem 0.7rem;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 500;
+      display: inline-flex; margin-top: 0.35rem; background: var(--accent-soft); border-left: 3px solid var(--accent);
+      padding: 0.4rem 0.7rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.72rem; font-weight: 600;
     }
+    .status-line { margin-top: 0.35rem; font-size: 0.78rem; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
     .footer {
-      display: flex; justify-content: space-between; align-items: center;
-      margin: 0 1.45rem 0.75rem; padding-top: 0.4rem;
-      border-top: 1px solid var(--line);
-      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; color: var(--faint);
-    }
-    .cols {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
-      flex: 1 1 auto; min-height: 0; align-content: stretch;
-    }
-    .cols > div, .cols-3 > div, .split-fig > div {
-      display: flex; flex-direction: column; min-height: 0; gap: 0.2rem;
-    }
-    .cols-3 {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;
-      flex: 1 1 auto; min-height: 0;
-    }
-    .cols-ui {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 0.4rem;
-      flex: 1 1 auto; min-height: 0; align-content: stretch;
-    }
-    .cols-ui > div {
-      display: flex; flex-direction: column; min-height: 0; gap: 0.15rem;
-    }
-    .cols-ui > div:nth-child(1) { grid-column: 1 / 3; }
-    .cols-ui > div:nth-child(2) { grid-column: 3 / 5; }
-    .cols-ui > div:nth-child(3) { grid-column: 5 / 7; }
-    .cols-ui > div:nth-child(4) { grid-column: 2 / 4; }
-    .cols-ui > div:nth-child(5) { grid-column: 4 / 6; }
-    .panel {
-      background: var(--bg); border: 1px solid var(--line); padding: 0.7rem 0.8rem;
-    }
-    .panel .ph {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: 0.4rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--line);
-    }
-    .panel .ph h3 {
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--accent);
-    }
-    .panel .ph em {
-      font-style: normal; font-family: "IBM Plex Mono", monospace;
-      font-size: 0.6rem; color: var(--faint);
-    }
-    ul { list-style: none; }
-    ul li {
-      display: flex; justify-content: space-between; gap: 0.75rem;
-      padding: 0.25rem 0; font-size: 0.86rem; font-weight: 500;
-      border-bottom: 1px solid var(--line);
-    }
-    ul li:last-child { border-bottom: 0; }
-    ul.plain li { display: block; border: 0; padding: 0.22rem 0; }
-    ul li span {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; white-space: nowrap;
-    }
-    ul li span.up { color: var(--up); }
-    ul li span.down { color: var(--down); }
-    .quotes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
-    .q {
-      background: var(--bg); border: 1px solid var(--line); padding: 0.55rem 0.6rem; min-height: 4.4rem;
-    }
-    .q .sym {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 600;
-      color: var(--cyan); margin-bottom: 0.2rem;
-    }
-    .q .val { font-size: 1.02rem; font-weight: 800; letter-spacing: -0.03em; }
-    .q .chg { font-family: "IBM Plex Mono", monospace; font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
-    .q .chg.up { color: var(--up); }
-    .q .chg.down { color: var(--down); }
-    .watch { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    .watch th {
-      text-align: left; font-family: "IBM Plex Mono", monospace;
-      font-size: 0.58rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--faint); padding: 0.28rem 0.45rem; border-bottom: 1px solid var(--line-strong);
-      background: var(--bg);
-    }
-    .watch td {
-      padding: 0.38rem 0.45rem; border-bottom: 1px solid var(--line); font-weight: 500; vertical-align: middle;
-    }
-    .watch .sym {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; color: var(--accent);
-    }
-    .badge {
-      display: inline-block; font-family: "IBM Plex Mono", monospace;
-      font-size: 0.58rem; font-weight: 600; padding: 0.12rem 0.35rem;
-    }
-    .badge.ok { background: rgba(10, 122, 62, 0.1); color: var(--up); }
-    .badge.open { background: rgba(180, 35, 24, 0.1); color: var(--down); }
-    .fig, .fig-ph {
-      width: 100%; flex: 1 1 auto; min-height: 0;
-      border: 1px solid var(--line); background: var(--bg);
-      overflow: hidden; display: flex; align-items: stretch; justify-content: center;
-    }
-    .fig img {
-      width: 100%; height: 100%;
-      object-fit: contain; object-position: top center;
-      display: block; background: var(--bg);
-    }
-    .fig-ph {
-      background: var(--bg); color: var(--faint);
-      font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; text-align: center; padding: 0.75rem;
-    }
-    .cap {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; color: var(--faint);
-      margin: 0; flex: 0 0 auto;
-    }
-    .split-fig {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
-      flex: 1 1 auto; min-height: 0;
-    }
-    .note {
-      margin-top: 0; font-size: 0.78rem; color: var(--muted); flex: 0 0 auto;
-    }
-    .body > .fig { flex: 1 1 auto; min-height: 0; }
-    /* Slide-native hybrid topology (readable at 16:9) */
-    .topo {
-      display: grid;
-      grid-template-columns: 1.15fr auto 1fr;
-      gap: 0.55rem;
-      align-items: stretch;
-      margin-top: 0.15rem;
-    }
-    .topo-col {
-      background: var(--bg);
-      border: 1px solid var(--line-strong);
-      padding: 0.55rem 0.65rem 0.65rem;
-      display: flex; flex-direction: column; gap: 0.4rem;
-    }
-    .topo-col h3 {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--accent);
-      margin-bottom: 0.15rem;
-    }
-    .topo-col.k8s h3 { color: var(--cyan); }
-    .topo-col.compose h3 { color: var(--up); }
-    .topo-box {
-      background: var(--paper);
-      border: 1px solid var(--line-strong);
-      padding: 0.4rem 0.5rem;
-      font-size: 0.82rem; font-weight: 600;
-    }
-    .topo-box small {
-      display: block; margin-top: 0.15rem;
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.6rem; font-weight: 500; color: var(--muted);
-    }
-    .topo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
-    .topo-mid {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 0.45rem; min-width: 4.2rem;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 600;
-      color: var(--muted); text-align: center;
-    }
-    .topo-arrow {
-      width: 100%; padding: 0.35rem 0.2rem;
-      border: 1px dashed var(--line-strong); background: var(--paper);
-      color: var(--accent);
-    }
-    .topo-ingress {
-      grid-column: 1 / -1;
-      background: var(--ink); color: #fff;
-      padding: 0.4rem 0.65rem;
-      font-size: 0.85rem; font-weight: 700;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .topo-ingress span {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 500; color: #9ec5ff;
-    }
-    .topo-wrap { display: grid; gap: 0.4rem; flex: 1 1 auto; min-height: 0; }
-    .topo-dash {
-      opacity: 0.75; border-style: dashed;
-      font-weight: 500; color: var(--muted);
-    }
-    /* Generic readable flows (C4 / sequence / agent) */
-    .flow-2 {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
-      flex: 1 1 auto; min-height: 0; align-items: stretch;
-    }
-    .flow-panel {
-      background: var(--bg); border: 1px solid var(--line-strong);
-      padding: 0.5rem 0.6rem 0.55rem;
-      display: flex; flex-direction: column; min-height: 0; gap: 0.35rem;
-    }
-    .flow-panel > h3 {
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--accent); margin: 0; flex: 0 0 auto;
-    }
-    .actors {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-bottom: 0;
-    }
-    .actor {
-      background: var(--paper); border: 1px solid var(--line-strong);
-      padding: 0.3rem 0.4rem; font-size: 0.74rem; font-weight: 600; text-align: center;
-    }
-    .actor small {
-      display: block; margin-top: 0.1rem;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; font-weight: 500; color: var(--muted);
-    }
-    .hub {
-      background: var(--ink); color: #fff;
-      padding: 0.45rem 0.55rem; text-align: center;
-      font-size: 0.85rem; font-weight: 800; margin: 0.2rem 0;
-    }
-    .hub small {
-      display: block; margin-top: 0.15rem;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; font-weight: 500; color: #9ec5ff;
-    }
-    .ext-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
-    .store-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; margin-top: 0.25rem;
-    }
-    /* Compact vertical lane diagrams */
-    .lane {
-      display: flex; flex-direction: column; gap: 0.28rem;
-      flex: 1 1 auto; min-height: 0; justify-content: space-between;
-    }
-    .lane-step {
-      display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.4rem; align-items: center;
-      background: var(--paper); border: 1px solid var(--line-strong);
-      padding: 0.4rem 0.5rem; min-height: 0;
-    }
-    .lane-step .n {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 700;
-      color: var(--accent); text-align: center;
-    }
-    .lane-step .t { font-size: 0.78rem; font-weight: 600; line-height: 1.2; }
-    .lane-step .t small {
-      display: block; margin-top: 0.08rem;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; font-weight: 500; color: var(--muted);
-    }
-    .lane-step.core { background: var(--ink); border-color: var(--ink); color: #fff; }
-    .lane-step.core .n { color: #9ec5ff; }
-    .lane-step.core .t small { color: #9ec5ff; }
-    .lane-step.side { border-style: dashed; }
-    .lane-step.side .t { color: var(--muted); font-weight: 500; }
-    .lane-fork {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.25rem;
-    }
-    .lane-fork .chip {
-      background: var(--paper); border: 1px solid var(--line-strong);
-      padding: 0.28rem 0.3rem; text-align: center;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; font-weight: 600;
-    }
-    .lane-fork .chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-    .lane-fork .chip.off { border-style: dashed; color: var(--faint); font-weight: 500; }
-    .lane-meta {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; color: var(--muted);
-      text-align: center; line-height: 1.25;
-    }
-
-    .quotes.tech { grid-template-columns: repeat(4, 1fr); gap: 0.4rem; flex: 1 1 auto; min-height: 0; align-content: stretch; }
-    .quotes.tech .q { min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; padding: 0.5rem 0.55rem; }
-    .quotes.tech .q .val { font-size: 0.92rem; }
-    .quotes.tech .q .chg { line-height: 1.25; white-space: normal; }
-    .quotes.load3 { grid-template-columns: repeat(3, 1fr); flex: 1 1 auto; min-height: 0; }
-    .quotes.load3 .q { min-height: 0; display: flex; flex-direction: column; gap: 0.2rem; }
-    .quotes.load3 .q .val { font-size: 1.35rem; }
-    .metric-list { list-style: none; margin-top: 0.25rem; }
-    .metric-list li {
-      display: flex; justify-content: space-between; gap: 0.5rem;
-      padding: 0.18rem 0; border-bottom: 1px solid var(--line);
-      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 500; color: var(--muted);
-    }
-    .metric-list li:last-child { border-bottom: 0; }
-    .metric-list li b { color: var(--ink); font-weight: 600; }
-    .pipe {
-      display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.28rem;
-      flex: 1 1 auto; min-height: 0; align-content: center;
-    }
-    .pipe-step {
-      background: var(--bg); border: 1px solid var(--line-strong);
-      padding: 0.45rem 0.35rem; text-align: center;
-      display: flex; flex-direction: column; justify-content: center; gap: 0.15rem;
-      position: relative; min-height: 0;
-    }
-    .pipe-step .n {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; font-weight: 700; color: var(--accent);
-    }
-    .pipe-step .t { font-size: 0.72rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
-    .pipe-step .t small {
-      display: block; margin-top: 0.12rem;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.52rem; font-weight: 500; color: var(--muted);
-    }
-    .pipe-step.core { background: var(--ink); border-color: var(--ink); color: #fff; }
-    .pipe-step.core .n { color: #9ec5ff; }
-    .pipe-step.core .t small { color: #9ec5ff; }
-    .pipe-step.acl { border-color: var(--accent); background: var(--accent-soft); }
-    .pipe-callout {
-      margin-top: 0.35rem;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;
-      flex: 0 0 auto;
-    }
-    .pipe-callout .panel { padding: 0.45rem 0.6rem; }
-    .pipe-callout .panel p { font-size: 0.78rem; font-weight: 500; color: var(--muted); }
-    .pipe-callout .panel p b { color: var(--ink); }
-
-    .lede { margin-top: 0.45rem; max-width: 58ch; font-size: 0.92rem; color: var(--muted); line-height: 1.35; }
-    .lede + .lede { margin-top: 0.35rem; max-width: 62ch; }
-    .pill-row {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem;
-      margin-top: 0.75rem; flex: 0 0 auto;
-    }
-    .pill {
-      background: var(--bg); border: 1px solid var(--line); padding: 0.45rem 0.55rem;
-    }
-    .pill .sym {
-      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; font-weight: 600;
-      color: var(--accent); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.15rem;
-    }
-    .pill .txt { font-size: 0.78rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
-    .risk-list { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; flex: 1 1 auto; }
-    .risk-list li {
-      display: block; border: 0; border-bottom: 1px solid var(--line); padding: 0.35rem 0 0.4rem;
-      font-size: 0.82rem; font-weight: 500;
-    }
-    .risk-list li:last-child { border-bottom: 0; }
-    .risk-list .rt {
-      display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline;
-      font-weight: 700; font-size: 0.86rem; margin-bottom: 0.15rem;
-    }
-    .risk-list .rd { color: var(--muted); font-size: 0.74rem; line-height: 1.3; font-weight: 500; }
-    .quotes.tech .q .chg { font-size: 0.6rem; margin-top: 0.2rem; }
-    .quotes.tech .q .desc {
-      margin-top: 0.25rem; font-size: 0.7rem; line-height: 1.25; color: var(--ink); font-weight: 500;
-    }
-    .pipe-flow {
-      display: flex; flex-direction: column; gap: 0.2rem;
-      flex: 1 1 auto; min-height: 0; justify-content: center;
-    }
-    .pipe-row {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
-      gap: 0.25rem; align-items: stretch;
-    }
-    .pipe-row .pipe-step { min-height: 3.6rem; }
-    .pipe-arr {
-      display: flex; align-items: center; justify-content: center;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; font-weight: 700;
-      color: var(--accent); padding: 0 0.1rem;
-    }
-    .pipe-down {
-      display: flex; align-items: center; justify-content: center;
-      font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; font-weight: 600;
-      color: var(--muted); padding: 0.05rem 0;
-    }
-    .pipe-flow .pipe-step .t { font-size: 0.78rem; }
-    .pipe-flow .pipe-step .t small { font-size: 0.55rem; }
+      display: flex; justify-content: space-between; align-items: center; margin: 0 1.35rem 0.65rem; padding-top: 0.35rem;
+      border-top: 1px solid var(--line); font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: var(--faint);
+    }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; flex: 1 1 auto; min-height: 0; }
+    .panel { background: var(--bg); border: 1px solid var(--line); padding: 0.65rem 0.75rem; display: flex; flex-direction: column; min-height: 0; }
+    .panel .ph { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem; padding-bottom: 0.28rem; border-bottom: 1px solid var(--line); }
+    .panel .ph h3 { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+    .panel .ph.em-down h3 { color: var(--down); }
+    .panel .ph.em-up h3 { color: var(--up); }
+    .panel .ph em { font-style: normal; font-family: ui-monospace, Consolas, monospace; font-size: 0.6rem; color: var(--faint); }
+    .pill-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; margin-top: 0.55rem; }
+    .pill { background: var(--bg); border: 1px solid var(--line); padding: 0.5rem 0.6rem; }
+    .pill .sym { font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; font-weight: 700; color: var(--accent); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.2rem; }
+    .pill .txt { font-size: 0.86rem; font-weight: 650; line-height: 1.25; }
+    .item { margin-bottom: 0.55rem; }
+    .item:last-child { margin-bottom: 0; }
+    .item .rt { display: flex; justify-content: space-between; gap: 0.5rem; font-weight: 750; font-size: 0.9rem; margin-bottom: 0.18rem; }
+    .item .rd { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+    .tag { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; font-weight: 700; white-space: nowrap; }
+    .tag.down { color: var(--down); } .tag.up { color: var(--up); }
+    .tech { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.45rem; flex: 1 1 auto; min-height: 0; }
+    .tech .q { background: var(--bg); border: 1px solid var(--line); padding: 0.55rem 0.65rem; }
+    .tech .sym { font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; font-weight: 700; color: var(--cyan); margin-bottom: 0.12rem; }
+    .tech .val { font-size: 1rem; font-weight: 800; letter-spacing: -0.02em; }
+    .tech .desc { margin-top: 0.2rem; font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+    .note { font-size: 0.74rem; color: var(--muted); }
+    .cap { font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; color: var(--faint); }
+    .todo { border: 1px dashed var(--warn); background: #fff8e8; color: #5c4500; padding: 0.55rem 0.7rem; font-size: 0.78rem; line-height: 1.35; }
+    .todo b { display: block; margin-bottom: 0.2rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .fig, .fig-ph { width: 100%; flex: 1 1 auto; min-height: 0; border: 1px solid var(--line); background: var(--bg); overflow: hidden; display: flex; align-items: stretch; justify-content: center; }
+    .fig img { width: 100%; height: 100%; object-fit: contain; object-position: top center; display: block; background: var(--bg); }
+    .fig-ph { color: var(--muted); font-size: 0.78rem; text-align: left; padding: 0.75rem; align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+    .split-fig { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex: 1 1 auto; min-height: 0; }
+    .split-fig > div { display: flex; flex-direction: column; min-height: 0; gap: 0.15rem; }
+    .cols-ui3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.45rem; flex: 1 1 auto; min-height: 0; }
+    .cols-ui3 > div { display: flex; flex-direction: column; min-height: 0; gap: 0.15rem; }
+    .plane { display: grid; grid-template-columns: 1.05fr 1fr; gap: 0.5rem; flex: 1 1 auto; min-height: 0; }
+    .plane-col { border: 1px solid var(--line-strong); padding: 0.5rem 0.6rem; display: flex; flex-direction: column; gap: 0.35rem; background: var(--bg); }
+    .plane-col h3 { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+    .plane-col.k8s h3 { color: var(--cyan); } .plane-col.compose h3 { color: var(--up); }
+    .box { background: var(--paper); border: 1px solid var(--line-strong); padding: 0.4rem 0.5rem; font-size: 0.82rem; font-weight: 650; }
+    .box small { display: block; margin-top: 0.12rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; font-weight: 500; color: var(--muted); }
+    .box.ctrl { border-left: 3px solid var(--ctrl); } .box.data { border-left: 3px solid var(--data); }
+    .box.plan { border-style: dashed; color: var(--muted); font-weight: 500; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+    .legend { display: flex; gap: 0.85rem; flex-wrap: wrap; font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; color: var(--muted); }
+    .legend i { display: inline-block; width: 0.55rem; height: 0.55rem; margin-right: 0.25rem; vertical-align: -0.05rem; }
+    .legend .c { background: var(--ctrl); } .legend .d { background: var(--data); }
+    .sm { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 0.5rem; flex: 1 1 auto; min-height: 0; }
+    .sm-main, .sm-side { background: var(--bg); border: 1px solid var(--line-strong); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.28rem; min-height: 0; }
+    .sm-main h3, .sm-side h3 { font-family: ui-monospace, Consolas, monospace; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+    .node { background: var(--paper); border: 1px solid var(--line-strong); padding: 0.35rem 0.45rem; font-size: 0.78rem; font-weight: 700; display: flex; justify-content: space-between; gap: 0.4rem; align-items: baseline; }
+    .node small { font-family: ui-monospace, Consolas, monospace; font-size: 0.55rem; font-weight: 500; color: var(--muted); }
+    .node.core { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .node.core small { color: #9ec5ff; }
+    .node.acl { border-color: var(--accent); background: var(--accent-soft); }
+    .node.side { border-style: dashed; color: var(--muted); font-weight: 600; }
+    .arrow { text-align: center; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+    .branch { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.25rem; }
+    .chip { background: var(--paper); border: 1px solid var(--line-strong); padding: 0.28rem 0.3rem; text-align: center; font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; font-weight: 700; }
+    .chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .chip.off { border-style: dashed; color: var(--faint); font-weight: 500; }
+    .metric { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; flex: 1 1 auto; min-height: 0; }
+    .metric .q { background: var(--bg); border: 1px solid var(--line); padding: 0.55rem 0.65rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .metric .sym { font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; font-weight: 700; color: var(--cyan); }
+    .metric .val { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .metric ul { list-style: none; margin-top: 0.15rem; }
+    .metric li { display: flex; justify-content: space-between; gap: 0.4rem; padding: 0.15rem 0; border-bottom: 1px solid var(--line); font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: var(--muted); }
+    .metric li:last-child { border-bottom: 0; } .metric li b { color: var(--ink); font-weight: 700; }
+    .tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.45rem; flex: 1 1 auto; min-height: 0; }
+    .tri .panel ul { list-style: none; }
+    .tri .panel li { padding: 0.28rem 0; border-bottom: 1px solid var(--line); font-size: 0.8rem; font-weight: 600; }
+    .tri .panel li:last-child { border-bottom: 0; }
+    .tri .panel li span { display: block; margin-top: 0.1rem; font-size: 0.7rem; font-weight: 500; color: var(--muted); }
+    .actors { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-bottom: 0.35rem; }
+    .actor { background: var(--paper); border: 1px solid var(--line-strong); padding: 0.35rem 0.45rem; font-size: 0.8rem; font-weight: 700; }
+    .actor small { display: block; margin-top: 0.1rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.55rem; font-weight: 500; color: var(--muted); }
+    .hub { background: var(--ink); color: #fff; padding: 0.45rem 0.55rem; text-align: center; font-size: 0.9rem; font-weight: 800; margin: 0.25rem 0; }
+    .hub small { display: block; margin-top: 0.15rem; font-family: ui-monospace, Consolas, monospace; font-size: 0.58rem; font-weight: 500; color: #9ec5ff; }
+    body.present { background: #111; overflow: hidden; }
+    body.present .deck { max-width: none; margin: 0; padding: 0; gap: 0; height: calc(100vh - 2.4rem); }
+    body.present .slide { display: none; width: min(100vw, calc((100vh - 2.4rem) * 16 / 9)); height: calc(100vh - 2.4rem); aspect-ratio: auto; margin: 0 auto; border: 0; box-shadow: none; }
+    body.present .slide.active { display: grid; }
+    body.present .bar { justify-content: center; }
+    @page { size: 338.67mm 190.5mm; margin: 0; }
     @media print {
       body { background: white; }
-      .bar { display: none; }
+      .bar { display: none !important; }
       .deck { max-width: none; margin: 0; padding: 0; gap: 0; }
       .slide {
-        box-shadow: none;
-        page-break-after: always; break-after: page;
-        width: 100%; height: 100vh; aspect-ratio: auto;
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        box-shadow: none; border: 0; width: 338.67mm; height: 190.5mm; aspect-ratio: auto;
+        page-break-after: always; break-after: page; -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
+      .slide:last-child { page-break-after: auto; break-after: auto; }
     }
   </style>
 </head>
 <body>
   <div class="bar">
     <strong>RPX DEFENSE</strong>
-    <span>Bloom AI light · 16 slides · Ctrl+P → PDF</span>
-    <a href="assets/CAPTURE.md">capture checklist</a>
+    <button type="button" id="btn-prev">←</button>
+    <span id="nav-label">01 / 16</span>
+    <button type="button" id="btn-next">→</button>
+    <span class="sep">·</span>
+    <button type="button" id="btn-present">Показ</button>
+    <span class="sep">·</span>
+    <a href="assets/CAPTURE.md">capture</a>
+    <span class="sep">·</span>
+    <span>Ctrl+P → PDF · ← → · F / Esc</span>
   </div>
-
   <div class="deck">
-    <!-- 01 -->
-    <article class="slide">
+    <article class="slide active" id="slide-01" data-n="1">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta">
-          <span>KNOWLEDGE PLATFORM · COURSE DEFENSE</span>
-          <span class="live-dot">HYBRID DESKTOP</span>
-        </div>
+        <div class="mast-meta"><span>COURSE DEFENSE</span><span>01 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>OLLAMA</b> <span class="up">▲ LIVE</span></div>
-        <div class="tick"><b>GRAPHRAG</b> <span class="flat">ON</span></div>
-        <div class="tick"><b>ACL</b> <span class="up">DENY_RETRIEVAL</span></div>
-        <div class="tick"><b>VIDEO</b> <span class="down">PENDING</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Special report · on-prem GraphRAG</p>
-        <h1>RetailPartnerX <span class="hl">Knowledge</span> Platform</h1>
-        <p class="lede">On-prem IDP для AI knowledge workloads FMCG-ритейлера: grounded-ответы по Product/Policy KB с ролевым ACL — без egress к SaaS LLM.</p>
-        <p class="lede">Снимает галлюцинации на политиках, утечки secret promo между ролями и вынос чувствительного контекста во внешние модели.</p>
+        <p class="kicker">Учебная платформа знаний</p>
+        <h1>RetailPartnerX</h1>
+        <p class="sub">ИИ-помощник по внутренним документам ритейла</p>
+        <p class="lede">Отвечает на вопросы о товарах и правилах компании, показывает источники и учитывает права доступа сотрудника. Документы обрабатываются внутри компании.</p>
         <div class="pill-row">
-          <div class="pill"><div class="sym">Grounded</div><div class="txt">GraphRAG: товар → аллерген → политика</div></div>
-          <div class="pill"><div class="sym">Secure</div><div class="txt">RBAC + deny_retrieval до LLM</div></div>
-          <div class="pill"><div class="sym">Closed loop</div><div class="txt">Ollama / MOCK only · LGTM traces</div></div>
+          <div class="pill"><div class="sym">Связи</div><div class="txt">Связывает товары, аллергены и правила.</div></div>
+          <div class="pill"><div class="sym">Источники</div><div class="txt">Показывает документы, на которых основан ответ.</div></div>
+          <div class="pill"><div class="sym">Доступ</div><div class="txt">Ограничивает доступ к закрытым материалам.</div></div>
         </div>
-        <div class="flash">ЕВГЕНИЙ ЮЛОВ · PLATFORM ENGINEER / AI ARCHITECT</div>
+        <p class="status-line">Учебный MVP · локальная модель · OCR сложных документов — следующий этап</p>
+        <p class="status-line">Демо: Ollama (CPU). Профиль сдачи: vLLM + AWQ — GPU runtime не проверен.</p>
+        <div class="flash">Евгений Юлов · Platform Engineer / AI Architect</div>
       </div>
-      <div class="footer"><span>RPX AI · DEMO</span><span>01 / 16</span></div>
+      <div class="footer"><span>RetailPartnerX Knowledge Platform</span><span>01 / 16</span></div>
     </article>
 
-    <!-- 02 -->
-    <article class="slide">
+    <article class="slide" id="slide-02" data-n="2">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>01 · RISK / RESPONSE</span><span class="live-dot">WATCHLIST</span></div>
+        <div class="mast-meta"><span>ЗАДАЧИ</span><span>02 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>HALLUCINATION</b> <span class="down">▲ RISK</span></div>
-        <div class="tick"><b>SECRET LEAK</b> <span class="down">▲ RISK</span></div>
-        <div class="tick"><b>SAAS LLM</b> <span class="down">OUT</span></div>
-        <div class="tick"><b>GRAPHRAG</b> <span class="up">▲ HEDGE</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Почему on-prem</p>
-        <h2>Проблема ритейлера → ответ платформы</h2>
+        <p class="kicker">Зачем платформа</p>
+        <h2>Какие задачи решает платформа</h2>
+        <p class="lede">Найти правило. Проверить источник. Не раскрыть закрытые данные.</p>
         <div class="cols">
           <div class="panel">
-            <div class="ph"><h3>Risk book</h3><em>FAIL</em></div>
-            <ul class="risk-list">
-              <li>
-                <div class="rt">Галлюцинации на политиках <span class="down">HIGH</span></div>
-                <div class="rd">Неструктурированные KB (НПА, политики, этикетки) → модель «додумывает» аллергены и требования без опоры на факты.</div>
-              </li>
-              <li>
-                <div class="rt">Утечки secret promo <span class="down">HIGH</span></div>
-                <div class="rd">Margin / promo-документы видны не той роли: category_manager не должен видеть то, что доступно compliance.</div>
-              </li>
-              <li>
-                <div class="rt">SaaS LLM вне контура <span class="down">BLOCK</span></div>
-                <div class="rd">Отправка политик и PII во внешний API нарушает air-gap и политики заказчика.</div>
-              </li>
-            </ul>
+            <div class="ph em-down"><h3>Проблема</h3><em>RISK</em></div>
+            <div class="item">
+              <div class="rt">Ответы без опоры на документы <span class="tag down">HIGH</span></div>
+              <div class="rd">Политики, НПА и этикетки разрознены: модель может сформулировать требование, которого нет в источниках. Качество пересказа оценивается отдельно от ACL.</div>
+            </div>
+            <div class="item">
+              <div class="rt">Закрытые promo/margin <span class="tag down">HIGH</span></div>
+              <div class="rd">Сотрудник без допуска не должен увидеть секретный playbook в ответе и в списке источников.</div>
+            </div>
+            <div class="item">
+              <div class="rt">Внешняя облачная модель <span class="tag down">BLOCK</span></div>
+              <div class="rd">Отправка внутренних документов во внешний API недопустима для выбранного сценария. Нужен локальный serving.</div>
+            </div>
           </div>
           <div class="panel">
-            <div class="ph"><h3>Hedge</h3><em>PASS</em></div>
-            <ul class="risk-list">
-              <li>
-                <div class="rt">GraphRAG retrieval <span class="up">GRAPH</span></div>
-                <div class="rd">Сначала связи в Neo4j (товар → аллерген → политика), затем векторные чанки — ответ с citations, не «мешок эмбеддингов».</div>
-              </li>
-              <li>
-                <div class="rt">ACL на retrieval <span class="up">ACL</span></div>
-                <div class="rd">RBAC + input/output guards; deny_retrieval отсекает секрет до LLM — в контексте модели его нет.</div>
-              </li>
-              <li>
-                <div class="rt">Closed-loop serving <span class="up">CLOSED</span></div>
-                <div class="rd">Только MOCK / self-hosted Ollama в hybrid-стенде; без egress к OpenAI/Anthropic.</div>
-              </li>
-            </ul>
+            <div class="ph em-up"><h3>Решение</h3><em>RESPONSE</em></div>
+            <div class="item">
+              <div class="rt">Поиск по связям и фрагментам <span class="tag up">GRAPH+VEC</span></div>
+              <div class="rd">Сначала связи товар → аллерген → правило, затем текстовые фрагменты документов. Ответ сопровождается источниками.</div>
+            </div>
+            <div class="item">
+              <div class="rt">Фильтр доступа до модели <span class="tag up">ACL</span></div>
+              <div class="rd">Роль ограничивает доступные документы. Смотрим ответ и citations, а не только badge allow/deny.</div>
+            </div>
+            <div class="item">
+              <div class="rt">Локальная модель <span class="tag up">OLLAMA</span></div>
+              <div class="rd">На демо — Ollama на CPU. Self-hosted inference не доказывает полный air-gap сети; изоляция проверяется отдельно.</div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="footer"><span>RETAILPARTNERX · FMCG</span><span>02 / 16</span></div>
+      <div class="footer"><span>PRE-01 · без обещания «галлюцинации устранены»</span><span>02 / 16</span></div>
     </article>
 
-    <!-- 03 -->
-    <article class="slide">
+    <article class="slide" id="slide-03" data-n="3">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>02 · SOLUTION</span><span>CLOSED LOOP</span></div>
+        <div class="mast-meta"><span>КОМПОНЕНТЫ</span><span>03 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>CONTROL</b> <span class="flat">LANGGRAPH</span></div>
-        <div class="tick"><b>DATA</b> <span class="flat">NEO4J+QDRANT</span></div>
-        <div class="tick"><b>SERVE</b> <span class="up">OLLAMA</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Architecture sketch</p>
-        <h2>GraphRAG Knowledge Platform</h2>
-        <div class="quotes tech">
+        <p class="kicker">Из чего состоит</p>
+        <h2>Из чего состоит платформа</h2>
+        <div class="tech">
           <div class="q">
-            <div class="sym">CTRL</div><div class="val">LangGraph</div>
-            <div class="chg">state machine · agent graph</div>
-            <div class="desc">Оркестрация chat: input_guard → retrieve → synthesize → output_guard; spans = ноды.</div>
+            <div class="sym">УПРАВЛЕНИЕ ЗАПРОСОМ</div>
+            <div class="val">LangGraph + проверки доступа</div>
+            <div class="desc">Задаёт шаги обработки и условные переходы. Проверки на входе/выходе и фильтр доступных документов — до генерации ответа.</div>
           </div>
           <div class="q">
-            <div class="sym">CTRL</div><div class="val">ACL / AuthZ</div>
-            <div class="chg">RBAC · guards · deny_retrieval</div>
-            <div class="desc">Роль решает, какие чанки/узлы попадут в контекст LLM до генерации.</div>
+            <div class="sym">СВЯЗИ</div>
+            <div class="val">Neo4j</div>
+            <div class="desc">Хранит связи предметной области: товар, аллерген, правило. Помогает найти нужные документы по структуре знаний.</div>
           </div>
           <div class="q">
-            <div class="sym">DATA</div><div class="val">Neo4j</div>
-            <div class="chg">graph store · Browser :30474</div>
-            <div class="desc">Онтология Product → Allergen → Policy; subgraph для grounded путей.</div>
+            <div class="sym">ФРАГМЕНТЫ ТЕКСТА</div>
+            <div class="val">Qdrant</div>
+            <div class="desc">Ищет текстовые куски документов среди уже доступных роли источников.</div>
           </div>
           <div class="q">
-            <div class="sym">DATA</div><div class="val">Qdrant</div>
-            <div class="chg">vector store · ACL filter</div>
-            <div class="desc">Семантический поиск по чанкам KB после graph-resolve; фильтр allowed_roles.</div>
+            <div class="sym">ОТВЕТ</div>
+            <div class="val">Локальная модель (Ollama)</div>
+            <div class="desc">Пишет ответ по собранному контексту. На демо — qwen2.5:0.5b. Профиль сдачи vLLM+AWQ на GPU не проверен.</div>
           </div>
           <div class="q">
-            <div class="sym">DATA</div><div class="val">Redis</div>
-            <div class="chg">semantic cache</div>
-            <div class="desc">Кэш ответа после output_guard; ключ учитывает роль и index_version.</div>
+            <div class="sym">НАБЛЮДАЕМОСТЬ</div>
+            <div class="val">Grafana + Prometheus + Tempo</div>
+            <div class="desc">Метрики снимает Prometheus с HTTP /metrics (~15 с). Трассы: OTLP → Tempo. Логи — отдельный путь в Loki.</div>
           </div>
           <div class="q">
-            <div class="sym">DATA</div><div class="val">MinIO</div>
-            <div class="chg">S3-compatible objects</div>
-            <div class="desc">Сырые/recognized этикетки и JSON exports для handoff в PIM/ERP.</div>
-          </div>
-          <div class="q">
-            <div class="sym">SRV</div><div class="val">Ollama</div>
-            <div class="chg">OpenAI-compatible · qwen2.5:0.5b</div>
-            <div class="desc">Self-hosted inference в Compose; closed loop без SaaS egress.</div>
-          </div>
-          <div class="q">
-            <div class="sym">OBS</div><div class="val">LGTM</div>
-            <div class="chg">Tempo · Loki · Prometheus</div>
-            <div class="desc">OTLP traces/logs/metrics; KP Overview и ACL denies на дашборде.</div>
+            <div class="sym">ВТОРОСТЕПЕННО</div>
+            <div class="val">Redis · MinIO</div>
+            <div class="desc">Кэш готовых ответов (с учётом роли) и объектное хранилище для файлов/экспортов. Не центр демо-сюжета.</div>
           </div>
         </div>
-        <p class="note">Hybrid desktop: K8s data-plane (api/stores) + Compose Ollama/obs — без SaaS LLM.</p>
+        <p class="note">Control Plane: API + LangGraph + проверки. Data Plane: хранилища и model serving. Размещение — на следующем слайде.</p>
       </div>
-      <div class="footer"><span>ADD · ADR-001 / ADR-006</span><span>03 / 16</span></div>
+      <div class="footer"><span>PRE-06 · PRE-10</span><span>03 / 16</span></div>
     </article>
 
-    <!-- 04 C4 -->
-    <article class="slide">
+    <article class="slide" id="slide-04" data-n="4">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>03 · C4</span><span>CONTEXT + CONTAINER</span></div>
+        <div class="mast-meta"><span>КОНТЕКСТ</span><span>04 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>L1</b> <span class="flat">CONTEXT</span></div>
-        <div class="tick"><b>L2</b> <span class="flat">CONTAINER</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Architecture Design Document · slide layout</p>
-        <h2>C4: контекст и контейнеры</h2>
-        <div class="flow-2">
-          <div class="flow-panel">
-            <h3>L1 · Context</h3>
+        <p class="kicker">C4 L1 · кто и с чем</p>
+        <h2>Кто пользуется системой и с чем она связана</h2>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>Люди</h3><em>USES</em></div>
             <div class="actors">
-              <div class="actor">Store Employee<small>Uses</small></div>
-              <div class="actor">Category Manager<small>Uses</small></div>
-              <div class="actor">Compliance Officer<small>Uses</small></div>
-              <div class="actor">Platform Operator<small>Ops UI · Dashboards</small></div>
+              <div class="actor">Сотрудник магазина<small>вопросы по правилам</small></div>
+              <div class="actor">Категорийный менеджер<small>товар / аллергены</small></div>
+              <div class="actor">Сотрудник compliance<small>доступ к закрытым материалам</small></div>
+              <div class="actor">Оператор платформы<small>Ops · дашборды</small></div>
             </div>
-            <div class="hub">Knowledge Platform<small>closed-loop GraphRAG</small></div>
-            <div class="ext-row">
-              <div class="topo-box">Ollama<small>OpenAI-compatible</small></div>
-              <div class="topo-box">Observability<small>OTLP · LGTM</small></div>
-            </div>
+            <div class="hub">Платформа знаний<small>закрытый контур документов</small></div>
           </div>
-          <div class="flow-panel">
-            <h3>L2 · Containers</h3>
-            <div class="topo-box">Users → Frontend → Backend API</div>
-            <div class="store-grid">
-              <div class="topo-box">Neo4j<small>graph</small></div>
-              <div class="topo-box">Qdrant<small>vectors</small></div>
-              <div class="topo-box">Redis<small>cache</small></div>
-              <div class="topo-box">MinIO<small>objects</small></div>
-              <div class="topo-box">Ollama + Obs<small>Compose</small></div>
-            </div>
-            <p class="note" style="margin-top:0.5rem">Backend → stores / Ollama / OTLP. Frontend ↔ API по HTTPS.</p>
+          <div class="panel">
+            <div class="ph"><h3>Связи</h3><em>BOUNDARY</em></div>
+            <div class="box">Локальная модель<small>Ollama на учебном стенде</small></div>
+            <div class="box" style="margin-top:0.3rem">Наблюдаемость<small>метрики · трассы · логи</small></div>
+            <div class="box plan" style="margin-top:0.3rem">ERP / CRM / PIM<small>план интеграции · не в текущем демо</small></div>
+            <p class="note" style="margin-top:0.45rem">UI ↔ API на desktop — HTTP (dev). TLS — целевая конфигурация, не то, что на скриншотах «Не защищено».</p>
+            <p class="cap">Канон: architecture/diagrams · C4 L1/L2 · appendix: L3 + Code view</p>
           </div>
         </div>
-        <p class="cap">Канон ADD: c4-context.svg · c4-container.svg</p>
       </div>
-      <div class="footer"><span>architecture/diagrams/sources/manual</span><span>04 / 16</span></div>
+      <div class="footer"><span>PRE-17 · planned ≠ running</span><span>04 / 16</span></div>
     </article>
 
-    <!-- 05 Hybrid -->
-    <article class="slide">
+    <article class="slide" id="slide-05" data-n="5">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>04 · DEPLOYMENT</span><span>HYBRID DESKTOP</span></div>
+        <div class="mast-meta"><span>РАЗМЕЩЕНИЕ</span><span>05 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>K8S</b> <span class="flat">API+STORES</span></div>
-        <div class="tick"><b>COMPOSE</b> <span class="flat">OLLAMA+OBS</span></div>
-        <div class="tick"><b>NO DUP</b> <span class="up">ZERO-OVERLAP</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Zero-overlap hybrid · simplified for slide</p>
-        <h2>K8s data-plane + Compose LLM/obs</h2>
-        <div class="topo-wrap">
-          <div class="topo-ingress">
-            Ingress · kp.local:8088
-            <span>UI + /api · LB</span>
+        <p class="kicker">Учебный hybrid-стенд</p>
+        <h2>Где работают сервисы</h2>
+        <p class="legend"><span><i class="c"></i>Control Plane</span><span><i class="d"></i>Data Plane</span><span>Это размещение стенда, не промышленный кластер</span></p>
+        <div class="plane">
+          <div class="plane-col k8s">
+            <h3>Kubernetes · приложение и хранилища</h3>
+            <div class="row2">
+              <div class="box ctrl">frontend<small>Control · UI</small></div>
+              <div class="box ctrl">api<small>Control · LangGraph</small></div>
+            </div>
+            <div class="row2">
+              <div class="box data">Neo4j<small>Data · связи</small></div>
+              <div class="box data">Qdrant<small>Data · фрагменты</small></div>
+            </div>
+            <div class="row2">
+              <div class="box data">MinIO<small>Data · объекты</small></div>
+              <div class="box data">Redis<small>Data · кэш</small></div>
+            </div>
           </div>
-          <div class="topo">
-            <div class="topo-col k8s">
-              <h3>Kubernetes · apps + data</h3>
-              <div class="topo-row">
-                <div class="topo-box">frontend<small>Deployment</small></div>
-                <div class="topo-box">api<small>Deployment · GraphRAG</small></div>
-              </div>
-              <div class="topo-row">
-                <div class="topo-box">Neo4j<small>graph</small></div>
-                <div class="topo-box">Qdrant<small>vectors</small></div>
-              </div>
-              <div class="topo-row">
-                <div class="topo-box">MinIO<small>objects</small></div>
-                <div class="topo-box">Redis<small>cache</small></div>
-              </div>
-            </div>
-            <div class="topo-mid">
-              <div class="topo-arrow">API → host.docker.internal</div>
-              <div>OTLP</div>
-              <div class="topo-arrow">traces / logs / metrics</div>
-            </div>
-            <div class="topo-col compose">
-              <h3>Compose · side-stack</h3>
-              <div class="topo-box">Ollama<small>qwen2.5:0.5b · :11434</small></div>
-              <div class="topo-box">Grafana<small>:3000 · KP Overview</small></div>
-              <div class="topo-row">
-                <div class="topo-box">Tempo<small>traces</small></div>
-                <div class="topo-box">Loki<small>logs</small></div>
-              </div>
-              <div class="topo-row">
-                <div class="topo-box">Prometheus</div>
-                <div class="topo-box">Alloy</div>
-              </div>
-            </div>
+          <div class="plane-col compose">
+            <h3>Docker Compose · модель и наблюдаемость</h3>
+            <div class="box data">Ollama<small>Data · model serving · :11434</small></div>
+            <div class="box" style="margin-top:0.3rem">Grafana · Tempo · Loki · Prometheus · Alloy<small>наблюдаемость · scrape /metrics · OTLP traces</small></div>
+            <div class="box plan" style="margin-top:0.3rem">vLLM + AWQ<small>профиль сдачи · GPU runtime не проверен</small></div>
+            <p class="note" style="margin-top:0.45rem">API в K8s обращается к Ollama через host.docker.internal. Целевая схема DMZ/Internal — отдельно в ADD.</p>
           </div>
         </div>
-        <p class="cap">Канон ADD: architecture/diagrams/images/current-hybrid-deployment.svg · здесь упрощённый вид для защиты</p>
       </div>
-      <div class="footer"><span>docs/SETUP.md · hybrid-up</span><span>05 / 16</span></div>
+      <div class="footer"><span>PRE-06 · PRE-07 · docs/SETUP.md</span><span>05 / 16</span></div>
     </article>
 
-    <!-- 06 UI overview -->
-    <article class="slide">
+    <article class="slide" id="slide-06" data-n="6">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>05 · FRONTEND</span><span class="live-dot">UI SURFACE</span></div>
+        <div class="mast-meta"><span>ИНТЕРФЕЙС</span><span>06 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>CHAT</b></div>
-        <div class="tick"><b>LABELS</b></div>
-        <div class="tick"><b>LLM</b></div>
-        <div class="tick"><b>GRAPH</b></div>
-        <div class="tick"><b>OPS</b></div>
-      </div>
       <div class="body">
-        <p class="kicker">Обзор UI платформы</p>
-        <h2>Пять экранов учебного MVP</h2>
-        <div class="cols-ui">
+        <p class="kicker">Три основных экрана</p>
+        <h2>Что можно сделать в интерфейсе</h2>
+        <div class="cols-ui3">
           <div>
             <div class="fig"><img src="assets/ui-chat.png" alt="Chat" /></div>
-            <p class="cap">Chat</p>
-          </div>
-          <div>
-            <div class="fig"><img src="assets/ui-labels.png" alt="Labels" /></div>
-            <p class="cap">Labels</p>
-          </div>
-          <div>
-            <div class="fig"><img src="assets/ui-llm.png" alt="LLM" /></div>
-            <p class="cap">LLM Settings</p>
+            <p class="cap">Chat · аллергены gluten/nuts · ответ + citations</p>
           </div>
           <div>
             <div class="fig"><img src="assets/ui-graph.png" alt="Graph" /></div>
-            <p class="cap">Graph · seed=gluten</p>
+            <p class="cap">Graph · связи предметной области</p>
           </div>
           <div>
             <div class="fig"><img src="assets/ui-ops.png" alt="Ops" /></div>
-            <p class="cap">Ops · store=live · OLLAMA</p>
+            <p class="cap">Ops · состояние и вход в Grafana</p>
           </div>
         </div>
+        <p class="note">Appendix: Labels (OCR mock / следующий этап) и LLM Settings. Пять мелких экранов в одном кадре для видео не используем.</p>
       </div>
       <div class="footer"><span>kp.local:8088</span><span>06 / 16</span></div>
     </article>
 
-    <!-- 07 Graph -->
-    <article class="slide">
+    <article class="slide" id="slide-07" data-n="7">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>06 · GRAPH</span><span>PRODUCT → ALLERGEN ← POLICY</span></div>
+        <div class="mast-meta"><span>ГРАФ</span><span>07 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>SEED</b> <span class="flat">gluten</span></div>
-        <div class="tick"><b>SOURCE</b> <span class="up">neo4j</span></div>
-        <div class="tick"><b>BROWSER</b> <span class="flat">:30474</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">GraphPage + Neo4j</p>
-        <h2>Визуализация subgraph</h2>
-        <div class="fig"><img src="assets/ui-graph.png" alt="Graph page" /></div>
-        <p class="cap">ACL-filtered SVG · Open Neo4j Browser (:30474) · demo_graph.cypher</p>
-      </div>
-      <div class="footer"><span>Форма: визуализация графа Neo4j</span><span>07 / 16</span></div>
-    </article>
-
-    <!-- 08 Chat path -->
-    <article class="slide">
-      <header class="masthead">
-        <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>07 · CHAT PATH</span><span>LINEAR PIPELINE</span></div>
-      </header>
-      <div class="ticker">
-        <div class="tick"><b>input_guard</b></div>
-        <div class="tick"><b>graph_retrieve</b></div>
-        <div class="tick"><b>vector_retrieve</b></div>
-        <div class="tick"><b>llm</b></div>
-        <div class="tick"><b>output_guard</b></div>
-      </div>
-      <div class="body">
-        <p class="kicker">LangGraph · happy path</p>
-        <h2>Путь chat-запроса</h2>
-        <div class="pipe-flow">
-          <div class="pipe-row">
-            <div class="pipe-step"><span class="n">01</span><div class="t">User<small>Category Manager · POST /v1/chat</small></div></div>
-            <div class="pipe-arr">→</div>
-            <div class="pipe-step"><span class="n">02</span><div class="t">input_guard<small>FastAPI · ok / deny→audit</small></div></div>
-            <div class="pipe-arr">→</div>
-            <div class="pipe-step"><span class="n">03</span><div class="t">semantic cache<small>hit → SSE · miss ↓</small></div></div>
-            <div class="pipe-arr">→</div>
-            <div class="pipe-step acl"><span class="n">04</span><div class="t">graph_retrieve<small>Neo4j · ACL filter</small></div></div>
-          </div>
-          <div class="pipe-down">↓ ACL-filtered context · затем векторы</div>
-          <div class="pipe-row">
-            <div class="pipe-step acl"><span class="n">05</span><div class="t">vector_retrieve<small>Qdrant · allowed_roles</small></div></div>
-            <div class="pipe-arr">→</div>
-            <div class="pipe-step core"><span class="n">06</span><div class="t">synthesize<small>Ollama · llm span</small></div></div>
-            <div class="pipe-arr">→</div>
-            <div class="pipe-step"><span class="n">07</span><div class="t">output_guard<small>policy / PII check</small></div></div>
-            <div class="pipe-arr">→</div>
-            <div class="pipe-step"><span class="n">08</span><div class="t">SSE + audit<small>final event · Tempo</small></div></div>
-          </div>
-        </div>
-        <div class="pipe-callout">
-          <div class="panel">
-            <div class="ph"><h3>ACL on retrieve</h3><em>BEFORE LLM</em></div>
-            <p>Шаги <b>04–05</b>: classification + allowed_roles — secret promo не попадает в prompt.</p>
-          </div>
-          <div class="panel">
-            <div class="ph"><h3>Deny / cache short-circuit</h3><em>NO LLM</em></div>
-            <p>Guard deny или cache hit → сразу audit/SSE. Tempo spans совпадают с нодами pipeline.</p>
-          </div>
-        </div>
-        <p class="cap">Канон ADD: sequence-chat.svg · agent-workflow.svg</p>
-      </div>
-      <div class="footer"><span>Tempo spans совпадают с нодами</span><span>08 / 16</span></div>
-    </article>
-
-    <!-- 09 ACL -->
-    <article class="slide">
-      <header class="masthead">
-        <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>08 · ACL DEMO</span><span class="live-dot">DENY_RETRIEVAL</span></div>
-      </header>
-      <div class="ticker">
-        <div class="tick"><b>MANAGER</b> <span class="down">DENY</span></div>
-        <div class="tick"><b>COMPLIANCE</b> <span class="up">ALLOW + SECRET</span></div>
-        <div class="tick"><b>METRIC</b> <span class="up">acl_denies_total</span></div>
-      </div>
-      <div class="body">
-        <p class="kicker">Secret promo · Q4 margin 42%</p>
-        <h2>Ролевой ACL на retrieval</h2>
+        <p class="kicker">Товар → аллерген ← правило</p>
+        <h2>Как связаны товар, аллерген и правило</h2>
         <div class="split-fig">
           <div>
-            <div class="fig"><img src="assets/ui-acl-manager-deny.png" alt="Manager deny" /></div>
-            <p class="cap">manager → deny_retrieval</p>
+            <div class="fig"><img src="assets/ui-graph.png" alt="Graph page" /></div>
+            <p class="cap">GraphPage · seed=gluten · source=neo4j</p>
           </div>
           <div>
-            <div class="fig"><img src="assets/ui-acl-compliance-allow.png" alt="Compliance allow" /></div>
-            <p class="cap">compliance → allow + secret citation</p>
+            <div class="fig"><img src="assets/neo4j-browser.png" alt="Neo4j Browser gluten path" /></div>
+            <p class="cap">Neo4j Browser · HAS_ALLERGEN / GOVERNS · gluten</p>
           </div>
         </div>
       </div>
-      <div class="footer"><span>Filter-path → deny_retrieval → Grafana ACL panel</span><span>09 / 16</span></div>
+      <div class="footer"><span>формат сдачи · короткий показ Browser</span><span>07 / 16</span></div>
     </article>
 
-    <!-- 10 Tempo -->
-    <article class="slide">
+    <article class="slide" id="slide-08" data-n="8">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>09 · OBSERVABILITY</span><span>TEMPO ≈ JAEGER</span></div>
+        <div class="mast-meta"><span>LANGGRAPH</span><span>08 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>TEMPO</b> <span class="flat">:3200</span></div>
-        <div class="tick"><b>SERVICE</b> <span class="up">kp-api</span></div>
-        <div class="tick"><b>SPANS</b> <span class="flat">input_guard…</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Deep-dive traces · Grafana Explore</p>
-        <h2>Tempo · span waterfall</h2>
-        <div class="fig"><img src="assets/grafana-tempo.png" alt="Grafana Tempo Explore" /></div>
-        <p class="cap">Explore → Tempo · trace detail + spans · evidence/trace.md</p>
+        <p class="kicker">Состояния и условные переходы</p>
+        <h2>Как обрабатывается запрос</h2>
+        <div class="sm">
+          <div class="sm-main">
+            <h3>Основной путь чата</h3>
+            <div class="node"><span>guard_input</span><small>входная проверка</small></div>
+            <div class="arrow">↓</div>
+            <div class="node"><span>route</span><small>условный переход</small></div>
+            <div class="branch">
+              <div class="chip on">chat ↓</div>
+              <div class="chip off">label</div>
+              <div class="chip off">blocked → output</div>
+            </div>
+            <div class="node acl"><span>graph_retrieve</span><small>Neo4j · доступные узлы</small></div>
+            <div class="arrow">↓</div>
+            <div class="node acl"><span>vector_retrieve</span><small>Qdrant · фильтр роли</small></div>
+            <div class="branch">
+              <div class="chip on">synthesize ↓</div>
+              <div class="chip off">refine ≤1</div>
+              <div class="chip off">optional</div>
+            </div>
+            <div class="node core"><span>synthesize</span><small>локальная модель</small></div>
+            <div class="arrow">↓</div>
+            <div class="node"><span>guard_output → END</span><small>выходная проверка</small></div>
+          </div>
+          <div class="sm-side">
+            <h3>Важно</h3>
+            <div class="node side"><span>Показан основной путь чата</span><small>запреты и другие ветви отмечены отдельно</small></div>
+            <div class="node side"><span>Фиксированная state machine</span><small>не ReAct / не автономный Planner</small></div>
+            <div class="node side"><span>SSE: meta + final</span><small>после agent.arun · не token streaming</small></div>
+            <div class="node side"><span>Ключевые этапы размечены span</span><small>не каждый узел = одноимённый span</small></div>
+            <p class="note">Ветка label: label_recognize → policy_check → synthesize (OCR mock / future).</p>
+          </div>
+        </div>
       </div>
-      <div class="footer"><span>ADR-006 · Tempo вместо Jaeger</span><span>10 / 16</span></div>
+      <div class="footer"><span>PRE-05 · PRE-11 · PRE-12 · graph.py</span><span>08 / 16</span></div>
+    </article>
+    <article class="slide" id="slide-09" data-n="9">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>ДОСТУП</span><span>09 / 16</span></div>
+      </header>
+      <div class="body">
+        <p class="kicker">Один вопрос — разные права</p>
+        <h2>Один вопрос — разные права доступа</h2>
+        <div class="split-fig">
+          <div>
+            <div class="fig"><img src="assets/ui-acl-manager-deny.png" alt="Manager" /></div>
+            <p class="cap">manager · deny / без секретного источника</p>
+          </div>
+          <div>
+            <div class="fig"><img src="assets/ui-acl-compliance-allow.png" alt="Compliance" /></div>
+            <p class="cap">compliance · allow + secret citation</p>
+          </div>
+        </div>
+        <p class="note">Смотрим ответ и citations, не только badge. deny_retrieval — маркер после сравнения с privileged probe; ограничение дают фильтры источников.</p>
+      </div>
+      <div class="footer"><span>ACL · manager vs compliance</span><span>09 / 16</span></div>
     </article>
 
-    <!-- 11 Ops deep links -->
-    <article class="slide">
+    <article class="slide" id="slide-10" data-n="10">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>09 · OBSERVABILITY</span><span class="live-dot">OPS DEEP LINKS</span></div>
+        <div class="mast-meta"><span>ТРАССА</span><span>10 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>OPS</b> <span class="up">LIVE</span></div>
-        <div class="tick"><b>TEMPO</b> <span class="flat">EXPLORE</span></div>
-        <div class="tick"><b>LOKI</b> <span class="flat">LOGS</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">UI → observability</p>
-        <h2>Ops · deep links в Grafana</h2>
-        <div class="fig"><img src="assets/ui-ops.png" alt="Ops page" /></div>
-        <p class="cap">Ops → Grafana Explore Tempo / Loki · spans совпадают с нодами</p>
+        <p class="kicker">Где запрос тратит время</p>
+        <h2>Где запрос тратит время</h2>
+        <div class="fig">
+          <img src="assets/grafana-tempo.png" alt="Tempo POST /v1/chat spans" />
+        </div>
+        <p class="cap">POST /v1/chat · input_guard · graph_retrieve · vector_retrieve/rerank · llm (~18.7 s) · output_guard</p>
+        <p class="note">Основное время — локальная модель (llm). Retrieval миллисекунды. Tempo — выбранный backend (ADR-006).</p>
+      </div>
+      <div class="footer"><span>Трассировка запросов в Tempo</span><span>10 / 16</span></div>
+    </article>
+
+    <article class="slide" id="slide-11" data-n="11">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>OPS</span><span>11 / 16</span></div>
+      </header>
+      <div class="body">
+        <p class="kicker">От состояния к диагностике</p>
+        <h2>Как перейти от состояния системы к диагностике</h2>
+        <div class="fig">
+          <img src="assets/ui-ops.png" alt="Ops page with trace_id" />
+        </div>
+        <p class="cap">Ops · live store · OLLAMA · audit с trace_id · deep links Grafana Tempo / Loki</p>
+        <p class="note">В audit заполнен trace_id — можно перейти из Ops к трассе в Tempo. Резерв для видео: живой переход Ops → Grafana.</p>
       </div>
       <div class="footer"><span>kp.local:8088/ops</span><span>11 / 16</span></div>
     </article>
 
-    <!-- 12 Grafana KP Overview 1 -->
-    <article class="slide">
+    <article class="slide" id="slide-12" data-n="12">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>10 · GRAFANA</span><span class="live-dot">KP OVERVIEW</span></div>
+        <div class="mast-meta"><span>МЕТРИКИ</span><span>12 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>UP</b> <span class="up">API</span></div>
-        <div class="tick"><b>REQ/MIN</b> <span class="flat">LIVE</span></div>
-        <div class="tick"><b>RAG LATENCY</b> <span class="flat">p50/p90</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Prometheus scrape · desktop evidence</p>
-        <h2>KP Overview · traffic &amp; latency</h2>
-        <div class="fig"><img src="assets/grafana-kp-overview-1.png" alt="KP Overview traffic" /></div>
-        <p class="cap">UP · req/min · RAG latency p50/p90</p>
+        <p class="kicker">KP Overview · traffic</p>
+        <h2>Работает ли API и сколько длится ответ</h2>
+        <div class="fig"><img src="assets/grafana-kp-overview-1.png" alt="KP Overview 1" /></div>
+        <p class="cap">UP = scrape /metrics успешен · Requests/min = прикладные пути · RAG latency p50/p95 (quantile 0.95)</p>
+        <p class="note">UP не гарантирует качество ответа модели. Latency включает генерацию, если LLM вызывался. status в счётчиках — прикладной (allow / stream / cache), не HTTP-код.</p>
       </div>
-      <div class="footer"><span>localhost:3000/d/kp-overview</span><span>12 / 16</span></div>
+      <div class="footer"><span>PRE-09 · PRE-15 · localhost:3000/d/kp-overview</span><span>12 / 16</span></div>
     </article>
 
-    <!-- 13 Grafana KP Overview 2 -->
-    <article class="slide">
+    <article class="slide" id="slide-13" data-n="13">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>10 · GRAFANA</span><span>TOKENS + TOTALS</span></div>
+        <div class="mast-meta"><span>МЕТРИКИ</span><span>13 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>TOKENS/MIN</b> <span class="flat">LLM</span></div>
-        <div class="tick"><b>REQUEST TOTALS</b> <span class="up">BY STATUS</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Prometheus scrape · desktop evidence</p>
-        <h2>KP Overview · tokens &amp; totals</h2>
-        <div class="fig"><img src="assets/grafana-kp-overview-2.png" alt="KP Overview tokens" /></div>
-        <p class="cap">tokens/min · request totals by endpoint/status</p>
+        <p class="kicker">KP Overview · tokens &amp; totals</p>
+        <h2>Сколько токенов учитывается и какие пути выполнялись</h2>
+        <div class="fig"><img src="assets/grafana-kp-overview-2.png" alt="KP Overview 2" /></div>
+        <p class="cap">tokens/min = учтённые input/output за окно · не decode tokens/s · возможны estimate / MOCK / degraded</p>
+        <p class="note">Request totals — накопленные прикладные метки. stream фиксируется при входе в ветку, не доказывает успешное завершение.</p>
       </div>
-      <div class="footer"><span>localhost:3000/d/kp-overview</span><span>13 / 16</span></div>
+      <div class="footer"><span>PRE-15 · PRE-16</span><span>13 / 16</span></div>
     </article>
 
-    <!-- 14 Grafana ACL denies -->
-    <article class="slide">
+    <article class="slide" id="slide-14" data-n="14">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>10 · GRAFANA</span><span class="live-dot">ACL DENIES</span></div>
+        <div class="mast-meta"><span>DENY</span><span>14 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>ACL DENIES</b> <span class="up">▲ ~0.63 / min</span></div>
-        <div class="tick"><b>CACHE</b> <span class="flat">0% OFF</span></div>
-        <div class="tick"><b>METRIC</b> <span class="flat">acl_denies_total</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">deny_retrieval → Prometheus counter</p>
-        <h2>ACL denies на дашборде</h2>
-        <div class="fig"><img src="assets/grafana-acl-denies.png" alt="ACL denies panel" /></div>
-        <p class="cap">ACL denies / min ≈ 0.63 · live после manager deny demo</p>
+        <p class="kicker">Наблюдение отказов</p>
+        <h2>Как видны отказы в доступе</h2>
+        <div class="fig"><img src="assets/grafana-acl-denies.png" alt="ACL denies" /></div>
+        <p class="cap">Панель: решения deny / мин (rate за ~5 min) · исторический пример ≈ 0.63 — не обещать в новом запуске</p>
+        <p class="note">Счётчик растёт для всех deny*, включая input guard. 0% cache hit не доказывает выключенный кэш. Доказательство отсутствия утечки — ответ и источники.</p>
       </div>
-      <div class="footer"><span>localhost:3000/d/kp-overview</span><span>14 / 16</span></div>
+      <div class="footer"><span>PRE-13 · PRE-14</span><span>14 / 16</span></div>
     </article>
 
-    <!-- 15 Load -->
-    <article class="slide">
+    <article class="slide" id="slide-15" data-n="15">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>11 · LOAD + CAPACITY</span><span>EVIDENCE NUMBERS</span></div>
+        <div class="mast-meta"><span>ЗАМЕРЫ</span><span>15 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>MOCK</b> <span class="up">~79 RPS</span></div>
-        <div class="tick"><b>OLLAMA</b> <span class="down">~7s E2E</span></div>
-        <div class="tick"><b>BOTTLENECK</b> <span class="flat">LLM</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">docs/load-report.md · capacity-planning.md</p>
-        <h2>Нагрузка и железо</h2>
-        <div class="quotes load3">
+        <p class="kicker">Пробные прогоны · evidence/load</p>
+        <h2>Что показали пробные замеры</h2>
+        <div class="metric">
           <div class="q">
-            <div class="sym">MOCK · API+GraphRAG+ACL</div>
-            <div class="val">~79.5 RPS</div>
-            <div class="chg up">потолок без LLM</div>
-            <ul class="metric-list">
-              <li><span>avg</span><b>~12.6 ms</b></li>
-              <li><span>p50 / p95</span><b>~12.0 / ~15.8 ms</b></li>
-              <li><span>success</span><b>100% · 20×1</b></li>
+            <div class="sym">MOCK + memory · smoke 20×1</div>
+            <div class="val">~79.5 req/s</div>
+            <ul>
+              <li><span>конфиг</span><b>store=memory · LLM=MOCK</b></li>
+              <li><span>avg / p95</span><b>~12.6 / ~15.8 ms</b></li>
+              <li><span>success HTTP</span><b>100% · 20/20</b></li>
+              <li><span>смысл</span><b>smoke, не предел Neo4j/Qdrant</b></li>
             </ul>
           </div>
           <div class="q">
-            <div class="sym">OLLAMA E2E · qwen2.5:0.5b Q4</div>
-            <div class="val">~7.1 s</div>
-            <div class="chg">avg ok · desktop CPU</div>
-            <ul class="metric-list">
-              <li><span>p50 / p95</span><b>~1.3 / ~14.1 s</b></li>
-              <li><span>max ok</span><b>~20.1 s</b></li>
-              <li><span>success</span><b>50% · 5/10</b></li>
-              <li><span>RPS</span><b>~0.011</b></li>
+            <div class="sym">live + Ollama · 10×1</div>
+            <div class="val">50% timeout</div>
+            <ul>
+              <li><span>завершились</span><b>5 / 10</b></li>
+              <li><span>avg / p95 (только ok)</span><b>~7.1 / ~14.1 s</b></li>
+              <li><span>остальные</span><b>ReadTimeout ~180 s</b></li>
+              <li><span>вывод</span><b>не стабильная производительность</b></li>
             </ul>
           </div>
           <div class="q">
-            <div class="sym">DESK · hybrid lab</div>
+            <div class="sym">Железо демо</div>
             <div class="val">CPU-only</div>
-            <div class="chg">i7-8550U · 4c/8t</div>
-            <ul class="metric-list">
+            <ul>
+              <li><span>CPU</span><b>i7-8550U · 4c/8t</b></li>
               <li><span>RAM</span><b>~32 GB</b></li>
-              <li><span>Ollama model</span><b>~0.4–0.8 GB</b></li>
-              <li><span>data-plane</span><b>~4–8 GB</b></li>
+              <li><span>ok в скрипте</span><b>HTTP/JSON, не quality</b></li>
+              <li><span>RPS формула</span><b>для 20×1 = wall-clock ок</b></li>
             </ul>
           </div>
         </div>
-        <p class="note">Узкое место E2E — LLM serving, не GraphRAG/ACL.</p>
+        <p class="note">Не называть ~80 RPS «потолком» GraphRAG. Latency успешной половины Ollama — не задержка всего сервиса.</p>
       </div>
-      <div class="footer"><span>evidence/load/*.json</span><span>15 / 16</span></div>
+      <div class="footer"><span>PRE-03 · PRE-04 · PRE-20 · PRE-21</span><span>15 / 16</span></div>
     </article>
 
-    <!-- 16 Watchlist -->
-    <article class="slide">
+    <article class="slide" id="slide-16" data-n="16">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>12 · FORM SCORECARD</span><span class="live-dot">SUBMIT</span></div>
+        <div class="mast-meta"><span>ИТОГ</span><span>16 / 16</span></div>
       </header>
-      <div class="ticker">
-        <div class="tick"><b>MONOREPO</b> <span class="up">DONE</span></div>
-        <div class="tick"><b>ADD</b> <span class="up">DONE</span></div>
-        <div class="tick"><b>LOAD</b> <span class="up">DONE</span></div>
-        <div class="tick"><b>VIDEO</b> <span class="down">OPEN</span></div>
-      </div>
       <div class="body">
-        <p class="kicker">Критерии формы сдачи</p>
-        <h2>Evidence watchlist</h2>
-        <table class="watch">
-          <thead>
-            <tr><th>Symbol</th><th>Block</th><th>Detail</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="sym">REPO</td><td>Monorepo</td><td>app/infra · app/backend · docs/architecture</td></tr>
-            <tr><td class="sym">ADD</td><td>Diagrams</td><td>C4 · capacity · diagrams-as-code</td></tr>
-            <tr><td class="sym">ACL</td><td>Demo</td><td>deny_retrieval + compliance secret</td></tr>
-            <tr><td class="sym">GRAPH</td><td>Neo4j</td><td>GraphPage SVG + Browser :30474</td></tr>
-            <tr><td class="sym">OBS</td><td>LGTM</td><td>Tempo · Loki · KP Overview · ACL metric</td></tr>
-            <tr><td class="sym">LOAD</td><td>Report</td><td>MOCK ~79 RPS · Ollama E2E</td></tr>
-            <tr><td class="sym">VIDEO</td><td>Submit</td><td>script ready · video_url pending</td></tr>
-          </tbody>
-        </table>
+        <p class="kicker">Статус сдачи</p>
+        <h2>Что реализовано и что остаётся</h2>
+        <div class="tri">
+          <div class="panel">
+            <div class="ph em-up"><h3>Реализовано</h3><em>CODE</em></div>
+            <ul>
+              <li>GraphRAG + ACL фильтры<span>API, LangGraph, Neo4j/Qdrant</span></li>
+              <li>Локальный serving демо<span>Ollama CPU</span></li>
+              <li>Наблюдаемость<span>Prom · Grafana · Tempo · Loki</span></li>
+              <li>ADD / ADR / monorepo<span>диаграммы и отчёты в репо</span></li>
+            </ul>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>Подтверждено демо</h3><em>SHOW</em></div>
+            <ul>
+              <li>Chat + источники<span>после проверки пересказа</span></li>
+              <li>Graph source=neo4j<span>+ Neo4j Browser</span></li>
+              <li>Роли manager / compliance<span>после пересъёмки без 42%</span></li>
+              <li>Метрики KP Overview<span>с корректными подписями</span></li>
+            </ul>
+          </div>
+          <div class="panel">
+            <div class="ph em-down"><h3>Следующий этап</h3><em>OPEN</em></div>
+            <ul>
+              <li>vLLM + AWQ на GPU<span>профиль есть · runtime не проверен</span></li>
+              <li>OCR сложных документов<span>mock / future · не DONE</span></li>
+              <li>Стабильность Ollama E2E<span>таймауты 5/10</span></li>
+              <li>Видео 5–7 мин<span>video_url · сценарий готов</span></li>
+              <li>Новые захваты<span>Tempo chat · ACL · Ops trace_id · Neo4j</span></li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div class="footer"><span>Q&amp;A · README форма сдачи</span><span>16 / 16</span></div>
+      <div class="footer"><span>PRE-07 · vLLM и OCR не отмечены DONE</span><span>16 / 16</span></div>
     </article>
   </div>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+      var label = document.getElementById("nav-label");
+      var idx = Math.max(0, slides.findIndex(function (s) { return s.classList.contains("active"); }));
+      if (idx < 0) idx = 0;
+      function show(i) {
+        idx = (i + slides.length) % slides.length;
+        slides.forEach(function (s, n) { s.classList.toggle("active", n === idx); });
+        var n1 = idx + 1;
+        label.textContent = (n1 < 10 ? "0" : "") + n1 + " / " + slides.length;
+        if (history.replaceState) history.replaceState(null, "", "#slide-" + (n1 < 10 ? "0" : "") + n1);
+      }
+      function fromHash() {
+        var m = (location.hash || "").match(/slide-(\d+)/i);
+        if (m) {
+          var n = parseInt(m[1], 10) - 1;
+          if (n >= 0 && n < slides.length) show(n);
+        }
+      }
+      document.getElementById("btn-prev").addEventListener("click", function () { show(idx - 1); });
+      document.getElementById("btn-next").addEventListener("click", function () { show(idx + 1); });
+      document.getElementById("btn-present").addEventListener("click", function () {
+        document.body.classList.toggle("present");
+        show(idx);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); show(idx + 1); }
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); show(idx - 1); }
+        else if (e.key === "f" || e.key === "F") { document.body.classList.add("present"); show(idx); }
+        else if (e.key === "Escape") { document.body.classList.remove("present"); }
+      });
+      window.addEventListener("hashchange", fromHash);
+      fromHash();
+      show(idx);
+    })();
+  </script>
 </body>
 </html>

@@ -66,4 +66,4 @@ python app/backend/scripts/load_smoke.py \
 
 ## Вывод
 
-На MOCK система держит порядка **~80 RPS** при p95 **~16 ms** — узкое место не GraphRAG ACL. На Ollama desktop `load_smoke` 10×1: p50/p95 **~1.3 / ~14 s** (ok), success **50%** из‑за CPU/timeout. Для submission-профиля с GPU — повторить на vLLM AWQ (см. [vllm-profile](infra/vllm-profile.md)); до верификации статус **runtime не проверен**.
+MOCK+memory smoke 20×1 даёт порядка **~80 req/s** при p95 **~16 ms** — это **не** предел производительности Neo4j/Qdrant и не capacity-тест. На Ollama desktop `load_smoke` 10×1: **5/10** завершились (avg/p95 только по ok **~7.1 / ~14 s**), **5/10** — ReadTimeout ~180 s; стенд нельзя считать стабильным. Для submission-профиля с GPU — повторить на vLLM AWQ (см. [vllm-profile](infra/vllm-profile.md)); до верификации статус **runtime не проверен**.
