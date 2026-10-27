@@ -140,6 +140,20 @@
       display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;
       flex: 1 1 auto; min-height: 0;
     }
+    .cols-ui {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.4rem;
+      flex: 1 1 auto; min-height: 0; align-content: stretch;
+    }
+    .cols-ui > div {
+      display: flex; flex-direction: column; min-height: 0; gap: 0.15rem;
+    }
+    .cols-ui > div:nth-child(1) { grid-column: 1 / 3; }
+    .cols-ui > div:nth-child(2) { grid-column: 3 / 5; }
+    .cols-ui > div:nth-child(3) { grid-column: 5 / 7; }
+    .cols-ui > div:nth-child(4) { grid-column: 2 / 4; }
+    .cols-ui > div:nth-child(5) { grid-column: 4 / 6; }
     .panel {
       background: var(--bg); border: 1px solid var(--line); padding: 0.7rem 0.8rem;
     }
@@ -590,23 +604,28 @@
         <div class="tick"><b>CHAT</b></div>
         <div class="tick"><b>LABELS</b></div>
         <div class="tick"><b>LLM</b></div>
+        <div class="tick"><b>GRAPH</b></div>
         <div class="tick"><b>OPS</b></div>
       </div>
       <div class="body">
         <p class="kicker">Обзор UI платформы</p>
         <h2>Пять экранов учебного MVP</h2>
-        <div class="cols">
+        <div class="cols-ui">
           <div>
             <div class="fig"><img src="assets/ui-chat.png" alt="Chat" /></div>
             <p class="cap">Chat</p>
+          </div>
+          <div>
+            <div class="fig"><img src="assets/ui-labels.png" alt="Labels" /></div>
+            <p class="cap">Labels · OCR=MOCK</p>
           </div>
           <div>
             <div class="fig"><img src="assets/ui-llm.png" alt="LLM" /></div>
             <p class="cap">LLM Settings</p>
           </div>
           <div>
-            <div class="fig"><img src="assets/ui-labels.png" alt="Labels" /></div>
-            <p class="cap">Labels · OCR=MOCK</p>
+            <div class="fig"><img src="assets/ui-graph.png" alt="Graph" /></div>
+            <p class="cap">Graph · seed=gluten</p>
           </div>
           <div>
             <div class="fig"><img src="assets/ui-ops.png" alt="Ops" /></div>
@@ -617,11 +636,31 @@
       <div class="footer"><span>kp.local:8088</span><span>06 / 16</span></div>
     </article>
 
-    <!-- 07 Chat path -->
+    <!-- 07 Graph -->
     <article class="slide">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>06 · CHAT PATH</span><span>SEQUENCE + AGENT</span></div>
+        <div class="mast-meta"><span>06 · GRAPH</span><span>PRODUCT → ALLERGEN ← POLICY</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>SEED</b> <span class="flat">gluten</span></div>
+        <div class="tick"><b>SOURCE</b> <span class="up">neo4j</span></div>
+        <div class="tick"><b>BROWSER</b> <span class="flat">:30474</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">GraphPage + Neo4j</p>
+        <h2>Визуализация subgraph</h2>
+        <div class="fig"><img src="assets/ui-graph.png" alt="Graph page" /></div>
+        <p class="cap">ACL-filtered SVG · Open Neo4j Browser (:30474) · demo_graph.cypher</p>
+      </div>
+      <div class="footer"><span>Форма: визуализация графа Neo4j</span><span>07 / 16</span></div>
+    </article>
+
+    <!-- 08 Chat path -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>07 · CHAT PATH</span><span>SEQUENCE + AGENT</span></div>
       </header>
       <div class="ticker">
         <div class="tick"><b>input_guard</b></div>
@@ -666,14 +705,14 @@
         </div>
         <p class="cap">Канон ADD: sequence-chat.svg · agent-workflow.svg (gen)</p>
       </div>
-      <div class="footer"><span>Tempo spans совпадают с нодами</span><span>07 / 16</span></div>
+      <div class="footer"><span>Tempo spans совпадают с нодами</span><span>08 / 16</span></div>
     </article>
 
-    <!-- 08 ACL -->
+    <!-- 09 ACL -->
     <article class="slide">
       <header class="masthead">
         <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>07 · ACL DEMO</span><span class="live-dot">DENY_RETRIEVAL</span></div>
+        <div class="mast-meta"><span>08 · ACL DEMO</span><span class="live-dot">DENY_RETRIEVAL</span></div>
       </header>
       <div class="ticker">
         <div class="tick"><b>MANAGER</b> <span class="down">DENY</span></div>
@@ -694,27 +733,7 @@
           </div>
         </div>
       </div>
-      <div class="footer"><span>Filter-path → deny_retrieval → Grafana ACL panel</span><span>08 / 16</span></div>
-    </article>
-
-    <!-- 09 Graph -->
-    <article class="slide">
-      <header class="masthead">
-        <div class="brand">RPX <span>AI</span></div>
-        <div class="mast-meta"><span>08 · GRAPH</span><span>PRODUCT → ALLERGEN ← POLICY</span></div>
-      </header>
-      <div class="ticker">
-        <div class="tick"><b>SEED</b> <span class="flat">gluten</span></div>
-        <div class="tick"><b>SOURCE</b> <span class="up">neo4j</span></div>
-        <div class="tick"><b>BROWSER</b> <span class="flat">:30474</span></div>
-      </div>
-      <div class="body">
-        <p class="kicker">GraphPage + Neo4j</p>
-        <h2>Визуализация subgraph</h2>
-        <div class="fig"><img src="assets/ui-graph.png" alt="Graph page" /></div>
-        <p class="cap">ACL-filtered SVG · Open Neo4j Browser (:30474) · demo_graph.cypher</p>
-      </div>
-      <div class="footer"><span>Форма: визуализация графа Neo4j</span><span>09 / 16</span></div>
+      <div class="footer"><span>Filter-path → deny_retrieval → Grafana ACL panel</span><span>09 / 16</span></div>
     </article>
 
     <!-- 10 Tempo -->
