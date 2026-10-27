@@ -135,7 +135,7 @@ def render_mermaid(src: Path, dest: Path) -> None:
         "-c",
         str(MERMAID_CONFIG),
         "-b",
-        "transparent",
+        "white",
     ]
     # Prefer local Chromium/Edge if puppeteer chrome missing — mmdc bundles chromium usually.
     _run(cmd)

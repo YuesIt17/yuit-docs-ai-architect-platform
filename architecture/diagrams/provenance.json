@@ -1,13 +1,13 @@
 {
-  "generated_at_utc": "2026-10-26T14:42:36Z",
+  "generated_at_utc": "2026-10-27T08:27:24Z",
   "limitations": [
+    "sources/gen = codegen; sources/manual = hand-edited Mermaid.",
     "k8s-topology-*.svg is Mermaid from Helm inventory; *-kube.svg is KubeDiagrams with embedded icons.",
     "KubeDiagrams / Mermaid show declared Helm topology, not live cluster state.",
     "Structurizr Mermaid export does not preserve all native renderer features.",
     "Pyreverse is static analysis; dynamic DI wiring may be incomplete.",
     "Postgres is deployed-unused; ER is intended schema from init.sql.",
-    "GPU/vLLM Helm profile is pending.",
-    "sources/gen = codegen; sources/manual = hand-edited Mermaid."
+    "GPU/vLLM Helm profile is pending."
   ],
   "origin_levels": {
     "curated-from-code": [
@@ -45,7 +45,6 @@
     "gen/python-classes-agent.mmd",
     "gen/python-classes-stores.mmd",
     "gen/python-packages.mmd",
-    "k8s-topology-desktop-kube",
     "k8s-topology-desktop-kube.svg",
     "k8s-topology-desktop.svg",
     "manual/c4-backend-components.mmd",

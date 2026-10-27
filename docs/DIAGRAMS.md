@@ -64,8 +64,9 @@ Secret/stringData в manifests заменяются fixture-значениями
 ## Preview в редакторе
 
 Cursor/VS Code Mermaid preview понимает в основном `flowchart` / `graph` / `stateDiagram`.
-Поэтому committed `.mmd` нормализуются в **flowchart TB** без HTML-подписей.
+Committed `.mmd` — **flowchart TB**; SVG собирает `mmdc` с `layout: elk` ([`tools/diagrams/mermaid-config.json`](../tools/diagrams/mermaid-config.json)), чтобы раскладка совпадала с preview (siblings на одном ранге), а не с дефолтным dagre.
 Structurizr DSL (`model/workspace.dsl`) — модель C4 для `validate`; рендер SVG — из `sources/manual/` + `sources/gen/` (не из Structurizr Mermaid export с `<div>`).
+Тема SVG — `neutral` + белый фон (для README/печати); preview в тёмном Cursor визуально темнее, граф тот же.
 
 ## Drift
 

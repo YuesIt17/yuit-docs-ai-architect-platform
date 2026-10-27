@@ -1,8 +1,9 @@
 {
   "theme": "neutral",
   "securityLevel": "loose",
+  "layout": "elk",
   "flowchart": {
-    "htmlLabels": false,
+    "htmlLabels": true,
     "useMaxWidth": true
   },
   "sequence": {
