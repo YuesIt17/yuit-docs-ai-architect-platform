@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RetailPartnerX · Defense Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --paper: #ffffff;
+      --ink: #0f1419;
+      --muted: #5c6672;
+      --faint: #8b949e;
+      --line: #e3e7ec;
+      --line-strong: #c9d0d8;
+      --accent: #0b5fff;
+      --accent-soft: rgba(11, 95, 255, 0.08);
+      --up: #0a7a3e;
+      --down: #b42318;
+      --cyan: #0a7ea4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Archivo, system-ui, sans-serif;
+      background: #e8ebf0;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+    .bar {
+      position: sticky; top: 0; z-index: 30;
+      display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+      padding: 0.65rem 1.2rem;
+      background: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem; color: #c5ccd4;
+    }
+    .bar strong { color: #fff; background: var(--accent); padding: 0.12rem 0.4rem; }
+    .bar a { color: #9ec5ff; text-decoration: none; }
+    .deck {
+      max-width: 1140px;
+      margin: 1.25rem auto 3rem;
+      display: grid; gap: 1.35rem;
+      padding: 0 1rem;
+    }
+    .slide {
+      aspect-ratio: 16 / 9;
+      position: relative;
+      overflow: hidden;
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      box-shadow: 0 12px 32px rgba(15, 20, 25, 0.06);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+    }
+    .masthead {
+      display: flex; align-items: stretch;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .brand {
+      background: var(--ink); color: #fff;
+      font-weight: 800; letter-spacing: -0.03em; font-size: 0.9rem;
+      padding: 0.5rem 0.85rem; text-transform: uppercase;
+      display: flex; align-items: center;
+    }
+    .brand span { margin-left: 0.35rem; color: #9ec5ff; font-weight: 600; }
+    .mast-meta {
+      flex: 1; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.65rem; color: var(--muted);
+    }
+    .live-dot {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      color: var(--up); font-weight: 600;
+    }
+    .live-dot::before {
+      content: ""; width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--up);
+    }
+    .ticker {
+      display: flex; overflow: hidden;
+      background: var(--bg); border-bottom: 1px solid var(--line);
+      font-family: "IBM Plex Mono", monospace; font-size: 0.65rem; white-space: nowrap;
+    }
+    .tick {
+      display: flex; gap: 0.45rem; align-items: center;
+      padding: 0.35rem 0.75rem; border-right: 1px solid var(--line);
+    }
+    .tick b { color: var(--ink); }
+    .tick .up { color: var(--up); }
+    .tick .down { color: var(--down); }
+    .tick .flat { color: var(--cyan); }
+    .body {
+      padding: 0.85rem 1.45rem 0.35rem;
+      min-height: 0; overflow: hidden;
+      display: flex; flex-direction: column; gap: 0.35rem;
+    }
+    .body > .fill { flex: 1 1 auto; min-height: 0; }
+    .kicker {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 0;
+      flex: 0 0 auto;
+    }
+    h1 {
+      font-size: clamp(1.7rem, 3.4vw, 2.7rem);
+      font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; max-width: 18ch;
+      flex: 0 0 auto;
+    }
+    h1 .hl { color: var(--accent); }
+    h2 {
+      font-size: clamp(1.15rem, 2.1vw, 1.55rem);
+      font-weight: 800; letter-spacing: -0.035em; line-height: 1.1; margin-bottom: 0;
+      flex: 0 0 auto;
+    }
+    .lede { margin-top: 0.7rem; max-width: 46ch; font-size: 0.98rem; color: var(--muted); }
+    .flash {
+      display: inline-flex; margin-top: 0.9rem;
+      background: var(--accent-soft); border-left: 3px solid var(--accent);
+      padding: 0.4rem 0.7rem;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 500;
+    }
+    .footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 0 1.45rem 0.75rem; padding-top: 0.4rem;
+      border-top: 1px solid var(--line);
+      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; color: var(--faint);
+    }
+    .cols {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
+      flex: 1 1 auto; min-height: 0; align-content: stretch;
+    }
+    .cols > div, .cols-3 > div, .split-fig > div {
+      display: flex; flex-direction: column; min-height: 0; gap: 0.2rem;
+    }
+    .cols-3 {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;
+      flex: 1 1 auto; min-height: 0;
+    }
+    .panel {
+      background: var(--bg); border: 1px solid var(--line); padding: 0.7rem 0.8rem;
+    }
+    .panel .ph {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 0.4rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--line);
+    }
+    .panel .ph h3 {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent);
+    }
+    .panel .ph em {
+      font-style: normal; font-family: "IBM Plex Mono", monospace;
+      font-size: 0.6rem; color: var(--faint);
+    }
+    ul { list-style: none; }
+    ul li {
+      display: flex; justify-content: space-between; gap: 0.75rem;
+      padding: 0.25rem 0; font-size: 0.86rem; font-weight: 500;
+      border-bottom: 1px solid var(--line);
+    }
+    ul li:last-child { border-bottom: 0; }
+    ul.plain li { display: block; border: 0; padding: 0.22rem 0; }
+    ul li span {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; white-space: nowrap;
+    }
+    ul li span.up { color: var(--up); }
+    ul li span.down { color: var(--down); }
+    .quotes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
+    .q {
+      background: var(--bg); border: 1px solid var(--line); padding: 0.55rem 0.6rem; min-height: 4.4rem;
+    }
+    .q .sym {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 600;
+      color: var(--cyan); margin-bottom: 0.2rem;
+    }
+    .q .val { font-size: 1.02rem; font-weight: 800; letter-spacing: -0.03em; }
+    .q .chg { font-family: "IBM Plex Mono", monospace; font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
+    .q .chg.up { color: var(--up); }
+    .q .chg.down { color: var(--down); }
+    .watch { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .watch th {
+      text-align: left; font-family: "IBM Plex Mono", monospace;
+      font-size: 0.58rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--faint); padding: 0.28rem 0.45rem; border-bottom: 1px solid var(--line-strong);
+      background: var(--bg);
+    }
+    .watch td {
+      padding: 0.38rem 0.45rem; border-bottom: 1px solid var(--line); font-weight: 500; vertical-align: middle;
+    }
+    .watch .sym {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; color: var(--accent);
+    }
+    .badge {
+      display: inline-block; font-family: "IBM Plex Mono", monospace;
+      font-size: 0.58rem; font-weight: 600; padding: 0.12rem 0.35rem;
+    }
+    .badge.ok { background: rgba(10, 122, 62, 0.1); color: var(--up); }
+    .badge.open { background: rgba(180, 35, 24, 0.1); color: var(--down); }
+    .fig, .fig-ph {
+      width: 100%; flex: 1 1 auto; min-height: 0;
+      border: 1px solid var(--line); background: var(--bg);
+      overflow: hidden; display: flex; align-items: stretch; justify-content: center;
+    }
+    .fig img {
+      width: 100%; height: 100%;
+      object-fit: contain; object-position: top center;
+      display: block; background: var(--bg);
+    }
+    .fig-ph {
+      background: var(--bg); color: var(--faint);
+      font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; text-align: center; padding: 0.75rem;
+    }
+    .cap {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; color: var(--faint);
+      margin: 0; flex: 0 0 auto;
+    }
+    .split-fig {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
+      flex: 1 1 auto; min-height: 0;
+    }
+    .note {
+      margin-top: 0; font-size: 0.78rem; color: var(--muted); flex: 0 0 auto;
+    }
+    .body > .fig { flex: 1 1 auto; min-height: 0; }
+    /* Slide-native hybrid topology (readable at 16:9) */
+    .topo {
+      display: grid;
+      grid-template-columns: 1.15fr auto 1fr;
+      gap: 0.55rem;
+      align-items: stretch;
+      margin-top: 0.15rem;
+    }
+    .topo-col {
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      padding: 0.55rem 0.65rem 0.65rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .topo-col h3 {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.15rem;
+    }
+    .topo-col.k8s h3 { color: var(--cyan); }
+    .topo-col.compose h3 { color: var(--up); }
+    .topo-box {
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      padding: 0.4rem 0.5rem;
+      font-size: 0.82rem; font-weight: 600;
+    }
+    .topo-box small {
+      display: block; margin-top: 0.15rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.6rem; font-weight: 500; color: var(--muted);
+    }
+    .topo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+    .topo-mid {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.45rem; min-width: 4.2rem;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 600;
+      color: var(--muted); text-align: center;
+    }
+    .topo-arrow {
+      width: 100%; padding: 0.35rem 0.2rem;
+      border: 1px dashed var(--line-strong); background: var(--paper);
+      color: var(--accent);
+    }
+    .topo-ingress {
+      grid-column: 1 / -1;
+      background: var(--ink); color: #fff;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.85rem; font-weight: 700;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .topo-ingress span {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 500; color: #9ec5ff;
+    }
+    .topo-wrap { display: grid; gap: 0.4rem; flex: 1 1 auto; min-height: 0; }
+    .topo-dash {
+      opacity: 0.75; border-style: dashed;
+      font-weight: 500; color: var(--muted);
+    }
+    /* Generic readable flows (C4 / sequence / agent) */
+    .flow-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem;
+      flex: 1 1 auto; min-height: 0; align-items: stretch;
+    }
+    .flow-panel {
+      background: var(--bg); border: 1px solid var(--line-strong);
+      padding: 0.5rem 0.6rem 0.55rem;
+      display: flex; flex-direction: column; min-height: 0; gap: 0.35rem;
+    }
+    .flow-panel > h3 {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent); margin: 0; flex: 0 0 auto;
+    }
+    .actors {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-bottom: 0;
+    }
+    .actor {
+      background: var(--paper); border: 1px solid var(--line-strong);
+      padding: 0.3rem 0.4rem; font-size: 0.74rem; font-weight: 600; text-align: center;
+    }
+    .actor small {
+      display: block; margin-top: 0.1rem;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; font-weight: 500; color: var(--muted);
+    }
+    .hub {
+      background: var(--ink); color: #fff;
+      padding: 0.45rem 0.55rem; text-align: center;
+      font-size: 0.85rem; font-weight: 800; margin: 0.2rem 0;
+    }
+    .hub small {
+      display: block; margin-top: 0.15rem;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; font-weight: 500; color: #9ec5ff;
+    }
+    .ext-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+    .store-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; margin-top: 0.25rem;
+    }
+    /* Compact vertical lane diagrams */
+    .lane {
+      display: flex; flex-direction: column; gap: 0.28rem;
+      flex: 1 1 auto; min-height: 0; justify-content: space-between;
+    }
+    .lane-step {
+      display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.4rem; align-items: center;
+      background: var(--paper); border: 1px solid var(--line-strong);
+      padding: 0.4rem 0.5rem; min-height: 0;
+    }
+    .lane-step .n {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; font-weight: 700;
+      color: var(--accent); text-align: center;
+    }
+    .lane-step .t { font-size: 0.78rem; font-weight: 600; line-height: 1.2; }
+    .lane-step .t small {
+      display: block; margin-top: 0.08rem;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; font-weight: 500; color: var(--muted);
+    }
+    .lane-step.core { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .lane-step.core .n { color: #9ec5ff; }
+    .lane-step.core .t small { color: #9ec5ff; }
+    .lane-step.side { border-style: dashed; }
+    .lane-step.side .t { color: var(--muted); font-weight: 500; }
+    .lane-fork {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.25rem;
+    }
+    .lane-fork .chip {
+      background: var(--paper); border: 1px solid var(--line-strong);
+      padding: 0.28rem 0.3rem; text-align: center;
+      font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; font-weight: 600;
+    }
+    .lane-fork .chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .lane-fork .chip.off { border-style: dashed; color: var(--faint); font-weight: 500; }
+    .lane-meta {
+      font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; color: var(--muted);
+      text-align: center; line-height: 1.25;
+    }
+    @media print {
+      body { background: white; }
+      .bar { display: none; }
+      .deck { max-width: none; margin: 0; padding: 0; gap: 0; }
+      .slide {
+        box-shadow: none;
+        page-break-after: always; break-after: page;
+        width: 100%; height: 100vh; aspect-ratio: auto;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <strong>RPX DEFENSE</strong>
+    <span>Bloom AI light · 16 slides · Ctrl+P → PDF</span>
+    <a href="assets/CAPTURE.md">capture checklist</a>
+  </div>
+
+  <div class="deck">
+    <!-- 01 -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta">
+          <span>KNOWLEDGE PLATFORM · COURSE DEFENSE</span>
+          <span class="live-dot">HYBRID DESKTOP</span>
+        </div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>OLLAMA</b> <span class="up">▲ LIVE</span></div>
+        <div class="tick"><b>GRAPHRAG</b> <span class="flat">ON</span></div>
+        <div class="tick"><b>ACL</b> <span class="up">DENY_RETRIEVAL</span></div>
+        <div class="tick"><b>VLLM</b> <span class="down">UNVERIFIED</span></div>
+        <div class="tick"><b>OCR</b> <span class="down">MOCK</span></div>
+        <div class="tick"><b>VIDEO</b> <span class="down">PENDING</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Special report · on-prem GraphRAG</p>
+        <h1>RetailPartnerX <span class="hl">Knowledge</span> Platform</h1>
+        <p class="lede">Закрытый контур: grounded-ответы по Product/Policy KB с ролевым ACL — без SaaS LLM.</p>
+        <div class="flash">ЕВГЕНИЙ ЮЛОВ · PLATFORM ENGINEER / AI ARCHITECT</div>
+      </div>
+      <div class="footer"><span>RPX AI · DEMO</span><span>01 / 16</span></div>
+    </article>
+
+    <!-- 02 -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>01 · RISK / RESPONSE</span><span class="live-dot">WATCHLIST</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>HALLUCINATION</b> <span class="down">▲ RISK</span></div>
+        <div class="tick"><b>SECRET LEAK</b> <span class="down">▲ RISK</span></div>
+        <div class="tick"><b>SAAS LLM</b> <span class="down">OUT</span></div>
+        <div class="tick"><b>GRAPHRAG</b> <span class="up">▲ HEDGE</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Почему on-prem</p>
+        <h2>Проблема ритейлера → ответ платформы</h2>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>Risk book</h3><em>FAIL</em></div>
+            <ul>
+              <li>Галлюцинации на политиках <span class="down">HIGH</span></li>
+              <li>Утечки secret promo <span class="down">HIGH</span></li>
+              <li>SaaS LLM вне контура <span class="down">BLOCK</span></li>
+            </ul>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>Hedge</h3><em>PASS</em></div>
+            <ul>
+              <li>Товар → аллерген → политика <span class="up">GRAPH</span></li>
+              <li>RBAC + guards + deny_retrieval <span class="up">ACL</span></li>
+              <li>MOCK / Ollama / vLLM only <span class="up">CLOSED</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>RETAILPARTNERX · FMCG</span><span>02 / 16</span></div>
+    </article>
+
+    <!-- 03 -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>02 · SOLUTION</span><span>CLOSED LOOP</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>CONTROL</b> <span class="flat">LANGGRAPH</span></div>
+        <div class="tick"><b>DATA</b> <span class="flat">NEO4J+QDRANT</span></div>
+        <div class="tick"><b>SERVE</b> <span class="up">OLLAMA</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Architecture sketch</p>
+        <h2>GraphRAG Knowledge Platform</h2>
+        <div class="quotes">
+          <div class="q"><div class="sym">CTRL</div><div class="val">AuthZ</div><div class="chg">guards · LangGraph · ACL</div></div>
+          <div class="q"><div class="sym">DATA</div><div class="val">Neo4j</div><div class="chg">Qdrant · MinIO · PG</div></div>
+          <div class="q"><div class="sym">SRV</div><div class="val">Ollama</div><div class="chg up">^ qwen2.5:0.5b</div></div>
+          <div class="q"><div class="sym">OBS</div><div class="val">LGTM</div><div class="chg">Tempo · Loki · Prom</div></div>
+        </div>
+        <p class="note">Hybrid desktop: K8s data-plane + Compose LLM/obs. Submission design: vLLM AWQ (runtime на GPU не проверен).</p>
+      </div>
+      <div class="footer"><span>ADD · ADR-001 / ADR-006</span><span>03 / 16</span></div>
+    </article>
+
+    <!-- 04 C4 -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>03 · C4</span><span>CONTEXT + CONTAINER</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>L1</b> <span class="flat">CONTEXT</span></div>
+        <div class="tick"><b>L2</b> <span class="flat">CONTAINER</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Architecture Design Document · slide layout</p>
+        <h2>C4: контекст и контейнеры</h2>
+        <div class="flow-2">
+          <div class="flow-panel">
+            <h3>L1 · Context</h3>
+            <div class="actors">
+              <div class="actor">Store Employee<small>Uses</small></div>
+              <div class="actor">Category Manager<small>Uses</small></div>
+              <div class="actor">Compliance Officer<small>Uses</small></div>
+              <div class="actor">Platform Operator<small>Ops UI · Dashboards</small></div>
+            </div>
+            <div class="hub">Knowledge Platform<small>closed-loop GraphRAG</small></div>
+            <div class="ext-row">
+              <div class="topo-box">Ollama<small>OpenAI-compatible</small></div>
+              <div class="topo-box">Observability<small>OTLP · LGTM</small></div>
+            </div>
+          </div>
+          <div class="flow-panel">
+            <h3>L2 · Containers</h3>
+            <div class="topo-box">Users → Frontend → Backend API</div>
+            <div class="store-grid">
+              <div class="topo-box">Neo4j<small>graph</small></div>
+              <div class="topo-box">Qdrant<small>vectors</small></div>
+              <div class="topo-box">Redis<small>cache</small></div>
+              <div class="topo-box">MinIO<small>objects</small></div>
+              <div class="topo-box topo-dash">Postgres<small>unused DSN</small></div>
+              <div class="topo-box">Ollama + Obs<small>Compose</small></div>
+            </div>
+            <p class="note" style="margin-top:0.5rem">Backend → stores / Ollama / OTLP. Frontend ↔ API по HTTPS.</p>
+          </div>
+        </div>
+        <p class="cap">Канон ADD: c4-context.svg · c4-container.svg</p>
+      </div>
+      <div class="footer"><span>architecture/diagrams/sources/manual</span><span>04 / 16</span></div>
+    </article>
+
+    <!-- 05 Hybrid -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>04 · DEPLOYMENT</span><span>HYBRID DESKTOP</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>K8S</b> <span class="flat">API+STORES</span></div>
+        <div class="tick"><b>COMPOSE</b> <span class="flat">OLLAMA+OBS</span></div>
+        <div class="tick"><b>NO DUP</b> <span class="up">ZERO-OVERLAP</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Zero-overlap hybrid · simplified for slide</p>
+        <h2>K8s data-plane + Compose LLM/obs</h2>
+        <div class="topo-wrap">
+          <div class="topo-ingress">
+            Ingress · kp.local:8088
+            <span>UI + /api · LB</span>
+          </div>
+          <div class="topo">
+            <div class="topo-col k8s">
+              <h3>Kubernetes · apps + data</h3>
+              <div class="topo-row">
+                <div class="topo-box">frontend<small>Deployment</small></div>
+                <div class="topo-box">api<small>Deployment · GraphRAG</small></div>
+              </div>
+              <div class="topo-row">
+                <div class="topo-box">Neo4j<small>graph</small></div>
+                <div class="topo-box">Qdrant<small>vectors</small></div>
+              </div>
+              <div class="topo-row">
+                <div class="topo-box">MinIO<small>objects</small></div>
+                <div class="topo-box">Redis<small>cache</small></div>
+              </div>
+              <div class="topo-box topo-dash">Postgres<small>deployed · DSN unused in MVP</small></div>
+            </div>
+            <div class="topo-mid">
+              <div class="topo-arrow">API → host.docker.internal</div>
+              <div>OTLP</div>
+              <div class="topo-arrow">traces / logs / metrics</div>
+            </div>
+            <div class="topo-col compose">
+              <h3>Compose · side-stack</h3>
+              <div class="topo-box">Ollama<small>qwen2.5:0.5b · :11434</small></div>
+              <div class="topo-box">Grafana<small>:3000 · KP Overview</small></div>
+              <div class="topo-row">
+                <div class="topo-box">Tempo<small>traces</small></div>
+                <div class="topo-box">Loki<small>logs</small></div>
+              </div>
+              <div class="topo-row">
+                <div class="topo-box">Prometheus</div>
+                <div class="topo-box">Alloy</div>
+              </div>
+              <div class="topo-box topo-dash">vLLM GPU<small>submission · runtime не проверен</small></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Канон ADD: architecture/diagrams/images/current-hybrid-deployment.svg · здесь упрощённый вид для защиты</p>
+      </div>
+      <div class="footer"><span>docs/SETUP.md · hybrid-up</span><span>05 / 16</span></div>
+    </article>
+
+    <!-- 06 UI overview -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>05 · FRONTEND</span><span class="live-dot">UI SURFACE</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>CHAT</b></div>
+        <div class="tick"><b>LABELS</b></div>
+        <div class="tick"><b>LLM</b></div>
+        <div class="tick"><b>OPS</b></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Обзор UI платформы</p>
+        <h2>Пять экранов учебного MVP</h2>
+        <div class="cols">
+          <div>
+            <div class="fig"><img src="assets/ui-chat.png" alt="Chat" /></div>
+            <p class="cap">Chat</p>
+          </div>
+          <div>
+            <div class="fig"><img src="assets/ui-llm.png" alt="LLM" /></div>
+            <p class="cap">LLM Settings</p>
+          </div>
+          <div>
+            <div class="fig"><img src="assets/ui-labels.png" alt="Labels" /></div>
+            <p class="cap">Labels · OCR=MOCK</p>
+          </div>
+          <div>
+            <div class="fig"><img src="assets/ui-ops.png" alt="Ops" /></div>
+            <p class="cap">Ops · store=live · OLLAMA</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>kp.local:8088</span><span>06 / 16</span></div>
+    </article>
+
+    <!-- 07 Chat path -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>06 · CHAT PATH</span><span>SEQUENCE + AGENT</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>input_guard</b></div>
+        <div class="tick"><b>graph_retrieve</b></div>
+        <div class="tick"><b>vector_retrieve</b></div>
+        <div class="tick"><b>llm</b></div>
+        <div class="tick"><b>output_guard</b></div>
+      </div>
+      <div class="body">
+        <p class="kicker">LangGraph state machine · slide layout</p>
+        <h2>Путь chat-запроса</h2>
+        <div class="flow-2">
+          <div class="flow-panel">
+            <h3>Sequence · ChatService</h3>
+            <div class="lane">
+              <div class="lane-step"><span class="n">01</span><div class="t">User · Category Manager<small>POST /v1/chat</small></div></div>
+              <div class="lane-step"><span class="n">02</span><div class="t">FastAPI + input_guard<small>ok ↓ · deny → audit</small></div></div>
+              <div class="lane-step"><span class="n">03</span><div class="t">Semantic cache<small>hit → SSE · miss ↓</small></div></div>
+              <div class="lane-step core"><span class="n">04</span><div class="t">KnowledgeAgent<small>retrieve ACL · LLM · output_guard</small></div></div>
+              <div class="lane-step"><span class="n">05</span><div class="t">Audit + SSE final</div></div>
+            </div>
+          </div>
+          <div class="flow-panel">
+            <h3>Agent graph · from code</h3>
+            <div class="lane">
+              <div class="lane-step"><span class="n">A</span><div class="t">guard_input → route</div></div>
+              <div class="lane-fork">
+                <div class="chip on">chat ↓</div>
+                <div class="chip off">label</div>
+                <div class="chip off">blocked</div>
+              </div>
+              <div class="lane-step"><span class="n">B</span><div class="t">graph_retrieve → vector_retrieve</div></div>
+              <div class="lane-fork">
+                <div class="chip on">synthesize</div>
+                <div class="chip off">refine ×1</div>
+                <div class="chip off">> synth</div>
+              </div>
+              <div class="lane-step core"><span class="n">C</span><div class="t">synthesize · llm span</div></div>
+              <div class="lane-step"><span class="n">D</span><div class="t">guard_output → END</div></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Канон ADD: sequence-chat.svg · agent-workflow.svg (gen)</p>
+      </div>
+      <div class="footer"><span>Tempo spans совпадают с нодами</span><span>07 / 16</span></div>
+    </article>
+
+    <!-- 08 ACL -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>07 · ACL DEMO</span><span class="live-dot">DENY_RETRIEVAL</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>MANAGER</b> <span class="down">DENY</span></div>
+        <div class="tick"><b>COMPLIANCE</b> <span class="up">ALLOW + SECRET</span></div>
+        <div class="tick"><b>METRIC</b> <span class="up">acl_denies_total</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Secret promo · Q4 margin 42%</p>
+        <h2>Ролевой ACL на retrieval</h2>
+        <div class="split-fig">
+          <div>
+            <div class="fig"><img src="assets/ui-acl-manager-deny.png" alt="Manager deny" /></div>
+            <p class="cap">manager → deny_retrieval</p>
+          </div>
+          <div>
+            <div class="fig"><img src="assets/ui-acl-compliance-allow.png" alt="Compliance allow" /></div>
+            <p class="cap">compliance → allow + secret citation</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>Filter-path → deny_retrieval → Grafana ACL panel</span><span>08 / 16</span></div>
+    </article>
+
+    <!-- 09 Graph -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>08 · GRAPH</span><span>PRODUCT → ALLERGEN ← POLICY</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>SEED</b> <span class="flat">gluten</span></div>
+        <div class="tick"><b>SOURCE</b> <span class="up">neo4j</span></div>
+        <div class="tick"><b>BROWSER</b> <span class="flat">:30474</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">GraphPage + Neo4j</p>
+        <h2>Визуализация subgraph</h2>
+        <div class="fig"><img src="assets/ui-graph.png" alt="Graph page" /></div>
+        <p class="cap">ACL-filtered SVG · Open Neo4j Browser (:30474) · demo_graph.cypher</p>
+      </div>
+      <div class="footer"><span>Форма: визуализация графа Neo4j</span><span>09 / 16</span></div>
+    </article>
+
+    <!-- 10 Tempo -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>09 · OBSERVABILITY</span><span>TEMPO ≈ JAEGER</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>TEMPO</b> <span class="flat">:3200</span></div>
+        <div class="tick"><b>SERVICE</b> <span class="up">kp-api</span></div>
+        <div class="tick"><b>SPANS</b> <span class="flat">input_guard…</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Deep-dive traces · Grafana Explore</p>
+        <h2>Tempo · span waterfall</h2>
+        <div class="fig"><img src="assets/grafana-tempo.png" alt="Grafana Tempo Explore" /></div>
+        <p class="cap">Explore → Tempo · trace detail + spans · evidence/trace.md</p>
+      </div>
+      <div class="footer"><span>ADR-006 · Tempo вместо Jaeger</span><span>10 / 16</span></div>
+    </article>
+
+    <!-- 11 Ops deep links -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>09 · OBSERVABILITY</span><span class="live-dot">OPS DEEP LINKS</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>OPS</b> <span class="up">LIVE</span></div>
+        <div class="tick"><b>TEMPO</b> <span class="flat">EXPLORE</span></div>
+        <div class="tick"><b>LOKI</b> <span class="flat">LOGS</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">UI → observability</p>
+        <h2>Ops · deep links в Grafana</h2>
+        <div class="fig"><img src="assets/ui-ops.png" alt="Ops page" /></div>
+        <p class="cap">Ops → Grafana Explore Tempo / Loki · spans совпадают с нодами</p>
+      </div>
+      <div class="footer"><span>kp.local:8088/ops</span><span>11 / 16</span></div>
+    </article>
+
+    <!-- 12 Grafana KP Overview 1 -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>10 · GRAFANA</span><span class="live-dot">KP OVERVIEW</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>UP</b> <span class="up">API</span></div>
+        <div class="tick"><b>REQ/MIN</b> <span class="flat">LIVE</span></div>
+        <div class="tick"><b>RAG LATENCY</b> <span class="flat">p50/p90</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Prometheus scrape · desktop evidence</p>
+        <h2>KP Overview · traffic &amp; latency</h2>
+        <div class="fig"><img src="assets/grafana-kp-overview-1.png" alt="KP Overview traffic" /></div>
+        <p class="cap">UP · req/min · RAG latency p50/p90</p>
+      </div>
+      <div class="footer"><span>localhost:3000/d/kp-overview</span><span>12 / 16</span></div>
+    </article>
+
+    <!-- 13 Grafana KP Overview 2 -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>10 · GRAFANA</span><span>TOKENS + TOTALS</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>TOKENS/MIN</b> <span class="flat">LLM</span></div>
+        <div class="tick"><b>REQUEST TOTALS</b> <span class="up">BY STATUS</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Prometheus scrape · desktop evidence</p>
+        <h2>KP Overview · tokens &amp; totals</h2>
+        <div class="fig"><img src="assets/grafana-kp-overview-2.png" alt="KP Overview tokens" /></div>
+        <p class="cap">tokens/min · request totals by endpoint/status</p>
+      </div>
+      <div class="footer"><span>localhost:3000/d/kp-overview</span><span>13 / 16</span></div>
+    </article>
+
+    <!-- 14 Grafana ACL denies -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>10 · GRAFANA</span><span class="live-dot">ACL DENIES</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>ACL DENIES</b> <span class="up">▲ ~0.63 / min</span></div>
+        <div class="tick"><b>CACHE</b> <span class="flat">0% OFF</span></div>
+        <div class="tick"><b>METRIC</b> <span class="flat">acl_denies_total</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">deny_retrieval → Prometheus counter</p>
+        <h2>ACL denies на дашборде</h2>
+        <div class="fig"><img src="assets/grafana-acl-denies.png" alt="ACL denies panel" /></div>
+        <p class="cap">ACL denies / min ≈ 0.63 · live после manager deny demo</p>
+      </div>
+      <div class="footer"><span>localhost:3000/d/kp-overview</span><span>14 / 16</span></div>
+    </article>
+
+    <!-- 15 Load -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>11 · LOAD + CAPACITY</span><span>EVIDENCE NUMBERS</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>MOCK</b> <span class="up">~79 RPS</span></div>
+        <div class="tick"><b>OLLAMA</b> <span class="down">~7s E2E</span></div>
+        <div class="tick"><b>BOTTLENECK</b> <span class="flat">LLM</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">docs/load-report.md · capacity-planning.md</p>
+        <h2>Нагрузка и железо</h2>
+        <div class="quotes">
+          <div class="q"><div class="sym">MOCK</div><div class="val">~79.5</div><div class="chg up">RPS · p95 ~16 ms · 100%</div></div>
+          <div class="q"><div class="sym">OLLAMA</div><div class="val">~7.1s</div><div class="chg">avg ok · success 50%</div></div>
+          <div class="q"><div class="sym">DESK</div><div class="val">CPU</div><div class="chg">i7-8550U · ~32 GB</div></div>
+          <div class="q"><div class="sym">VLLM</div><div class="val">AWQ</div><div class="chg down">runtime не проверен</div></div>
+        </div>
+        <p class="note">Узкое место E2E — LLM serving, не GraphRAG/ACL. OCR=MOCK · video_url=pending.</p>
+      </div>
+      <div class="footer"><span>evidence/load/*.json</span><span>15 / 16</span></div>
+    </article>
+
+    <!-- 16 Watchlist -->
+    <article class="slide">
+      <header class="masthead">
+        <div class="brand">RPX <span>AI</span></div>
+        <div class="mast-meta"><span>12 · FORM SCORECARD</span><span class="live-dot">SUBMIT</span></div>
+      </header>
+      <div class="ticker">
+        <div class="tick"><b>MONOREPO</b> <span class="up">DONE</span></div>
+        <div class="tick"><b>ADD</b> <span class="up">DONE</span></div>
+        <div class="tick"><b>LOAD</b> <span class="up">DONE</span></div>
+        <div class="tick"><b>VIDEO</b> <span class="down">OPEN</span></div>
+      </div>
+      <div class="body">
+        <p class="kicker">Критерии формы сдачи</p>
+        <h2>Evidence watchlist</h2>
+        <table class="watch">
+          <thead>
+            <tr><th>Symbol</th><th>Block</th><th>Detail</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="sym">REPO</td><td>Monorepo</td><td>app/infra · app/backend · docs/architecture</td><td><span class="badge ok">OK</span></td></tr>
+            <tr><td class="sym">ADD</td><td>Diagrams</td><td>C4 · capacity · diagrams-as-code</td><td><span class="badge ok">OK</span></td></tr>
+            <tr><td class="sym">ACL</td><td>Demo</td><td>deny_retrieval + compliance secret</td><td><span class="badge ok">OK</span></td></tr>
+            <tr><td class="sym">GRAPH</td><td>Neo4j</td><td>GraphPage SVG + Browser :30474</td><td><span class="badge ok">OK</span></td></tr>
+            <tr><td class="sym">OBS</td><td>LGTM</td><td>Tempo · Loki · KP Overview · ACL metric</td><td><span class="badge ok">OK</span></td></tr>
+            <tr><td class="sym">LOAD</td><td>Report</td><td>MOCK ~79 RPS · Ollama E2E</td><td><span class="badge ok">OK</span></td></tr>
+            <tr><td class="sym">VIDEO</td><td>Submit</td><td>script ready · video_url pending</td><td><span class="badge open">OPEN</span></td></tr>
+            <tr><td class="sym">VLLM</td><td>Serve</td><td>AWQ design · no NVIDIA runtime</td><td><span class="badge open">GAP</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="footer"><span>Q&amp;A · README форма сдачи</span><span>16 / 16</span></div>
+    </article>
+  </div>
+</body>
+</html>

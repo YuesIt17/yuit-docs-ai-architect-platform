@@ -156,18 +156,36 @@ class KnowledgeAgent:
             )
         return {"retrieved": retrieved, "citations": citations, "acl_decision": "allow"}
 
+    def _apply_secret_filter_acl(self, out: dict[str, Any], query: str, principal: Principal) -> dict[str, Any]:
+        """Mark deny_retrieval when secret hits exist for compliance but were ACL-filtered for principal.
+
+        Probe retrieve is not returned to the user — citations stay principal-scoped.
+        Enables acl_denies_total / Grafana ACL panel for the filter-path demo.
+        """
+        if principal.role == "compliance_officer":
+            return out
+        if any(c.get("classification") == "secret" for c in (out.get("citations") or [])):
+            return out
+        officer = Principal(user_id="u-acl-probe", role="compliance_officer", name="ACL probe")
+        privileged = self.store.hybrid_retrieve(query, officer, top_k=5)
+        if any(getattr(h.document, "classification", "public") == "secret" for h in privileged):
+            out["acl_decision"] = "deny_retrieval"
+        return out
+
     def vector_retrieve(self, state: AgentState) -> dict[str, Any]:
         with span("vector_retrieve", request_id=state.get("request_id")):
             principal = Principal(user_id=state["user_id"], role=state["role"])
+            query = state.get("guarded_message", "")
             graph_ids = state.get("graph_doc_ids")
             with span("rerank", request_id=state.get("request_id")):
                 hits = self.store.hybrid_retrieve(
-                    state.get("guarded_message", ""),
+                    query,
                     principal,
                     top_k=5,
                     graph_doc_ids=list(graph_ids) if graph_ids is not None else None,
                 )
             out = self._hits_to_state(hits)
+            out = self._apply_secret_filter_acl(out, query, principal)
             out["refine_count"] = int(state.get("refine_count") or 0)
             return out
 
@@ -178,6 +196,8 @@ class KnowledgeAgent:
         refined = f"{base} политика требование маркировка"
         hits = self.store.hybrid_retrieve(refined, principal, top_k=5)
         out = self._hits_to_state(hits)
+        # Probe original question so secret-promo ACL still marks deny_retrieval.
+        out = self._apply_secret_filter_acl(out, base, principal)
         out["refine_count"] = int(state.get("refine_count") or 0) + 1
         out["guarded_message"] = base  # keep original question for synthesize
         return out
@@ -191,8 +211,10 @@ class KnowledgeAgent:
     def policy_check(self, state: AgentState) -> dict[str, Any]:
         principal = Principal(user_id=state["user_id"], role=state["role"])
         query = state.get("guarded_message", "")
-        hits = self.store.hybrid_retrieve(query + " allergen policy", principal, top_k=5)
-        return self._hits_to_state(hits)
+        q = query + " allergen policy"
+        hits = self.store.hybrid_retrieve(q, principal, top_k=5)
+        out = self._hits_to_state(hits)
+        return self._apply_secret_filter_acl(out, q, principal)
 
     async def synthesize(self, state: AgentState) -> dict[str, Any]:
         if state.get("acl_decision") == "deny_input" and state.get("answer"):

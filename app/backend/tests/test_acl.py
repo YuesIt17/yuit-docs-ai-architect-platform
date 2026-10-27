@@ -45,3 +45,22 @@ async def test_agent_denies_secret_to_manager(seeded):
     for cit in state.get("citations") or []:
         assert cit["classification"] != "secret"
     assert "42%" not in (state.get("answer") or "") or state.get("acl_decision") == "deny_output"
+    # Filter-path ACL: secret exists for compliance but was not returned → deny_retrieval
+    assert str(state.get("acl_decision") or "").startswith("deny")
+
+
+@pytest.mark.asyncio
+async def test_agent_allows_secret_to_compliance(seeded):
+    c = seeded
+    state = await c.agent.arun(
+        {
+            "request_id": "t2",
+            "message": "Расскажи про Q4 Closed Promo Margin Playbook и маржу 42%",
+            "modality": "chat",
+            "role": "compliance_officer",
+            "user_id": "u-comp",
+            "errors": [],
+        }
+    )
+    assert any(c.get("classification") == "secret" for c in (state.get("citations") or []))
+    assert state.get("acl_decision") == "allow"
