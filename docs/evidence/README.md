@@ -38,4 +38,4 @@ python scripts/load_smoke.py --base-url http://127.0.0.1:30080 --count 10 --conc
 3. После загрузки проставить `video_url` в `manifest.json`.
 4. Экраны: Chat ACL, Graph SVG + Neo4j Browser, Tempo spans, Loki logs, Grafana KP Overview.
 
-Запись видео: **ожидается** (владелец). Фейковый URL не добавлять.
+Запись видео: [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` в `manifest.json`.

@@ -2,9 +2,11 @@
 
 **Защищённая платформа мультимодального анализа корпоративных знаний (GraphRAG)** для курса «ИИ-архитектор».
 
-> **Глоссарий:** [docs/Glossary.md](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Evidence:** [docs/evidence/](docs/evidence/) · **Видео:** ожидается
+> **Глоссарий:** [docs/Glossary.md](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Evidence:** [docs/evidence/](docs/evidence/) · **Видео:** [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU)
 
 Сотрудники магазина, category managers и compliance RetailPartnerX получают grounded-ответы по Product/Policy KB и демо-этикеткам **в закрытом контуре** (без SaaS OpenAI/Anthropic), с ролевым ACL и проверяемым GraphRAG-путём (товар → аллерген → политика).
+
+[![Демо защиты · YouTube](https://img.youtube.com/vi/y2_mY9_ceuU/hqdefault.jpg)](https://www.youtube.com/watch?v=y2_mY9_ceuU)
 
 ---
 
@@ -34,7 +36,7 @@
 
 | Требование формы | Где | Статус |
 | ---------------- | --- | ------ |
-| Видео 5–7 мин | [`tasks/AI_PLATFORM_VIDEO_SCRIPT.md`](tasks/AI_PLATFORM_VIDEO_SCRIPT.md) · URL в [`docs/evidence/manifest.json`](docs/evidence/manifest.json) | **ожидается** |
+| Видео 5–7 мин | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · сценарий [`tasks/defense-video-script.md`](tasks/defense-video-script.md) · URL в [`docs/evidence/manifest.json`](docs/evidence/manifest.json) | готово |
 | Трейсы Jaeger / логи vLLM | [`docs/evidence/trace.md`](docs/evidence/trace.md) (Tempo ≈ Jaeger) · [`docs/evidence/loki.md`](docs/evidence/loki.md) (Ollama) · [`ADR-006`](architecture/adr/ADR-006-observability.md) · [`vllm-profile`](docs/infra/vllm-profile.md) | готово* |
 | Визуализация графа Neo4j | [`GraphPage.tsx`](app/frontend/src/pages/GraphPage.tsx) (ACL subgraph SVG) · [`docs/SETUP.md`](docs/SETUP.md) (Browser `:30474`) · [`demo_graph.cypher`](app/scripts/demo_graph.cypher) · [`ADR-003`](architecture/adr/ADR-003-graph-db.md) | готово |
 | Нагрузочный отчёт: RPS и латентность | [`docs/load-report.md`](docs/load-report.md) · [`docs/evidence/load/`](docs/evidence/load/) | готово |
@@ -45,7 +47,7 @@
 | --------------- | ------ |
 | Git-Monorepo | готово |
 | ADD | готово |
-| Demo & Load | видео — единственный открытый пункт |
+| Demo & Load | готово |
 
 ---
 
@@ -78,7 +80,7 @@
 | OCR | MOCK | Real vision OCR (вне MVP) |
 | Vault | Stub README | Live Vault agent |
 | Session memory | только `session_id` | Dialog persistence |
-| Видео | сценарий готов | запись + `video_url` (**блокер сдачи**) |
+| Видео | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` в manifest | — |
 
 ---
 
@@ -145,12 +147,12 @@ Demo auth: Bearer `guest` | `associate` | `manager` | `compliance`.
 
 ## Известные отклонения
 
-1. **Видео** — единственный открытый пункт формы сдачи (сценарий готов).
-2. **Пути monorepo** — `app/infra`, `app/backend` вместо корневых `/infra`, `/backend`.
-3. **Observability** — Tempo вместо Jaeger; логи Ollama вместо vLLM (нет GPU).
-4. **OCR = MOCK** — контракт пайплайна, не real vision.
-5. **Demo-auth** — учебные Bearer-токены.
-6. **Vault** — planned stub.
+1. **Пути monorepo** — `app/infra`, `app/backend` вместо корневых `/infra`, `/backend`.
+2. **Observability** — Tempo вместо Jaeger; логи Ollama вместо vLLM (нет GPU).
+3. **OCR = MOCK** — контракт пайплайна, не real vision.
+4. **Demo-auth** — учебные Bearer-токены.
+5. **Vault** — planned stub.
+6. **vLLM GPU** — профиль есть, runtime на этом стенде не проверен.
 
 ## Автор
 

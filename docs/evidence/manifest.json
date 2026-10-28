@@ -11,7 +11,7 @@
   "cache_mode": "ENABLE_SEMANTIC_CACHE=false",
   "ocr_provider": "MOCK",
   "demo_auth": true,
-  "video_url": "pending",
+  "video_url": "https://www.youtube.com/watch?v=y2_mY9_ceuU",
   "defense_date_submit_by": "FILL (submit ≥8 days before defense)",
   "capacity_doc": "docs/capacity-planning.md",
   "load_raw_dir": "docs/evidence/load/",
