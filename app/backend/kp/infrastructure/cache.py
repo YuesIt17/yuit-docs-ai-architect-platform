@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass, field
@@ -21,6 +22,12 @@ class CacheEntry:
     prompt_version: str = "v1"
     model_uri: str = ""
     source_doc_ids: list[str] = field(default_factory=list)
+    # doc_id -> content hash at caching time; lets a hit detect that a source was edited.
+    source_fingerprints: dict[str, str] = field(default_factory=dict)
+
+
+def document_fingerprint(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 class InProcessSemanticCache:
@@ -32,7 +39,7 @@ class InProcessSemanticCache:
         self._entries: list[tuple[list[float], str, CacheEntry]] = []
         self.hits = 0
         self.misses = 0
-        self.threshold = 0.92
+        self.threshold = settings.semantic_cache_threshold
 
     def get(
         self,
@@ -75,6 +82,13 @@ class InProcessSemanticCache:
         vec = self.embeddings.embed(f"{role}::{query}")
         self._entries.append((vec, role, entry))
 
+    def evict_documents(self, doc_ids: set[str]) -> int:
+        """Drop only the entries that cite these documents; other answers stay cached."""
+        kept = [item for item in self._entries if not doc_ids & set(item[2].source_doc_ids)]
+        evicted = len(self._entries) - len(kept)
+        self._entries = kept
+        return evicted
+
     @property
     def hit_rate(self) -> float:
         total = self.hits + self.misses
@@ -84,14 +98,14 @@ class InProcessSemanticCache:
 class RedisSemanticCache:
     """Shared semantic cache stored in Redis (cosine match in-process)."""
 
-    KEY = "kp:semantic_cache:v2"
+    KEY = "kp:semantic_cache:v3"
 
     def __init__(self, settings: Settings, embeddings: EmbeddingService):
         self.settings = settings
         self.embeddings = embeddings
         self.hits = 0
         self.misses = 0
-        self.threshold = 0.92
+        self.threshold = settings.semantic_cache_threshold
         self._redis = None
         self._fallback = InProcessSemanticCache(settings, embeddings)
         try:
@@ -128,6 +142,7 @@ class RedisSemanticCache:
                             prompt_version=e.get("prompt_version", "v1"),
                             model_uri=e.get("model_uri", ""),
                             source_doc_ids=list(e.get("source_doc_ids") or []),
+                            source_fingerprints=dict(e.get("source_fingerprints") or {}),
                         ),
                     )
                 )
@@ -212,6 +227,16 @@ class RedisSemanticCache:
             self._save(entries)
         except Exception as exc:
             logger.warning("Redis cache put failed: %s", exc)
+
+    def evict_documents(self, doc_ids: set[str]) -> int:
+        """Drop only the entries that cite these documents; other answers stay cached."""
+        if not self._redis:
+            return self._fallback.evict_documents(doc_ids)
+        entries = self._load()
+        kept = [item for item in entries if not doc_ids & set(item[2].source_doc_ids)]
+        if len(kept) != len(entries):
+            self._save(kept)
+        return len(entries) - len(kept)
 
     @property
     def hit_rate(self) -> float:

@@ -168,6 +168,7 @@ app/backend/
 │   ├── infrastructure/      # Neo4j, Qdrant, Redis, MinIO, LLM, vision
 │   └── observability/       # Prometheus + OTel/Tempo + JSON logs
 ├── pipelines/               # CLI seed / sync / ingest
+├── evals/                   # golden set, eval gate, LLM judge, cache calibration
 ├── scripts/
 ├── tests/
 ├── openapi/

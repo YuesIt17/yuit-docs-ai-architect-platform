@@ -1,0 +1,16 @@
+{"a": "What allergens are in FreshFarm oats?", "b": "Which allergens do FreshFarm oats contain?", "same": true}
+{"a": "What are the ingredients of FarmSoft cottage cheese?", "b": "What is FarmSoft cottage cheese made of?", "same": true}
+{"a": "Do age-restricted products require age verification?", "b": "Is age verification required for age-restricted products?", "same": true}
+{"a": "What does the allergen shelf labeling policy require?", "b": "What are the requirements of the allergen shelf labeling policy?", "same": true}
+{"a": "Must loyalty IDs be tokenized before LLM calls?", "b": "Do loyalty IDs have to be tokenized before calling the LLM?", "same": true}
+{"a": "How must personal data in loyalty programs be processed?", "b": "How should loyalty programs process personal data?", "same": true}
+{"a": "Is DairyPure whole milk kept refrigerated?", "b": "Does DairyPure whole milk need refrigeration?", "same": true}
+{"a": "What is the barcode of FreshFarm oats?", "b": "Which barcode do FreshFarm oats have?", "same": true}
+{"a": "What allergens are in FreshFarm oats?", "b": "What allergens are in FarmSoft cottage cheese?", "same": false}
+{"a": "What allergens are in FreshFarm oats?", "b": "What is the barcode of FreshFarm oats?", "same": false}
+{"a": "What are the ingredients of FarmSoft cottage cheese?", "b": "What is the fat content of FarmSoft cottage cheese?", "same": false}
+{"a": "Do age-restricted products require age verification?", "b": "May the assistant recommend age-restricted products to minors?", "same": false}
+{"a": "What does the allergen shelf labeling policy require?", "b": "What does the customer privacy policy require?", "same": false}
+{"a": "Must loyalty IDs be tokenized before LLM calls?", "b": "Must loyalty IDs be removed from answers?", "same": false}
+{"a": "Is DairyPure whole milk kept refrigerated?", "b": "Is FarmSoft cottage cheese kept refrigerated?", "same": false}
+{"a": "How must personal data in loyalty programs be processed?", "b": "How must food labels indicate composition?", "same": false}

@@ -59,6 +59,8 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | ---- | ----------- | --------------- |
 | Closed LLM perimeter | MOCK / Ollama / vLLM only, no SaaS | [ADR-001](architecture/adr/ADR-001-llm-serving.md) |
 | GraphRAG on/off | verifiable product→policy path | `pytest tests/test_rag_graph_on_off.py` |
+| RAG evaluation | golden-set gate in CI + optional local LLM judge (DeepEval) | [docs/evaluation.md](docs/evaluation.md) |
+| Semantic cache | calibrated threshold, per-document invalidation | [docs/evaluation.md](docs/evaluation.md) |
 | ACL / security | secret deny, cache revoke, asset ACL, path traversal | `tests/test_acl.py`, `tests/test_sec_*` |
 | LangGraph | state machine, not ReAct | `kp/agent/graph.py` |
 | Frontend | Chat, Graph, Labels, Ops, LLM settings | `app/frontend/` |

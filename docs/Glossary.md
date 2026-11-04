@@ -36,7 +36,7 @@ On an LLM timeout or outage, the API responds with a fallback (MOCK) and a `degr
 
 ### Semantic Cache
 
-A cache of finished answers **after** the Output Guard; the key accounts for the role and index version (`index_version`). It is invalidated when policies or the index change. See [ADR-008](../architecture/adr/ADR-008-sync-async-cache.md).
+A cache of finished answers **after** the Output Guard; the key accounts for the role and index version (`index_version`). It is invalidated when policies or the index change, and per document when a cited source is edited. See [ADR-008](../architecture/adr/ADR-008-sync-async-cache.md).
 
 ### LLM Serving
 

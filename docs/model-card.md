@@ -26,7 +26,7 @@ RBAC at retrieval + asset presign; input injection guard; output ACL; PII redact
 
 ## Evaluation
 
-Deterministic ACL / GraphRAG pytest. LLM-as-Judge — optional local only, not a substitute for ACL tests.
+Deterministic ACL / GraphRAG pytest and a golden-set gate in CI. An optional local LLM judge (DeepEval) scores faithfulness and relevancy, and does not replace the ACL tests. See [evaluation.md](evaluation.md).
 
 ## Cost / FinOps
 

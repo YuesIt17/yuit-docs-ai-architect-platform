@@ -67,6 +67,35 @@ async def test_cache_miss_when_source_deleted(chat_env):
 
 
 @pytest.mark.asyncio
+async def test_editing_a_source_evicts_only_answers_that_cite_it(chat_env):
+    c = chat_env
+    svc = ChatService(c, c.settings)
+    mgr = Principal(user_id="u-mgr", role="category_manager")
+    edited_query = ChatRequest(message="Tokenized loyalty IDs", session_id="s4", stream=False)
+    other_query = ChatRequest(message="FarmSoft cottage cheese ingredients", session_id="s5", stream=False)
+    edited_docs = {cit.doc_id for cit in (await svc.handle(edited_query, mgr)).citations}
+    other_docs = {cit.doc_id for cit in (await svc.handle(other_query, mgr)).citations}
+    only_edited = edited_docs - other_docs
+    assert only_edited, "the two answers need a source that only one of them cites"
+    assert (await svc.handle(edited_query, mgr)).acl_decision == "allow_cache"
+    assert (await svc.handle(other_query, mgr)).acl_decision == "allow_cache"
+
+    c.store.documents[only_edited.pop()].text += " Updated guidance."
+
+    assert (await svc.handle(other_query, mgr)).acl_decision == "allow_cache"
+    assert (await svc.handle(edited_query, mgr)).acl_decision != "allow_cache"
+
+
+def test_cache_threshold_comes_from_settings():
+    from kp.config import Settings
+    from kp.infrastructure.cache import InProcessSemanticCache
+    from kp.infrastructure.embeddings import EmbeddingService
+
+    settings = Settings(semantic_cache_threshold=0.8)
+    assert InProcessSemanticCache(settings, EmbeddingService(settings)).threshold == 0.8
+
+
+@pytest.mark.asyncio
 async def test_policy_version_invalidates_cache(chat_env):
     c = chat_env
     svc = ChatService(c, c.settings)

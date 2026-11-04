@@ -28,6 +28,8 @@ Interactive chat and label recognition need low latency (sync/SSE). Heavy multi-
 - Sync/SSE for interactive chat and label extraction
 - Async `/v1/jobs` for batch / multi-hop
 - Semantic cache **after** the Output Guard; invalidation through `index_version` (hw-9)
+- Partial invalidation: each entry stores content hashes of its sources, and a changed hash evicts only the entries citing that document
+- The similarity threshold is configurable and calibrated per embedding model ([evaluation.md](../../docs/evaluation.md))
 
 ## Consequences
 

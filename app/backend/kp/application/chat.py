@@ -12,7 +12,7 @@ from kp.application.audit import record_request_audit
 from kp.config import Settings
 from kp.deps import AppContainer
 from kp.domain.schemas import ChatRequest, ChatResponse, Citation
-from kp.infrastructure.cache import CacheEntry
+from kp.infrastructure.cache import CacheEntry, document_fingerprint
 from kp.observability import metrics
 from kp.observability.spans import current_trace_id, span
 from kp.security.guardrails import input_guard, output_guard
@@ -56,6 +56,17 @@ class ChatService:
                 return False
         return True
 
+    def _changed_sources(self, entry: CacheEntry) -> set[str]:
+        """Sources edited since this answer was cached. Deleted ones are handled by the ACL re-check."""
+        changed = set()
+        for doc_id in entry.source_doc_ids:
+            doc = self.c.store.documents.get(doc_id)
+            if doc is None:
+                continue
+            if entry.source_fingerprints.get(doc_id) != document_fingerprint(doc.text):
+                changed.add(doc_id)
+        return changed
+
     def _lookup_cache(self, message: str, principal: Principal) -> CacheEntry | None:
         entry = self.c.cache.get(
             message,
@@ -66,6 +77,13 @@ class ChatService:
             model_uri=self._cache_model_uri(),
         )
         if not entry:
+            return None
+        changed = self._changed_sources(entry)
+        if changed:
+            metrics.CACHE_EVICTIONS.inc(self.c.cache.evict_documents(changed))
+            self.c.cache.misses += 1
+            if self.c.cache.hits > 0:
+                self.c.cache.hits -= 1
             return None
         if not self._authorize_cached_sources(principal, entry):
             self.c.cache.misses += 1
@@ -92,6 +110,7 @@ class ChatService:
             return
         citations = state.get("citations") or []
         source_ids = [str(c.get("doc_id")) for c in citations if c.get("doc_id")]
+        documents = self.c.store.documents
         self.c.cache.put(
             message,
             principal.role,
@@ -103,6 +122,11 @@ class ChatService:
                 prompt_version=self.settings.prompt_version,
                 model_uri=self._cache_model_uri(),
                 source_doc_ids=source_ids,
+                source_fingerprints={
+                    doc_id: document_fingerprint(documents[doc_id].text)
+                    for doc_id in source_ids
+                    if doc_id in documents
+                },
             ),
         )
 

@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # Off by default until cache hits re-authorize sources (SEC-01).
     enable_semantic_cache: bool = False
+    # Calibrate per embedding model with evals/calibrate_cache.py.
+    semantic_cache_threshold: float = 0.92
     enable_vlm: bool = False
     enable_vision_ocr: bool = True
 

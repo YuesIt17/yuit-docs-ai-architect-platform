@@ -32,6 +32,9 @@ dev = [
   "pytest-asyncio>=0.24.0",
   "ruff>=0.7.0",
 ]
+eval = [
+  "deepeval>=4.3,<5",
+]
 embeddings = [
   "sentence-transformers>=3.0.0",
 ]
@@ -47,4 +50,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["kp*", "pipelines*", "scripts*"]
+include = ["kp*", "pipelines*", "scripts*", "evals*"]
