@@ -160,6 +160,6 @@ Demo auth: Bearer `guest` | `associate` | `manager` | `compliance`.
 
 ## Author
 
-**Evgeny Yulov**, Platform Engineer / AI Architect (learning case study).
+**Eugene Yulov**, Platform Engineer / AI Architect (learning case study).
 
 GitHub: [YuesIt17/yuit-docs-ai-architect-platform](https://github.com/YuesIt17/yuit-docs-ai-architect-platform)
