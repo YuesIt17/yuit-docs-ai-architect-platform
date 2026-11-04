@@ -1,65 +1,158 @@
 {{- if .Values.networkPolicy.enabled }}
-# Minimum NetworkPolicies for Control vs Data plane. Requires a CNI that enforces NetPol
-# (e.g. Calico). On Docker Desktop default CNI may not enforce — treat as documented intent.
+{{- /*
+Default-deny with explicit allowlists. Enforcement requires a CNI that supports NetworkPolicy,
+such as Calico or Cilium. The default Docker Desktop CNI accepts these objects but does not enforce them.
+*/ -}}
+{{- $ns := .Values.namespace }}
+{{- $labels := include "kp.labels" . }}
+{{- $ingressNs := .Values.networkPolicy.ingressNamespace }}
+{{- $hostCidr := .Values.networkPolicy.hostAccessCidr }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: kp-data-plane-ingress
-  namespace: {{ .Values.namespace }}
+  name: kp-default-deny
+  namespace: {{ $ns }}
   labels:
-    {{- include "kp.labels" . | nindent 4 }}
-    kp.retailpartnerx.io/plane: data
+    {{- $labels | nindent 4 }}
 spec:
-  podSelector:
-    matchLabels:
-      kp.retailpartnerx.io/plane: data
+  podSelector: {}
   policyTypes: ["Ingress", "Egress"]
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              kp.retailpartnerx.io/plane: control
-      ports:
-        - protocol: TCP
-          port: 5432
-        - protocol: TCP
-          port: 6379
-        - protocol: TCP
-          port: 6333
-        - protocol: TCP
-          port: 7474
-        - protocol: TCP
-          port: 7687
-        - protocol: TCP
-          port: 9000
-  egress:
-    - {} # DNS + intra-cluster; tighten per CNI in production
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: kp-control-plane-egress
-  namespace: {{ .Values.namespace }}
+  name: kp-allow-dns
+  namespace: {{ $ns }}
   labels:
-    {{- include "kp.labels" . | nindent 4 }}
-    kp.retailpartnerx.io/plane: control
+    {{- $labels | nindent 4 }}
 spec:
-  podSelector:
-    matchLabels:
-      kp.retailpartnerx.io/plane: control
+  podSelector: {}
   policyTypes: ["Egress"]
   egress:
     - to:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              kp.retailpartnerx.io/plane: data
-    - to:
-        - namespaceSelector: {}
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
       ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # host.docker.internal Ollama/Tempo (desktop hybrid) — not expressible as podSelector;
-    # document as known desktop exception when networkPolicy.enabled=true on Docker Desktop.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-frontend
+  namespace: {{ $ns }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ingressNs }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.frontend.port }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-api
+  namespace: {{ $ns }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ingressNs }}
+        - podSelector:
+            matchLabels:
+              app: frontend
+        {{- if $hostCidr }}
+        - ipBlock:
+            cidr: {{ $hostCidr }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }}
+  egress:
+    {{- range $store := .Values.networkPolicy.stores }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ $store.app }}
+      ports:
+        {{- range $port := $store.ports }}
+        - protocol: TCP
+          port: {{ $port }}
+        {{- end }}
+    {{- end }}
+    {{- range $rule := .Values.networkPolicy.apiEgress }}
+    - to:
+        - ipBlock:
+            cidr: {{ $rule.cidr }}
+      ports:
+        {{- range $port := $rule.ports }}
+        - protocol: TCP
+          port: {{ $port }}
+        {{- end }}
+    {{- end }}
+{{- range $store := .Values.networkPolicy.stores }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-{{ $store.app }}
+  namespace: {{ $ns }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $store.app }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        {{- range $port := $store.ports }}
+        - protocol: TCP
+          port: {{ $port }}
+        {{- end }}
+    {{- if and $hostCidr $store.hostPorts }}
+    - from:
+        - ipBlock:
+            cidr: {{ $hostCidr }}
+      ports:
+        {{- range $port := $store.hostPorts }}
+        - protocol: TCP
+          port: {{ $port }}
+        {{- end }}
+    {{- end }}
+{{- end }}
 {{- end }}

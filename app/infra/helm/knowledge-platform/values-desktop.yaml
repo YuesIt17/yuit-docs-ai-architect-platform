@@ -32,6 +32,13 @@ minio:
   serviceType: NodePort
   consoleNodePort: 30901
 
+networkPolicy:
+  # Docker Desktop host network, for Prometheus scrapes and the Ops deep links.
+  hostAccessCidr: 192.168.65.0/24
+  apiEgress:
+    # Compose side-stack through host.docker.internal: Ollama, vLLM, Tempo.
+    - {cidr: 192.168.65.0/24, ports: [11434, 8000, 4318]}
+
 # Ollama stays in Docker Compose — not in Desktop K8s.
 # Hybrid: $env:KP_LLM='compose-ollama' → values-desktop-compose-ollama.yaml
 llm:

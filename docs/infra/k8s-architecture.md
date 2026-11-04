@@ -39,7 +39,7 @@ By default there are **7 pods**. Ollama is **not** in Helm, only in Compose (`ma
 | Deployment | Service | Port(s) | Replicas | Plane | Resources (requests) |
 |------------|---------|---------|----------|-------|----------------------|
 | `api` | `api` | 8080 | 1 | control | cpu 100m, mem 256Mi |
-| `frontend` | `frontend` | 80 | 1 | edge | cpu 50m, mem 64Mi |
+| `frontend` | `frontend` | 80 → 8080 | 1 | edge | cpu 50m, mem 64Mi |
 | `postgres` | `postgres` | 5432 | 1 | data | — |
 | `neo4j` | `neo4j` | 7474, 7687 | 1 | data | — |
 | `qdrant` | `qdrant` | 6333 | 1 | data | — |

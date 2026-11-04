@@ -4,6 +4,7 @@
 |------|-------|----------|-------|
 | **Hybrid (recommended)** | Desktop demo | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg) |
 | **K8s + Helm primer** | Cluster objects, relationship map, feature delivery | [k8s-primer.md](k8s-primer.md) | Mermaid in the document |
+| **Hardening** | Restricted pods, default-deny network, Kyverno admission | [k8s-hardening.md](k8s-hardening.md) | — |
 | **DevSecOps lab** | `kp` audit (Trivy / Semgrep / Nmap / ZAP / Nuclei / Checkov / kube-bench) | [sec-ops.md](sec-ops.md) | — |
 
 ## Zero-overlap (hybrid)

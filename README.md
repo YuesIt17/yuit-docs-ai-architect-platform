@@ -62,6 +62,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | RAG evaluation | golden-set gate in CI + optional local LLM judge (DeepEval) | [docs/evaluation.md](docs/evaluation.md) |
 | Semantic cache | calibrated threshold, per-document invalidation | [docs/evaluation.md](docs/evaluation.md) |
 | ACL / security | secret deny, cache revoke, asset ACL, path traversal | `tests/test_acl.py`, `tests/test_sec_*` |
+| Cluster hardening | Restricted pods, default-deny network, Kyverno admission | [docs/infra/k8s-hardening.md](docs/infra/k8s-hardening.md) |
 | LangGraph | state machine, not ReAct | `kp/agent/graph.py` |
 | Frontend | Chat, Graph, Labels, Ops, LLM settings | `app/frontend/` |
 | Hybrid desktop | K8s data plane + Compose LLM/obs | `app/scripts/hybrid/` |

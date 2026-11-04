@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir \
     prometheus-client \
     opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp \
     opentelemetry-instrumentation-fastapi \
-    pillow pypdfium2
+    pillow pypdfium2 \
+    "langgraph-checkpoint-postgres>=3.2,<4" "psycopg[binary,pool]>=3.2"
 
 COPY app/backend/kp ./kp
 COPY app/backend/pipelines ./pipelines
@@ -22,5 +23,8 @@ COPY app/backend/scripts ./scripts
 COPY app/datasets /datasets
 
 ENV DATASETS_DIR=/datasets
+
+# A numeric user lets Kubernetes verify runAsNonRoot.
+USER 10001
 EXPOSE 8080
 CMD ["uvicorn", "kp.main:app", "--host", "0.0.0.0", "--port", "8080"]

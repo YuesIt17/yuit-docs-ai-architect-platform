@@ -18,12 +18,17 @@ spec:
         app: postgres
         kp.retailpartnerx.io/plane: data
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 70) | nindent 6 }}
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           env:
             - name: POSTGRES_USER
               value: {{ .Values.postgres.user | quote }}
+            # A subdirectory, because a volume root is not owned by the postgres user.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -33,17 +38,25 @@ spec:
               value: {{ .Values.postgres.database | quote }}
           ports:
             - containerPort: 5432
-          {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-          {{- end }}
-      {{- if .Values.persistence.enabled }}
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: data
+          {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: kp-postgres-data
-      {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -76,15 +89,22 @@ spec:
       labels:
         app: neo4j
         kp.retailpartnerx.io/plane: data
+        # The image entrypoint rewrites its config under /var/lib/neo4j at startup.
+        kp.retailpartnerx.io/writable-rootfs: image-entrypoint-writes-config
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 7474) | nindent 6 }}
       # K8s service-link env NEO4J_PORT_* is mistaken for Neo4j config keys.
       enableServiceLinks: false
       containers:
         - name: neo4j
           image: {{ .Values.neo4j.image }}
+          {{- include "kp.containerSecurity" (dict "readOnly" false) | nindent 10 }}
           env:
             - name: NEO4J_AUTH
-              value: neo4j/{{ .Values.neo4j.password }}
+              valueFrom:
+                secretKeyRef:
+                  name: kp-secrets
+                  key: NEO4J_AUTH
             - name: NEO4J_server_config_strict__validation_enabled
               value: "false"
           ports:
@@ -140,10 +160,14 @@ spec:
       labels:
         app: qdrant
         kp.retailpartnerx.io/plane: data
+        # Qdrant writes an init marker into its working directory.
+        kp.retailpartnerx.io/writable-rootfs: app-writes-init-marker
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 1000) | nindent 6 }}
       containers:
         - name: qdrant
           image: {{ .Values.qdrant.image }}
+          {{- include "kp.containerSecurity" (dict "readOnly" false) | nindent 10 }}
           ports:
             - containerPort: 6333
           {{- if .Values.persistence.enabled }}
@@ -190,11 +214,19 @@ spec:
         app: redis
         kp.retailpartnerx.io/plane: data
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 999) | nindent 6 }}
       containers:
         - name: redis
           image: {{ .Values.redis.image }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           ports:
             - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -227,10 +259,14 @@ spec:
       labels:
         app: minio
         kp.retailpartnerx.io/plane: data
+        # The Bitnami entrypoint writes runtime config under /opt/bitnami.
+        kp.retailpartnerx.io/writable-rootfs: image-entrypoint-writes-config
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 1001) | nindent 6 }}
       containers:
         - name: minio
           image: {{ .Values.minio.image }}
+          {{- include "kp.containerSecurity" (dict "readOnly" false) | nindent 10 }}
           {{- if .Values.minio.args }}
           args: {{ .Values.minio.args | toJson }}
           {{- end }}

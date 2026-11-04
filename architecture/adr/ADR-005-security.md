@@ -30,6 +30,7 @@ Critical criterion: **User B must not receive an answer based on a secret docume
 - Retrieval is **always** ACL-filtered; the Output Guard blocks secret leaks
 - Vision: MIME allowlist + size limit
 - Demo tokens in the UI (not a production IdP); a corporate IdP is on the roadmap
+- Cluster layer: Restricted Pod Security, default-deny NetworkPolicy, optional Kyverno admission ([k8s-hardening.md](../../docs/infra/k8s-hardening.md))
 
 ## Consequences
 

@@ -61,7 +61,7 @@ Chain: `Deployment` → `ReplicaSet` → `Pod(s)`.
 | **Service** | Stable in-cluster DNS/VIP → Pods by label | `api`, `frontend`, `postgres`, … |
 | **Endpoints / EndpointSlice** | Actual Pod IPs behind a Service | automatic |
 | **Ingress** | HTTP(S) routes from outside → Service | `kp-ui` (`/`), `kp-api` (`/api`) |
-| **NetworkPolicy** | A pod↔pod firewall | see `templates/networkpolicy.yaml` and [sec-ops.md](sec-ops.md) |
+| **NetworkPolicy** | A pod↔pod firewall | default-deny with allowlists; see [k8s-hardening.md](k8s-hardening.md) |
 
 ### Storage
 
@@ -82,7 +82,7 @@ Chain: `Deployment` → `ReplicaSet` → `Pod(s)`.
 
 | Object | Why | Ours |
 |----------|-------|-------|
-| **ServiceAccount (SA)** | A Pod's identity to the API | usually `default` (lab; hardening uses a separate SA) |
+| **ServiceAccount (SA)** | A Pod's identity to the API | `default`, with the token not mounted |
 | **Role / ClusterRole** | What is allowed | cluster-admin for local kubectl |
 | **RoleBinding / ClusterRoleBinding** | Who holds the role | — |
 

@@ -28,7 +28,7 @@ api:
 
 frontend:
   replicas: 1
-  port: 80
+  port: 8080
 
 ingress:
   enabled: true
@@ -51,7 +51,7 @@ neo4j:
 
 qdrant:
   enabled: true
-  image: qdrant/qdrant:v1.13.2
+  image: qdrant/qdrant:v1.13.2-unprivileged
 
 redis:
   enabled: true
@@ -75,8 +75,27 @@ persistence:
   qdrantSize: 5Gi
   minioSize: 10Gi
 
+podSecurity:
+  # Enforced by the API server through namespace labels.
+  level: restricted
+
 networkPolicy:
   enabled: true
+  ingressNamespace: ingress-nginx
+  # Host network allowed to reach NodePorts. Empty blocks it.
+  hostAccessCidr: ""
+  # Allowed egress from the API beyond the stores, as {cidr, ports}, such as an LLM or tracing host.
+  apiEgress: []
+  stores:
+    - {app: postgres, ports: [5432]}
+    - {app: neo4j, ports: [7474, 7687], hostPorts: [7474, 7687]}
+    - {app: qdrant, ports: [6333]}
+    - {app: redis, ports: [6379]}
+    - {app: minio, ports: [9000, 9001], hostPorts: [9001]}
+
+# Admission policies. Install Kyverno first: see docs/infra/k8s-hardening.md.
+kyverno:
+  enabled: false
 
 resources:
   api:

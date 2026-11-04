@@ -18,10 +18,12 @@ spec:
         app: api
         kp.retailpartnerx.io/plane: control
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 10001) | nindent 6 }}
       containers:
         - name: api
           image: {{ .Values.images.api }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           ports:
             - containerPort: {{ .Values.api.port }}
           env:
@@ -50,7 +52,13 @@ spec:
             - name: MINIO_ENDPOINT
               value: minio:9000
             - name: POSTGRES_DSN
-              value: postgresql+asyncpg://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}
+              valueFrom:
+                secretKeyRef:
+                  name: kp-secrets
+                  key: POSTGRES_DSN
+            # The root filesystem is read-only; library caches go to the /tmp volume.
+            - name: HOME
+              value: /tmp
             # Compose Tempo on host; app wires OTLP/HTTP traces. Logs → Loki via Alloy (stdout JSON). Prom scrapes /metrics.
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.api.env.OTEL_EXPORTER_OTLP_ENDPOINT | default "http://host.docker.internal:4318" | quote }}
@@ -66,6 +74,16 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.resources.api | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: object-store-cache
+              mountPath: /app/data
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: object-store-cache
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

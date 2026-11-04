@@ -385,7 +385,7 @@ Alternative in the cluster: the Job from the Aqua kube-bench documentation (not 
 ### 10. Hardening direction (building)
 
 **Why:** close breaking findings with concrete controls (NetPol, PSS, RBAC, admission, image gate).  
-In the desktop lab, Gatekeeper is usually **not** installed (too heavy for a laptop). The direction for production / shared clusters:
+These controls are implemented in the chart ([k8s-hardening.md](k8s-hardening.md)), with Kyverno as the optional admission layer:
 
 | Control | What to do |
 |----------|-------------|
@@ -413,6 +413,8 @@ Next, add separate allow rules for `api → postgres/neo4j/redis/...` and Ingres
 ---
 
 ## Breaking ↔ Building (typical findings on this chart)
+
+The chart now implements the NetworkPolicy, `securityContext` and service account fixes below. See [k8s-hardening.md](k8s-hardening.md). The table stays as the reasoning behind them.
 
 | Observation | Why it is this way in the MVP | Building fix |
 |------------|------------------|--------------|
