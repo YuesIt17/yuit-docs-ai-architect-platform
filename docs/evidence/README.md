@@ -33,7 +33,7 @@ Fill in `trace.md` / `loki.md` from Grafana Explore (deep links are on the Ops p
 
 ## Video recording checklist
 
-1. Follow [tasks/AI_PLATFORM_VIDEO_SCRIPT.md](../../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) (5–7 min).
+1. Keep the video to 5–7 minutes.
 2. Do **not** commit the video binary.
 3. After uploading, set `video_url` in `manifest.json`.
 4. Screens: Chat ACL, Graph SVG + Neo4j Browser, Tempo spans, Loki logs, Grafana KP Overview.

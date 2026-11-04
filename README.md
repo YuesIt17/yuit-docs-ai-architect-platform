@@ -36,7 +36,7 @@ These criteria come from the course submission form. Everything else in the repo
 
 | Requirement | Where | Status |
 | ----------- | ----- | ------ |
-| 5–7 min video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · script [`tasks/defense-video-script.md`](tasks/defense-video-script.md) · URL in [`docs/evidence/manifest.json`](docs/evidence/manifest.json) | done |
+| 5–7 min video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · URL in [`docs/evidence/manifest.json`](docs/evidence/manifest.json) | done |
 | Jaeger traces / vLLM logs | [`docs/evidence/trace.md`](docs/evidence/trace.md) (Tempo ≈ Jaeger) · [`docs/evidence/loki.md`](docs/evidence/loki.md) (Ollama) · [`ADR-006`](architecture/adr/ADR-006-observability.md) · [`vllm-profile`](docs/infra/vllm-profile.md) | done* |
 | Neo4j graph visualization | [`GraphPage.tsx`](app/frontend/src/pages/GraphPage.tsx) (ACL subgraph SVG) · [`docs/SETUP.md`](docs/SETUP.md) (Browser `:30474`) · [`demo_graph.cypher`](app/scripts/demo_graph.cypher) · [`ADR-003`](architecture/adr/ADR-003-graph-db.md) | done |
 | Load report: RPS and latency | [`docs/load-report.md`](docs/load-report.md) · [`docs/evidence/load/`](docs/evidence/load/) | done |
@@ -119,7 +119,6 @@ Calculations: **[docs/capacity-planning.md](docs/capacity-planning.md)**.
 | [`docs/`](docs/) | SETUP, capacity, load, evidence | `/docs` |
 | [`architecture/`](architecture/) | ADD: C4, ADR, diagrams | ADD |
 | [`tools/diagrams/`](tools/diagrams/) | diagram generation from code | additional |
-| [`tasks/`](tasks/) | video script | demo |
 | [`data/`](data/) | runtime object store (not source) | — |
 
 ## Architecture from code

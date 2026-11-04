@@ -1,7 +1,6 @@
 # Screenshots for the Defense Deck
 
-Files are referenced from [`../defense-deck.html`](../defense-deck.html).  
-Recapture requirements: [`../../tasks/DEFENSE_REVIEW_CURSOR_VIDEO.md`](../../tasks/DEFENSE_REVIEW_CURSOR_VIDEO.md) (PRE-02, PRE-08, PRE-19 and others).
+Files are referenced from [`../defense-deck.html`](../defense-deck.html).
 
 Status: **do not mark DONE** until the file is replaced and the caption in the deck is updated.
 

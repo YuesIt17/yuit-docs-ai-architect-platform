@@ -34,7 +34,7 @@ This project develops the case from `yuit-docs-ai-architect` (hw-1…hw-10) and 
 | C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagram SVGs](../architecture/diagrams/images/) · [DIAGRAMS.md](DIAGRAMS.md) |
 | Capacity Planning (VRAM / CPU / RAM) | [capacity-planning.md](capacity-planning.md) |
 | ADR | [adr/](../architecture/adr/) |
-| Demo / load | [AI_PLATFORM_VIDEO_SCRIPT](../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) · [load-report.md](load-report.md) · [evidence/](evidence/) |
+| Demo / load | [video](https://www.youtube.com/watch?v=y2_mY9_ceuU) (Russian narration) · [load-report.md](load-report.md) · [evidence/](evidence/) |
 | Model Card | [model-card.md](model-card.md) |
 
 Learning MVP: the GraphRAG runtime uses an in-memory mirror of the ontology; Neo4j/Qdrant run in Compose for the Browser and sync.
