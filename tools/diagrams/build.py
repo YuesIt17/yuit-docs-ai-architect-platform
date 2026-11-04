@@ -531,7 +531,7 @@ def write_provenance(out_dir: Path, profile: str, outputs: list[str]) -> None:
             "KubeDiagrams / Mermaid show declared Helm topology, not live cluster state.",
             "Structurizr Mermaid export does not preserve all native renderer features.",
             "Pyreverse is static analysis; dynamic DI wiring may be incomplete.",
-            "Postgres is deployed-unused; ER is intended schema from init.sql.",
+            "Postgres holds LangGraph dialog checkpoints; ER is intended schema from init.sql.",
             "GPU/vLLM Helm profile is pending.",
         ],
     }

@@ -77,11 +77,11 @@
   "helm_inputs": [
     {
       "path": "app/infra/helm/knowledge-platform/values.yaml",
-      "sha256": "b9eea2b7b08d8820929ae00b532a48b064ec57ce1a1c876f2ec8b8f7f4b96c97"
+      "sha256": "531e48de5017ac57088ffb26411fb80d87f259397d19da7ffa16f3163e55c443"
     },
     {
       "path": "app/infra/helm/knowledge-platform/values-desktop.yaml",
-      "sha256": "a0c8cac0971bc2ab2b0797bfc2f9fdcc4f03e09ba5fefc637f48c2b386de5d5a"
+      "sha256": "3445b0a1f2db9b20430b09252b8c7e7ea81d383a330ce0725fbf18eceb1c1da5"
     }
   ],
   "k8s_resources": [
@@ -180,7 +180,11 @@
         "app.kubernetes.io/instance": "kp",
         "app.kubernetes.io/name": "knowledge-platform",
         "app.kubernetes.io/part-of": "retailpartnerx-kp",
-        "kp.retailpartnerx.io/plane": "mixed"
+        "kp.retailpartnerx.io/plane": "mixed",
+        "pod-security.kubernetes.io/audit": "restricted",
+        "pod-security.kubernetes.io/enforce": "restricted",
+        "pod-security.kubernetes.io/enforce-version": "latest",
+        "pod-security.kubernetes.io/warn": "restricted"
       },
       "name": "kp",
       "namespace": "kp"
@@ -190,10 +194,9 @@
       "labels": {
         "app.kubernetes.io/instance": "kp",
         "app.kubernetes.io/name": "knowledge-platform",
-        "app.kubernetes.io/part-of": "retailpartnerx-kp",
-        "kp.retailpartnerx.io/plane": "control"
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
       },
-      "name": "kp-control-plane-egress",
+      "name": "kp-allow-dns",
       "namespace": "kp"
     },
     {
@@ -201,10 +204,79 @@
       "labels": {
         "app.kubernetes.io/instance": "kp",
         "app.kubernetes.io/name": "knowledge-platform",
-        "app.kubernetes.io/part-of": "retailpartnerx-kp",
-        "kp.retailpartnerx.io/plane": "data"
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
       },
-      "name": "kp-data-plane-ingress",
+      "name": "kp-api",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-default-deny",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-frontend",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-minio",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-neo4j",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-postgres",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-qdrant",
+      "namespace": "kp"
+    },
+    {
+      "kind": "NetworkPolicy",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-redis",
       "namespace": "kp"
     },
     {
@@ -300,7 +372,7 @@
         {
           "name": null,
           "port": 80,
-          "targetPort": 80
+          "targetPort": 8080
         }
       ],
       "selector": {
@@ -406,6 +478,16 @@
         ""
       ],
       [
+        "commit_turn",
+        "__end__",
+        ""
+      ],
+      [
+        "contextualize",
+        "graph_retrieve",
+        ""
+      ],
+      [
         "graph_retrieve",
         "vector_retrieve",
         ""
@@ -417,7 +499,7 @@
       ],
       [
         "guard_output",
-        "__end__",
+        "commit_turn",
         ""
       ],
       [
@@ -437,7 +519,7 @@
       ],
       [
         "route",
-        "graph_retrieve",
+        "contextualize",
         "chat"
       ],
       [
@@ -469,6 +551,8 @@
     "nodes": [
       "__end__",
       "__start__",
+      "commit_turn",
+      "contextualize",
       "graph_retrieve",
       "guard_input",
       "guard_output",
@@ -481,9 +565,9 @@
     ]
   },
   "note": "Not a live cluster inventory. Labels are not isolation guarantees.",
-  "postgres_status": "deployed-unused",
+  "postgres_status": "dialog-checkpoints",
   "profile": "desktop",
   "provenance": "generated-from-helm-template",
-  "sanitized_manifest_sha256": "efa4da00a20a825852e57b70eab8e6d56f04c734be2ff311845fd9fe3ad9f898",
+  "sanitized_manifest_sha256": "1c807d6b526e5d4442bedf4d66855b0cf58309feed4995804d8a56df7c895952",
   "status": "declared-deployment"
 }

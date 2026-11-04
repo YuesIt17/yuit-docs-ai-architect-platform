@@ -67,6 +67,10 @@ jobs:
           export PYTHONPATH=tools/diagrams:app/backend
           app/backend/.venv/bin/pytest -q tests/architecture
 
+      # Ubuntu 23.10+ blocks the user namespaces that the Chromium sandbox used by Mermaid CLI needs.
+      - name: Allow the Chromium sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: diagrams-check (drift)
         env:
           DIAGRAMS_INCLUDE_GIT_SHA: "1"
