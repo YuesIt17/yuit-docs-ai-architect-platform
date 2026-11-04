@@ -1,6 +1,6 @@
 # C4 L4 — Code view (compact)
 
-Уровень кода для ключевых deployable units (не полный class diagram).
+Code level for the key deployable units (not a full class diagram).
 
 ## API (`app/backend/kp`)
 
@@ -35,4 +35,4 @@ security.rbac.can_access / resolve_principal(DEMO_AUTH_ENABLED)
 security.guardrails.input_guard / output_guard / vision_input_guard
 ```
 
-См. также L3: [c4-component.md](c4-component.md).
+See also L3: [c4-component.md](c4-component.md).

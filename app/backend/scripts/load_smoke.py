@@ -17,10 +17,10 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[3]
 QUESTIONS = [
-    "Какие аллергены у FreshFarm oats?",
-    "Что говорит политика про gluten и nuts?",
-    "Расскажи про творог Простоквашино",
-    "Какие требования к маркировке молока?",
+    "What allergens are in FreshFarm oats?",
+    "What does the policy say about gluten and nuts?",
+    "Tell me about FarmSoft cottage cheese",
+    "What are the labeling requirements for milk?",
     "Shelf labeling policy allergens",
 ]
 

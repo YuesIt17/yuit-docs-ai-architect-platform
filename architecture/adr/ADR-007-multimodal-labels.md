@@ -1,40 +1,40 @@
 ﻿# ADR-007: Multimodal Label Recognition
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-RetailPartnerX обрабатывает сканы этикеток (PDF/PNG и др.): нужно извлечь структуру, связать с политиками через GraphRAG и отдать handoff в PIM/ERP.
+RetailPartnerX processes label scans (PDF, PNG and others). The platform must extract structure, link it to policies through GraphRAG and hand off to PIM/ERP.
 
-## Критерии выбора
+## Selection criteria
 
-- Поддержка распространённых форматов этикеток
-- Разделение raw / recognized / export в object store
-- CI без тяжёлого OCR (fixtures / mock)
-- Политический check после extract
+- Support for common label formats
+- Separate raw / recognized / export areas in the object store
+- CI without heavy OCR (fixtures / mock)
+- Policy check after extraction
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| Только VLM end-to-end | Меньше пайплайна | Дорого по GPU, хуже audit |
-| **Detect → rasterize → OCR/VLM → JSON → GraphRAG** | Контроль шагов | Больше компонентов |
-| Ручная разметка | Качество | Не масштабируется |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| End-to-end VLM only | Shorter pipeline | Expensive on GPU, weaker audit |
+| **Detect → rasterize → OCR/VLM → JSON → GraphRAG** | Control over each step | More components |
+| Manual annotation | Quality | Does not scale |
 
-## Решение
+## Decision
 
-Принимать **PDF, PNG, JPEG, WEBP, TIFF**. Пайплайн: MIME → rasterize PDF → **OCR provider=MOCK** extract → structured JSON → policy_check (GraphRAG). Raw + recognized в MinIO. CI — детерминированные fixtures.
+Accept **PDF, PNG, JPEG, WEBP, TIFF**. Pipeline: MIME → rasterize PDF → **OCR provider=MOCK** extract → structured JSON → policy_check (GraphRAG). Raw and recognized objects are stored in MinIO. CI uses deterministic fixtures.
 
-**Реальный OCR** сложных сканов/чертежей — **вне текущего MVP** (known deviation; требует отдельного согласования). API/UI явно возвращают `ocr_provider=MOCK`. Не позиционировать mock как распознавание реального документа.
+**Real OCR** of complex scans/drawings is **outside the current MVP** (a known deviation that requires separate agreement). The API and UI explicitly return `ocr_provider=MOCK`. The mock must not be presented as real document recognition.
 
-## Последствия
+## Consequences
 
-- (+) Демо контракта multimodal path; handoff через exports/outbox
-- (−) Нет prod OCR accuracy; соответствие общей цели курса по OCR — риск до согласования
+- (+) Demonstrates the multimodal path contract; handoff through exports/outbox
+- (−) No production OCR accuracy; meeting the course's overall OCR goal remains a risk until agreed
 
-## Ссылки
+## References
 
 - Sequence: [sequence-label.md](../docs/sequence-label.md)
 - ADR-009 (MinIO prefixes)

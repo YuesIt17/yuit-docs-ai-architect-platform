@@ -37,7 +37,7 @@ helm upgrade --install kp ./app/infra/helm/knowledge-platform \
 ## GPU unavailable
 
 Static configs and Helm values can be reviewed without a GPU.
-**Status: runtime не проверен** until `curl /v1/models` succeeds on a machine with NVIDIA GPU + drivers.
+**Status: runtime not verified** until `curl /v1/models` succeeds on a machine with NVIDIA GPU + drivers.
 
 Do **not** rename Ollama to vLLM. Do **not** claim GGUF Ollama weights are interchangeable with AWQ vLLM.
 

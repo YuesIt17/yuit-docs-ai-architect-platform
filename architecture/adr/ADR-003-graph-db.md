@@ -1,43 +1,43 @@
 ﻿# ADR-003: Graph Database
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-Простой векторный поиск недостаточен для критерия курса (GraphRAG). Нужна онтология корпоративных знаний RetailPartnerX: документы, чанки, сущности, темы, этикетки — и рёбра связей для multi-hop resolve до dense search.
+Plain vector search does not satisfy the course's GraphRAG criterion. RetailPartnerX needs an ontology of corporate knowledge (documents, chunks, entities, topics, labels) and relationship edges for multi-hop resolution before dense search.
 
-## Критерии выбора
+## Selection criteria
 
-- Self-hosted graph + Browser для демо
-- Простая онтология 4–5 типов узлов
-- Cypher / визуализация для защиты
-- Зеркалирование модели в in-memory MVP
+- Self-hosted graph with a Browser for the demo
+- Simple ontology of 4–5 node types
+- Cypher and visualization for the project defense
+- Model mirrored in the in-memory MVP
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| **Neo4j Community** | Browser, Cypher, зрелая экосистема | JVM footprint |
-| Memgraph | Быстрый in-mem | Меньше учебного материала |
-| Nebula | Scale-out | Избыточно для MVP |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| **Neo4j Community** | Browser, Cypher, mature ecosystem | JVM footprint |
+| Memgraph | Fast in-memory | Less learning material |
+| Nebula | Scale-out | Excessive for an MVP |
 
-## Решение
+## Decision
 
-**Neo4j Community** для онтологии GraphRAG:
+**Neo4j Community** for the GraphRAG ontology:
 
-- Узлы: `Document`, `Chunk`, `Entity`, `Topic`, `LabelAsset`
-- Рёбра: `CONTAINS`, `REFERENCES`, `ABOUT`, `AMENDS`, `HAS_ALLERGEN`, `GOVERNS`, `EXTRACTED_FROM`, `DESCRIBES_SKU`
+- Nodes: `Document`, `Chunk`, `Entity`, `Topic`, `LabelAsset`
+- Edges: `CONTAINS`, `REFERENCES`, `ABOUT`, `AMENDS`, `HAS_ALLERGEN`, `GOVERNS`, `EXTRACTED_FROM`, `DESCRIBES_SKU`
 
-**MVP runtime:** in-memory graph с той же моделью; compose Neo4j — для Browser-демо и sync-пайплайнов. Это закрывает требование GraphRAG без ложного заявления «live Cypher на каждый chat».
+**MVP runtime:** an in-memory graph with the same model; Compose Neo4j serves the Browser demo and sync pipelines. This meets the GraphRAG requirement without falsely claiming live Cypher on every chat.
 
-## Последствия
+## Consequences
 
-- (+) Явные связи снижают потерю контекста vs «мешок чанков»
-- (−) Нужна дисциплина ingest/ontology; dual-write memory↔Neo4j на этапе роста
+- (+) Explicit relationships reduce context loss compared with a "bag of chunks"
+- (−) Requires ingest/ontology discipline; memory↔Neo4j dual writes as the system grows
 
-## Ссылки
+## References
 
 - ER: [er-diagram.md](../docs/er-diagram.md)
 - `app/backend/kp/repositories/memory_store.py`, `pipelines/sync_neo4j.py`

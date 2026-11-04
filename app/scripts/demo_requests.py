@@ -13,31 +13,31 @@ CASES = [
     {
         "id": "graph_allergen",
         "token": "associate",
-        "message": "Какие политики маркировки связаны с gluten?",
+        "message": "Which labeling policies relate to gluten?",
         "expect": "citations or grounded answer",
     },
     {
         "id": "acl_manager_secret",
         "token": "manager",
-        "message": "Расскажи про Q4 Closed Promo Margin Playbook и маржу 42%",
+        "message": "Tell me about the Q4 Closed Promo Margin Playbook and the 42% margin",
         "expect": "no secret citations / no 42%",
     },
     {
         "id": "acl_compliance_secret",
         "token": "compliance",
-        "message": "Расскажи про Q4 Closed Promo Margin Playbook",
+        "message": "Tell me about the Q4 Closed Promo Margin Playbook",
         "expect": "may cite secret if seeded",
     },
     {
         "id": "refuse_irrelevant",
         "token": "associate",
-        "message": "квантовая физика чёрных дыр xyzzy",
+        "message": "quantum physics of black holes xyzzy",
         "expect": "insufficient context refusal",
     },
     {
         "id": "guest_public_only",
         "token": "guest",
-        "message": "Что такое FreshFarm oats?",
+        "message": "What is FreshFarm oats?",
         "expect": "public-only or empty",
     },
 ]

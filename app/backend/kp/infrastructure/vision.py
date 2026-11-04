@@ -39,13 +39,7 @@ ALLERGEN_LEXICON = [
     "celery",
     "mustard",
     "sesame",
-    "сульфит",
-    "глютен",
-    "молоко",
-    "яйц",
-    "соя",
-    "арахис",
-    "орех",
+    "sulfite",
 ]
 
 
@@ -100,12 +94,12 @@ class VisionService:
             sample = data[:200].decode("utf-8")
         except UnicodeDecodeError:
             return False
-        return any(k in sample for k in ("Brand:", "Ingredients:", "Состав", "Allergen"))
+        return any(k in sample for k in ("Brand:", "Ingredients:", "Allergen"))
 
     def _mock_ocr_from_bytes(self, filename: str, data: bytes, pages: list[bytes]) -> str:
         try:
             text = data.decode("utf-8")
-            if "Ingredients" in text or "Состав" in text or "allerg" in text.lower():
+            if "Ingredients" in text or "allerg" in text.lower():
                 return text
         except UnicodeDecodeError:
             pass

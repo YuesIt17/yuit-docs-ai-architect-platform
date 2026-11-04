@@ -1,8 +1,8 @@
-# Architecture docs (описания)
+# Architecture Docs (descriptions)
 
-Текстовые views ADD — не путать с [`../diagrams/`](../diagrams/) (SVG/модель) и [`../adr/`](../adr/).
+Text views of the ADD, separate from [`../diagrams/`](../diagrams/) (SVG/model) and [`../adr/`](../adr/).
 
-| Документ | Тема |
+| Document | Topic |
 |----------|------|
 | [c4-context.md](c4-context.md) | C4 L1 |
 | [c4-container.md](c4-container.md) | C4 L2 |

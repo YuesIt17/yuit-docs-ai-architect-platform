@@ -1,23 +1,23 @@
-﻿# ER / модель данных
+# ER / Data Model
 
-**Схема (intended DDL):** [er-conceptual.svg](../diagrams/images/er-conceptual.svg)
+**Diagram (intended DDL):** [er-conceptual.svg](../diagrams/images/er-conceptual.svg)
 
-## Назначение
+## Purpose
 
-Хранение документов, чанков (векторы), этикеток, сессий, audit и outbox; RBAC через `classification` + `allowed_roles`.
+Storage of documents, chunks (vectors), labels, sessions, audit and outbox; RBAC through `classification` + `allowed_roles`.
 
-## Сущности
+## Entities
 
-| Сущность | Ключевые поля |
+| Entity | Key fields |
 | -------- | ------------- |
 | Document | corpus, classification, allowed_roles, index_version |
 | Chunk | embedding, modality, doc_id |
 | LabelAsset | s3_uri_raw / recognized, classification |
-| Session / ChatMessage | история диалога |
+| Session / ChatMessage | dialog history |
 | AuditDecision | request_id, role, acl_decision, cost_est |
 | Outbox | event_type (`label.recognized`), payload |
 
-Онтология графа (узлы/рёбра): [ADR-003](adr/ADR-003-graph-db.md).
+Graph ontology (nodes/edges): [ADR-003](adr/ADR-003-graph-db.md).
 
 ```mermaid
 erDiagram

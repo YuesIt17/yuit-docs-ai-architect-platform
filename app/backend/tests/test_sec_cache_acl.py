@@ -30,7 +30,7 @@ async def test_cache_hit_then_classification_revoke(chat_env):
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
     # Use a public/internal product question that returns citations
-    body = ChatRequest(message="овсяные хлопья FreshFarm аллергены", session_id="s1", stream=False)
+    body = ChatRequest(message="FreshFarm oats allergens", session_id="s1", stream=False)
     first = await svc.handle(body, mgr)
     assert first.acl_decision in {"allow", "allow_cache"}
     assert first.citations, "need citations to test revoke"
@@ -55,7 +55,7 @@ async def test_cache_miss_when_source_deleted(chat_env):
     c = chat_env
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
-    body = ChatRequest(message="молоко Простоквашино состав", session_id="s2", stream=False)
+    body = ChatRequest(message="DairyPure milk ingredients", session_id="s2", stream=False)
     first = await svc.handle(body, mgr)
     if not first.citations:
         pytest.skip("no citations for seed query")
@@ -71,7 +71,7 @@ async def test_policy_version_invalidates_cache(chat_env):
     c = chat_env
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
-    body = ChatRequest(message="политика маркировки аллергенов", session_id="s3", stream=False)
+    body = ChatRequest(message="allergen labeling policy", session_id="s3", stream=False)
     await svc.handle(body, mgr)
     hit = await svc.handle(body, mgr)
     if hit.acl_decision != "allow_cache":

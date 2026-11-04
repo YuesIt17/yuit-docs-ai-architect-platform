@@ -1,28 +1,28 @@
 # Model Card — RetailPartnerX Knowledge Platform
 
-Стыковка с [hw-10](../../yuit-docs-ai-architect/hw-10/) (Governance / FinOps). Учебный артефакт.
+Linked to [hw-10](../../yuit-docs-ai-architect/hw-10/) (Governance / FinOps). A learning artifact.
 
 ## Intended use
 
-Обоснованные (grounded) ответы для сотрудников магазина, category managers и compliance по Product / Policy / Regulatory KB и демо-этикеткам.
+Grounded answers for store associates, category managers and compliance staff, based on the Product / Policy / Regulatory KB and demo labels.
 
-## Вне scope
+## Out of scope
 
-Медицинские советы, юридические заключения, обучение foundation-моделей, **реальный OCR** сложных PDF/сканов (отложен; текущий OCR = MOCK).
+Medical advice, legal opinions, foundation model training, and **real OCR** of complex PDFs/scans (deferred; the current OCR is MOCK).
 
-## Модели
+## Models
 
-| Компонент | Default MVP | Notes |
+| Component | Default MVP | Notes |
 |-----------|-------------|-------|
 | Chat LLM desktop | Ollama `qwen2.5:0.5b` | Convenience profile |
-| Chat LLM submission | `Qwen/Qwen2.5-1.5B-Instruct-AWQ` via vLLM | AWQ, ctx 4096; **runtime не проверен** без GPU |
+| Chat LLM submission | `Qwen/Qwen2.5-1.5B-Instruct-AWQ` via vLLM | AWQ, ctx 4096; **runtime not verified** without a GPU |
 | Chat CI | MOCK | Deterministic |
 | Embeddings | `intfloat/multilingual-e5-small` (384) or MOCK | LOCAL optional extra `.[embeddings]` |
 | Vision / OCR | **MOCK** (`provider=MOCK`) | Pipeline contract demo only |
 
 ## Safety
 
-RBAC на retrieval + asset presign; input injection guard; output ACL; PII redaction. Demo Bearer ≠ IdP. LLM URL allowlist (SEC-04).
+RBAC at retrieval + asset presign; input injection guard; output ACL; PII redaction. Demo Bearer ≠ IdP. LLM URL allowlist (SEC-04).
 
 ## Evaluation
 

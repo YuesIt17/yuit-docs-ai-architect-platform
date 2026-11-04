@@ -1,38 +1,38 @@
-﻿# Compose — hybrid side-stack
+# Compose — hybrid side-stack
 
-**Схема:** [current-hybrid-deployment.svg](../../architecture/diagrams/images/current-hybrid-deployment.svg) (K8s + Compose side-stack)
+**Diagram:** [current-hybrid-deployment.svg](../../architecture/diagrams/images/current-hybrid-deployment.svg) (K8s + Compose side-stack)
 
-Источник: [`app/infra/docker-compose.yml`](../../app/infra/docker-compose.yml), [`Makefile`](../../Makefile).  
-Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md) · ADR: [ADR-006](../../architecture/adr/ADR-006-observability.md).
+Source: [`app/infra/docker-compose.yml`](../../app/infra/docker-compose.yml), [`Makefile`](../../Makefile).  
+Startup: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md) · ADR: [ADR-006](../../architecture/adr/ADR-006-observability.md).
 
 Project: `retailpartnerx-kp`.
 
-## Правило zero-overlap
+## The zero-overlap rule
 
-| Слой | Где |
+| Layer | Where |
 |------|-----|
-| Platform (api, frontend, postgres, neo4j, qdrant, redis, **minio**) | **только Kubernetes** |
-| LLM (**ollama**) | **только Compose** |
-| Observability (prometheus, grafana, tempo, loki, alloy) | **только Compose** |
+| Platform (api, frontend, postgres, neo4j, qdrant, redis, **minio**) | **Kubernetes only** |
+| LLM (**ollama**) | **Compose only** |
+| Observability (prometheus, grafana, tempo, loki, alloy) | **Compose only** |
 
 ## Profiles
 
-| Profile | Сервисы |
+| Profile | Services |
 |---------|---------|
 | `obs` | tempo, loki, alloy, prometheus, grafana |
 | `llm` | ollama |
 
-Сканеры безопасности (отдельный файл, ephemeral): [sec-ops.md](sec-ops.md) · `make sec-scan` · [`docker-compose.sec-ops.yml`](../../app/infra/docker-compose.sec-ops.yml).
+Security scanners (separate file, ephemeral): [sec-ops.md](sec-ops.md) · `make sec-scan` · [`docker-compose.sec-ops.yml`](../../app/infra/docker-compose.sec-ops.yml).
 
 | Target | Windows | macOS |
 |--------|---------|-------|
 | Hybrid up | `.\app\scripts\hybrid\hybrid-up.ps1` | `bash app/scripts/hybrid/hybrid-up.sh` |
-| `llm` + `obs` | `docker compose -f app/infra/docker-compose.yml --profile llm --profile obs up -d` | то же |
+| `llm` + `obs` | `docker compose -f app/infra/docker-compose.yml --profile llm --profile obs up -d` | same |
 | Sec scanners | `.\app\scripts\sec\sec-scan.ps1` | `bash app/scripts/sec/sec-scan.sh` |
 
-## Порты (Compose)
+## Ports (Compose)
 
-| Сервис | Порт |
+| Service | Port |
 |--------|------|
 | ollama | **11434** |
 | tempo | **3200**, OTLP **4317/4318** |
@@ -74,20 +74,20 @@ flowchart LR
 
 ```powershell
 .\app\scripts\hybrid\hybrid-up.ps1
-# или: make demo
+# or: make demo
 ```
 
 **macOS**
 
 ```bash
 bash app/scripts/hybrid/hybrid-up.sh
-# или: make demo
+# or: make demo
 ```
 
-API в K8s → Ollama: `http://host.docker.internal:11434/v1`  
+API in K8s → Ollama: `http://host.docker.internal:11434/v1`  
 API → Tempo: `http://host.docker.internal:4318` (OTLP/HTTP, Helm env).  
-Logs → Loki через Alloy (Docker socket + JSON stdout).
+Logs → Loki through Alloy (Docker socket + JSON stdout).
 
-После chat: Grafana Explore → Tempo service `kp-api`, Loki по `trace_id`, panels **KP Overview** (requests / RAG p95 / tokens).
+After a chat: Grafana Explore → Tempo service `kp-api`, Loki by `trace_id`, **KP Overview** panels (requests / RAG p95 / tokens).
 
-Подробности K8s: [k8s-architecture.md](k8s-architecture.md).
+K8s details: [k8s-architecture.md](k8s-architecture.md).

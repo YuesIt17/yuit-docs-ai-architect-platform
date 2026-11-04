@@ -1,28 +1,28 @@
-﻿# C4 Level 1 — Контекст системы
+# C4 Level 1 — System Context
 
-**Схема:** [c4-context.svg](../diagrams/images/c4-context.svg)
+**Diagram:** [c4-context.svg](../diagrams/images/c4-context.svg)
 
-## Назначение
+## Purpose
 
-Knowledge Platform RetailPartnerX встраивается в enterprise-ландшафт ритейлера: каналы магазинов и backoffice обращаются через BFF; платформа интегрируется с PIM, ERP, CDP/CRM и корпоративным IdP. Отдельно существует сервис рекомендаций (hw-2), границы с которым сохраняются через OpenAPI.
+The RetailPartnerX Knowledge Platform fits into the retailer's enterprise landscape: store channels and the back office connect through a BFF, and the platform integrates with PIM, ERP, CDP/CRM and the corporate IdP. A separate recommendation service (hw-2) exists, and the boundary with it is kept through OpenAPI.
 
-## Акторы и внешние системы
+## Actors and External Systems
 
-| Участник | Роль |
+| Participant | Role |
 | -------- | ---- |
-| Mobile/Web App, Store Tablet, Category Backoffice | Каналы пользователей |
-| Backend BFF | Единая точка входа каналов; не знает ML-деталей |
+| Mobile/Web App, Store Tablet, Category Backoffice | User channels |
+| Backend BFF | Single entry point for channels; unaware of ML details |
 | Knowledge Platform | GraphRAG, labels, ACL, on-prem LLM |
-| AI Recsys Service | Персональные рекомендации (внешняя к KP) |
-| PIM / ERP / CDP / IdP | Каталог, операции, профиль, аутентификация |
+| AI Recsys Service | Personalized recommendations (external to KP) |
+| PIM / ERP / CDP / IdP | Catalog, operations, profile, authentication |
 
 ## Trust boundary
 
-BFF вызывает Knowledge Platform только по OpenAPI (`/v1/chat`, `/v1/vision/label`). Внутренности LLM / графа / векторов каналам не экспонируются.
+The BFF calls the Knowledge Platform only through OpenAPI (`/v1/chat`, `/v1/vision/label`). LLM, graph and vector internals are not exposed to channels.
 
 ```mermaid
 flowchart LR
-  subgraph channels [Каналы_RetailPartnerX]
+  subgraph channels [RetailPartnerX_Channels]
     App[Mobile_Web_App]
     Tablet[Store_Associate_Tablet]
     Backoffice[Category_Backoffice]

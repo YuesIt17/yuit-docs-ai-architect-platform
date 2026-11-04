@@ -105,7 +105,7 @@ services:
     mem_reservation: 512m
 
   # Submission serving profile (GPU). Desktop convenience remains Ollama above.
-  # If no NVIDIA GPU: configs are static — mark "runtime не проверен" in docs/evidence.
+  # If no NVIDIA GPU: configs are static — mark "runtime not verified" in docs/evidence.
   vllm:
     image: vllm/vllm-openai:v0.6.6
     profiles: ["vllm"]

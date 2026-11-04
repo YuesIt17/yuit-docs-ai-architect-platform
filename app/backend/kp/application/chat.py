@@ -136,7 +136,7 @@ class ChatService:
         if not guard.ok:
             metrics.REQUESTS.labels(endpoint="chat", status="guard_deny").inc()
             denied = {
-                "answer": "Запрос отклонён input guard (подозрение на prompt injection).",
+                "answer": "Request rejected by the input guard (suspected prompt injection).",
                 "citations": [],
                 "acl_decision": "deny_input",
                 "degraded": False,

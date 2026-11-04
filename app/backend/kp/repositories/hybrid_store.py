@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import Any
 
 from kp.domain.nodes import DocumentNode, LabelAssetNode, RetrievedChunk
@@ -11,44 +10,12 @@ from kp.infrastructure.embeddings import EmbeddingService
 from kp.infrastructure.neo4j_graph import Neo4jGraphRepository
 from kp.infrastructure.qdrant_vectors import QdrantVectorRepository
 from kp.repositories.memory_store import MemoryKnowledgeStore
+from kp.repositories.text_match import lexical_hits as _lexical_hits
 from kp.security.rbac import Principal
 
 logger = logging.getLogger("kp.store")
 
 _MIN_VECTOR_SCORE = 0.18
-_STOP = {
-    "что",
-    "как",
-    "про",
-    "для",
-    "это",
-    "или",
-    "the",
-    "and",
-    "for",
-    "about",
-    "with",
-    "know",
-    "знаешь",
-    "расскажи",
-    "какие",
-}
-
-
-def _tokens(text: str) -> set[str]:
-    return {
-        t
-        for t in re.findall(r"[\wа-яё]+", text.lower(), flags=re.IGNORECASE)
-        if len(t) > 2 and t not in _STOP
-    }
-
-
-def _lexical_hits(query: str, text: str) -> int:
-    q = _tokens(query)
-    if not q:
-        return 0
-    return len(q & _tokens(text))
-
 
 class HybridKnowledgeStore:
     """

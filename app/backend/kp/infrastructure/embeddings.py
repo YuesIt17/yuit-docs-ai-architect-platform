@@ -14,7 +14,7 @@ logger = logging.getLogger("kp.embeddings")
 
 
 def _tokenize(text: str) -> list[str]:
-    return re.findall(r"[\wа-яё]+", text.lower(), flags=re.IGNORECASE)
+    return re.findall(r"\w+", text.lower())
 
 
 class EmbeddingService:

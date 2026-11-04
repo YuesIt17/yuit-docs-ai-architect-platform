@@ -1,31 +1,31 @@
 ﻿# ADR-001: LLM Serving (air-gapped)
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-RetailPartnerX требует on-prem инференс без SaaS OpenAI/Anthropic (инверсия решения hw-4 «SaaS для PoC»). Закрытый контур: данные политик, promo и этикеток не покидают периметр. Нужна совместимость с русским языком и возможность демо на consumer GPU.
+RetailPartnerX requires on-prem inference without SaaS OpenAI/Anthropic (this reverses the hw-4 decision to use SaaS for the PoC). In the closed perimeter, policy, promo and label data never leave the boundary. The platform needs multilingual model support and must be able to run a demo on a consumer GPU.
 
-## Критерии выбора
+## Selection criteria
 
-- OpenAI-compatible API (единый клиент)
-- Throughput / KV-cache для batch и chat
-- Квантование AWQ/GGUF под ограниченную VRAM
-- Простота laptop-демо и CI без GPU
+- OpenAI-compatible API (a single client)
+- Throughput / KV cache for batch and chat
+- AWQ/GGUF quantization for limited VRAM
+- Simple laptop demo and CI without a GPU
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| **vLLM** | Высокий throughput, PagedAttention, OpenAI API | Нужен GPU / ops |
-| SGLang | Сильный structured/agent serving | Меньше экосистема в курсе |
-| TGI | Зрелый HF-стек | Тяжелее ops для MVP |
-| **Ollama** | Быстрый laptop-демо | Не prod throughput |
-| MOCK | CI / pytest без железа | Не качество ответов |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| **vLLM** | High throughput, PagedAttention, OpenAI API | Requires a GPU and ops |
+| SGLang | Strong structured/agent serving | Smaller ecosystem within the course |
+| TGI | Mature HF stack | Heavier ops for an MVP |
+| **Ollama** | Fast laptop demo | Not production throughput |
+| MOCK | CI / pytest without hardware | No answer quality |
 
-## Решение
+## Decision
 
 - **Desktop:** Ollama + `qwen2.5:0.5b` (`compose` profile `llm`)
 - **CI / unit tests:** MOCK
@@ -34,15 +34,15 @@ RetailPartnerX требует on-prem инференс без SaaS OpenAI/Anthro
   - Model: `Qwen/Qwen2.5-1.5B-Instruct-AWQ` (AWQ, context 4096, max-num-seqs 2)
   - Compose profile `vllm`, Helm overlay `values-submission-vllm.yaml`
   - Docs: [docs/infra/vllm-profile.md](../../docs/infra/vllm-profile.md)
-- Клиент: единый `LLMClient` (`MOCK` \| `OLLAMA` \| `VLLM`) с allowlist `base_url`
-- Если GPU недоступен: конфигурация проверяется статически; статус **«runtime не проверен»**
+- Client: a single `LLMClient` (`MOCK` \| `OLLAMA` \| `VLLM`) with a `base_url` allowlist
+- If no GPU is available, the configuration is checked statically and its status is **"runtime not verified"**
 
-## Последствия
+## Consequences
 
 - (+) Data residency, laptop demo, submission path aligned with course serving engines
 - (−) vLLM GPU runtime may remain unverified on CPU-only machines; Ollama is not claimed as vLLM
 
-## Ссылки
+## References
 
-- Код: `app/backend/kp/infrastructure/llm.py`
+- Code: `app/backend/kp/infrastructure/llm.py`
 - Continuity: hw-4 (SaaS), hw-7 (sizing)

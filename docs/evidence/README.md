@@ -1,23 +1,23 @@
-# Папка evidence
+# Evidence Folder
 
-Сюда кладём воспроизводимые результаты проверок (не придумывать цифры и скриншоты).
+This folder holds reproducible verification results (numbers and screenshots are never invented).
 
-## Состав после реального прогона
+## Contents after a real run
 
-| Путь | Содержание |
+| Path | Contents |
 |------|------------|
-| `manifest.json` | commit SHA, дата, OS, провайдеры, размер корпуса |
-| `pytest.txt` | вывод `pytest -q` |
-| `demo_check.json` | вывод `scripts/demo_check.py` |
-| `load/` | сырые JSON из `load_smoke.py` (MOCK + Ollama) |
-| `trace.md` | Grafana Tempo: trace id + список span для одного chat-запроса |
-| `loki.md` | подтверждение, что логи API видны в Loki |
-| `manifest.template.json` | пустой шаблон с подсказками по полям |
+| `manifest.json` | commit SHA, date, OS, providers, corpus size |
+| `pytest.txt` | `pytest -q` output |
+| `demo_check.json` | `scripts/demo_check.py` output |
+| `load/` | raw JSON from `load_smoke.py` (MOCK + Ollama) |
+| `trace.md` | Grafana Tempo: trace id + span list for one chat request |
+| `loki.md` | confirmation that API logs are visible in Loki |
+| `manifest.template.json` | empty template with field hints |
 
-## Как обновить
+## How to update
 
 ```powershell
-# Из корня репозитория после hybrid-up (API на :8080 или :30080)
+# From the repo root after hybrid-up (API on :8080 or :30080)
 cd app/backend
 .\.venv\Scripts\python -m pytest -q | Tee-Object -FilePath ..\..\docs\evidence\pytest.txt
 
@@ -25,17 +25,17 @@ python ..\scripts\demo_check.py --base-url http://127.0.0.1:30080 `
   | Out-File -Encoding utf8 ..\..\docs\evidence\demo_check.json
 
 python scripts/load_smoke.py --base-url http://127.0.0.1:30080 --count 20 --label mock
-# С OLLAMA в Helm/API:
+# With OLLAMA in Helm/API:
 python scripts/load_smoke.py --base-url http://127.0.0.1:30080 --count 10 --concurrency 1 --label ollama
 ```
 
-Заполнить `trace.md` / `loki.md` из Grafana Explore (deep links на Ops-странице). Скопировать `manifest.template.json` → `manifest.json` и указать железо (примеры в комментариях шаблона / capacity-planning).
+Fill in `trace.md` / `loki.md` from Grafana Explore (deep links are on the Ops page). Copy `manifest.template.json` → `manifest.json` and specify the hardware (examples are in the template comments / capacity-planning).
 
-## Чеклист записи видео
+## Video recording checklist
 
-1. Следовать [tasks/AI_PLATFORM_VIDEO_SCRIPT.md](../../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) (5–7 мин).
-2. Бинарник видео **не** коммитить.
-3. После загрузки проставить `video_url` в `manifest.json`.
-4. Экраны: Chat ACL, Graph SVG + Neo4j Browser, Tempo spans, Loki logs, Grafana KP Overview.
+1. Follow [tasks/AI_PLATFORM_VIDEO_SCRIPT.md](../../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) (5–7 min).
+2. Do **not** commit the video binary.
+3. After uploading, set `video_url` in `manifest.json`.
+4. Screens: Chat ACL, Graph SVG + Neo4j Browser, Tempo spans, Loki logs, Grafana KP Overview.
 
-Запись видео: [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` в `manifest.json`.
+Video recording: [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) (Russian narration) · `video_url` in `manifest.json`.

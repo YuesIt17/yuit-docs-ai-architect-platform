@@ -1,17 +1,17 @@
-# Архитектура из кода (diagrams-as-code)
+# Architecture from Code (diagrams-as-code)
 
-Воспроизводимый pipeline: **источники реализации → факты / модель → SVG**.
-Диаграммы **не** доказывают безопасность или работоспособность live-кластера.
+A reproducible pipeline: **implementation sources → facts / model → SVG**.
+Diagrams do **not** prove the security or health of a live cluster.
 
-## Bootstrap (один раз)
+## Bootstrap (once)
 
-Требования: Docker Desktop (Structurizr CLI), Node.js/npm (Mermaid CLI), Python venv backend, Helm, Graphviz (`dot`).
+Requirements: Docker Desktop (Structurizr CLI), Node.js/npm (Mermaid CLI), the backend Python venv, Helm, Graphviz (`dot`).
 
 ```powershell
 python tools/diagrams/build.py --bootstrap
 ```
 
-Закреплённые версии: [`tools/diagrams/tools.lock`](../tools/diagrams/tools.lock), `package-lock.json`, `requirements.txt`.
+Pinned versions: [`tools/diagrams/tools.lock`](../tools/diagrams/tools.lock), `package-lock.json`, `requirements.txt`.
 
 ## Build / check
 
@@ -20,31 +20,31 @@ python tools/diagrams/build.py --profile desktop
 python tools/diagrams/build.py --profile desktop --check
 ```
 
-или `make diagrams` / `make diagrams-check`.
+or `make diagrams` / `make diagrams-check`.
 
-`--check` регенерирует `sources/gen/` во временный каталог, сравнивает с committed gen + inventory, **не** перезаписывает artifacts. Manual `.mmd` не регенерируются.
+`--check` regenerates `sources/gen/` into a temporary directory and compares it with the committed gen + inventory. It does **not** overwrite artifacts. Manual `.mmd` files are not regenerated.
 
-Профиль **`gpu`**: pending (нет `values-gpu.yaml`) — сборка отказывается фабриковать manifests.
+The **`gpu`** profile is pending (there is no `values-gpu.yaml`), so the build refuses to fabricate manifests.
 
-## Где что править
+## Where to edit what
 
-| Что | Редактировать | Generated? |
-|-----|---------------|------------|
-| C4 DSL (validate) | [`architecture/diagrams/model/workspace.dsl`](../architecture/diagrams/model/workspace.dsl) | нет |
+| What | Edit | Generated? |
+|------|------|------------|
+| C4 DSL (validate) | [`architecture/diagrams/model/workspace.dsl`](../architecture/diagrams/model/workspace.dsl) | no |
 | C4 / hybrid / target Mermaid | [`architecture/diagrams/sources/manual/`](../architecture/diagrams/sources/manual/) | SVG only |
-| Source mapping | [`architecture/diagrams/model/source-map.yaml`](../architecture/diagrams/model/source-map.yaml) | нет (checked) |
+| Source mapping | [`architecture/diagrams/model/source-map.yaml`](../architecture/diagrams/model/source-map.yaml) | no (checked) |
 | Sequence / data-flow / ER | [`architecture/diagrams/sources/manual/`](../architecture/diagrams/sources/manual/) | SVG only |
-| Agent workflow | код [`kp/agent/graph.py`](../app/backend/kp/agent/graph.py) | `sources/gen/agent-workflow.*` |
-| Python code view | пакеты `kp.*` | Pyreverse → `sources/gen/` |
+| Agent workflow | code in [`kp/agent/graph.py`](../app/backend/kp/agent/graph.py) | `sources/gen/agent-workflow.*` |
+| Python code view | `kp.*` packages | Pyreverse → `sources/gen/` |
 | K8s topology | Helm values + templates | helm template → `sources/gen/` |
 
-Канонические артефакты: [`architecture/diagrams/images/*.svg`](../architecture/diagrams/images/).
+Canonical artifacts: [`architecture/diagrams/images/*.svg`](../architecture/diagrams/images/).
 
-## Уровни происхождения
+## Provenance levels
 
-1. **generated-from-code** (`sources/gen/`) — LangGraph, Pyreverse, Helm→KubeDiagrams  
-2. **curated-from-code** (`sources/manual/`) — C4 Mermaid, sequence, data-flow (с source-map)  
-3. **target-design** (`sources/manual/`) — IdP/Vault/vLLM/OCR overview, ER из `init.sql` (intended)
+1. **generated-from-code** (`sources/gen/`): LangGraph, Pyreverse, Helm→KubeDiagrams  
+2. **curated-from-code** (`sources/manual/`): C4 Mermaid, sequence, data-flow (with source-map)  
+3. **target-design** (`sources/manual/`): IdP/Vault/vLLM/OCR overview, ER from `init.sql` (intended)
 
 ## Profiles
 
@@ -53,40 +53,40 @@ python tools/diagrams/build.py --profile desktop --check
 | desktop | `values.yaml` + `values-desktop.yaml` | default CI |
 | gpu | — | **pending** |
 
-Compose Ollama/obs отражаются в hybrid deployment (manual Mermaid + Structurizr DSL), не в KubeDiagrams.
+Compose Ollama/obs appear in the hybrid deployment (manual Mermaid + Structurizr DSL), not in KubeDiagrams.
 
 ## Offline
 
-После bootstrap сборка не требует cloud API / живого кластера / GPU / production credentials.
-Mermaid `securityLevel: loose` только для локально доверенных `.mmd`.
-Secret/stringData в manifests заменяются fixture-значениями до KubeDiagrams/inventory.
+After bootstrap, the build needs no cloud API, live cluster, GPU or production credentials.
+Mermaid `securityLevel: loose` applies only to locally trusted `.mmd` files.
+Secret/stringData values in manifests are replaced with fixture values before KubeDiagrams/inventory.
 
-## Preview в редакторе
+## Editor preview
 
-Cursor/VS Code Mermaid preview понимает в основном `flowchart` / `graph` / `stateDiagram`.
-Committed `.mmd` — **flowchart TB**; SVG собирает `mmdc` с `layout: elk` ([`tools/diagrams/mermaid-config.json`](../tools/diagrams/mermaid-config.json)), чтобы раскладка совпадала с preview (siblings на одном ранге), а не с дефолтным dagre.
-Structurizr DSL (`model/workspace.dsl`) — модель C4 для `validate`; рендер SVG — из `sources/manual/` + `sources/gen/` (не из Structurizr Mermaid export с `<div>`).
-Тема SVG — `neutral` + белый фон (для README/печати); preview в тёмном Cursor визуально темнее, граф тот же.
+Cursor/VS Code Mermaid preview mostly understands `flowchart` / `graph` / `stateDiagram`.
+Committed `.mmd` files use **flowchart TB**; `mmdc` builds the SVGs with `layout: elk` ([`tools/diagrams/mermaid-config.json`](../tools/diagrams/mermaid-config.json)) so the layout matches the preview (siblings on one rank) rather than the default dagre.
+The Structurizr DSL (`model/workspace.dsl`) is the C4 model for `validate`; SVGs render from `sources/manual/` + `sources/gen/` (not from the Structurizr Mermaid export with `<div>`).
+The SVG theme is `neutral` with a white background (for README/print); the preview in dark Cursor looks darker, but the graph is the same.
 
 ## Drift
 
-Если `diagrams-check` падает:
+If `diagrams-check` fails:
 
-1. Убедиться, что изменение кода/Helm осознанное.  
+1. Confirm that the code/Helm change is intentional.  
 2. `python tools/diagrams/build.py --profile desktop`  
-3. Закоммитить обновлённые `architecture/diagrams/sources/gen/**` и SVG (кроме SHA-loop в provenance — git SHA только при `DIAGRAMS_INCLUDE_GIT_SHA=1` в CI artifacts).
+3. Commit the updated `architecture/diagrams/sources/gen/**` and SVGs (except the SHA loop in provenance: the git SHA is included only with `DIAGRAMS_INCLUDE_GIT_SHA=1` in CI artifacts).
 
-## Добавить view
+## Adding a view
 
-1. Добавить view в `architecture/diagrams/model/workspace.dsl` **или** `.mmd` в `architecture/diagrams/sources/manual/`.  
-2. Привязать символы в `source-map.yaml`.  
-3. Расширить `check_consistency.check_expected_outputs` при необходимости.  
-4. Пересобрать и закоммитить SVG.
+1. Add a view to `architecture/diagrams/model/workspace.dsl` **or** an `.mmd` file to `architecture/diagrams/sources/manual/`.  
+2. Bind the symbols in `source-map.yaml`.  
+3. Extend `check_consistency.check_expected_outputs` if needed.  
+4. Rebuild and commit the SVGs.
 
-## Ограничения
+## Limitations
 
-- Structurizr Mermaid export ≠ native Structurizr renderer.  
-- Pyreverse — статический анализ; DI/duck typing неполны.  
-- KubeDiagrams — **declared** topology из `helm template`, не live cluster.  
-- Postgres: **deployed-unused**; audit/jobs in-memory.  
+- The Structurizr Mermaid export is not the native Structurizr renderer.  
+- Pyreverse is static analysis; DI/duck typing are incomplete.  
+- KubeDiagrams shows the **declared** topology from `helm template`, not a live cluster.  
+- Postgres: **deployed-unused**; audit/jobs are in-memory.  
 - OCR: MOCK/planned.

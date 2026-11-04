@@ -1,20 +1,20 @@
-﻿# C4 Level 3 — Компоненты агента
+# C4 Level 3 — Agent Components
 
-**Схема:** [c4-backend-components.svg](../diagrams/images/c4-backend-components.svg) · workflow: [agent-workflow.svg](../diagrams/images/agent-workflow.svg)
+**Diagram:** [c4-backend-components.svg](../diagrams/images/c4-backend-components.svg) · workflow: [agent-workflow.svg](../diagrams/images/agent-workflow.svg)
 
-## Назначение
+## Purpose
 
-Внутреннее устройство оркестратора Knowledge Platform: Memory, Planner (route), Tools, Synthesizer, Guardrails — в духе требования курса к Agent Component view.
+Internal structure of the Knowledge Platform orchestrator: Memory, Planner (route), Tools, Synthesizer and Guardrails, following the course's Agent Component view requirement.
 
-## Компоненты
+## Components
 
-| Компонент | Ответственность | Владение данными |
+| Component | Responsibility | Data ownership |
 | --------- | --------------- | ---------------- |
-| Memory (session / audit) | История сессии, audit decision | Postgres + in-memory audit |
+| Memory (session / audit) | Session history, audit decision | Postgres + in-memory audit |
 | Planner / route | chat vs label vs blocked | State LangGraph |
 | Tools | graph_retrieve, vector_retrieve, label_recognize, policy_check | Neo4j/Qdrant/MinIO mirror |
-| Synthesizer | Генерация ответа через LLMClient | Промпт + citations |
-| Guardrails | PII, injection, ACL leak check | Политика ролей |
+| Synthesizer | Answer generation through LLMClient | Prompt + citations |
+| Guardrails | PII, injection, ACL leak check | Role policy |
 
 ```mermaid
 flowchart LR
@@ -29,4 +29,4 @@ flowchart LR
   RT -->|blocked| GO
 ```
 
-Код: `app/backend/kp/agent/graph.py`. Continuity: SRP из hw-3 (Policy Analyst → `policy_check`).
+Code: `app/backend/kp/agent/graph.py`. Continuity: SRP from hw-3 (Policy Analyst → `policy_check`).

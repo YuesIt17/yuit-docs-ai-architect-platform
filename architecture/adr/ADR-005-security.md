@@ -1,42 +1,42 @@
-﻿# ADR-005: Security и RBAC
+﻿# ADR-005: Security and RBAC
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-Критичный критерий: **User B не получает ответ по секретному документу**. Эволюция security layer из hw-6: PII, prompt injection, output guardrails + ACL на retrieval.
+Critical criterion: **User B must not receive an answer based on a secret document**. The security layer evolves from hw-6: PII handling, prompt injection defense, output guardrails and ACL at retrieval.
 
-## Критерии выбора
+## Selection criteria
 
-- Фильтрация **до** LLM (не только post-hoc)
-- Классификация документов и ролей
-- Демо без полного IdP (учебный MVP)
-- Защита vision-пути (MIME / size)
+- Filtering **before** the LLM (not only post hoc)
+- Document and role classification
+- Demo without a full IdP (learning MVP)
+- Protection of the vision path (MIME / size)
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| ACL только в промпте | Просто | Легко обойти / утечки в citations |
-| **ACL на chunk + output guard** | Defense in depth | Два места политики |
-| Полный OIDC + ABAC | Prod-grade | Вне scope MVP |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| ACL in the prompt only | Simple | Easy to bypass; leaks through citations |
+| **Chunk-level ACL + output guard** | Defense in depth | Policy lives in two places |
+| Full OIDC + ABAC | Production grade | Out of MVP scope |
 
-## Решение
+## Decision
 
-- Роли: `guest`, `store_associate`, `category_manager`, `compliance_officer`
-- Классификации: `public` / `internal` / `secret` на Document/Chunk
-- Retrieval **всегда** ACL-filtered; Output Guard блокирует утечку secret
-- Vision: allowlist MIME + лимит размера
-- Демо-токены в UI (не prod IdP); roadmap — корпоративный IdP
+- Roles: `guest`, `store_associate`, `category_manager`, `compliance_officer`
+- Classifications: `public` / `internal` / `secret` on Document/Chunk
+- Retrieval is **always** ACL-filtered; the Output Guard blocks secret leaks
+- Vision: MIME allowlist + size limit
+- Demo tokens in the UI (not a production IdP); a corporate IdP is on the roadmap
 
-## Последствия
+## Consequences
 
-- (+) Демо manager vs compliance закрывает критерий курса
-- (−) Demo bearer ≠ настоящая аутентификация; node-level Neo4j ACL — следующий этап
+- (+) The manager vs compliance demo satisfies the course criterion
+- (−) A demo bearer token is not real authentication; node-level Neo4j ACL is the next stage
 
-## Ссылки
+## References
 
 - `app/backend/kp/security/rbac.py`, `guardrails.py`
 - Demo: [tasks/AI_PLATFORM_VIDEO_SCRIPT.md](../../tasks/AI_PLATFORM_VIDEO_SCRIPT.md)

@@ -1,39 +1,39 @@
 ﻿# ADR-002: Vector Database
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-Нужен self-hosted векторный индекс для RAG по политикам, чанкам этикеток и документам с **payload-фильтрацией ACL** (`classification`, `allowed_roles`) до передачи контекста в LLM.
+RAG over policies, label chunks and documents needs a self-hosted vector index with **ACL payload filtering** (`classification`, `allowed_roles`) applied before context reaches the LLM.
 
-## Критерии выбора
+## Selection criteria
 
-- Self-hosted, без облачного managed DB
-- Фильтры по payload на query-time
-- Простой ops для MVP / compose
-- Совместимость с CI без Docker (in-process fallback)
+- Self-hosted, no managed cloud DB
+- Query-time payload filters
+- Simple ops for the MVP / Compose
+- CI compatibility without Docker (in-process fallback)
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| **Qdrant** | Простой compose, сильный payload filter | Меньше «enterprise» фич, чем Milvus |
-| Milvus | Масштаб, GPU index | Тяжелее ops |
-| Weaviate | Модули, hybrid | Сложнее схема для MVP |
-| pgvector | Одна Postgres | Слабее для dense ANN @ scale |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| **Qdrant** | Simple Compose setup, strong payload filters | Fewer enterprise features than Milvus |
+| Milvus | Scale, GPU index | Heavier ops |
+| Weaviate | Modules, hybrid search | More complex schema for an MVP |
+| pgvector | Single Postgres instance | Weaker for dense ANN at scale |
 
-## Решение
+## Decision
 
-**Qdrant** self-hosted (compose). MVP также держит **in-process** векторный индекс с теми же ACL-полями для CI без Docker. Compose Qdrant синхронизируется пайплайнами для демо; runtime chat в MVP читает in-memory mirror (честный учебный компромисс).
+**Qdrant**, self-hosted (Compose). The MVP also keeps an **in-process** vector index with the same ACL fields for CI without Docker. Pipelines sync Compose Qdrant for the demo; in the MVP, runtime chat reads the in-memory mirror (an explicit trade-off for a learning project).
 
-## Последствия
+## Consequences
 
-- (+) Быстрый путь ACL на retrieval; лёгкий demo stack
-- (−) Нужна дисциплина sync schema payload ↔ graph; live Qdrant на каждый chat — этап после MVP
+- (+) Fast ACL path at retrieval; lightweight demo stack
+- (−) Requires discipline to keep the payload schema and graph in sync; live Qdrant on every chat is a post-MVP stage
 
-## Ссылки
+## References
 
 - `app/backend/kp/repositories/memory_store.py`
 - Compose: `app/infra/docker-compose.yml`

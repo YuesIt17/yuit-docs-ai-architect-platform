@@ -1,24 +1,24 @@
-﻿# Deployment — физическое размещение
+# Deployment — Physical Placement
 
-**Схема:** [current-hybrid-deployment.svg](../diagrams/images/current-hybrid-deployment.svg) · K8s: [k8s-topology-desktop.svg](../diagrams/images/k8s-topology-desktop.svg)
+**Diagram:** [current-hybrid-deployment.svg](../diagrams/images/current-hybrid-deployment.svg) · K8s: [k8s-topology-desktop.svg](../diagrams/images/k8s-topology-desktop.svg)
 
-## Назначение
+## Purpose
 
-Сегментация сети (DMZ / Internal Control / Data / GPU), балансировка, секреты, учёт GPU для on-prem LLM.
+Network segmentation (DMZ / Internal Control / Data / GPU), load balancing, secrets and GPU accounting for the on-prem LLM.
 
-## Сегменты
+## Segments
 
-| Сегмент | Состав |
+| Segment | Contents |
 | ------- | ------ |
 | DMZ / Edge | Load Balancer → `kp-api` |
 | Internal Control | Prometheus, Grafana, Tempo, Loki, Vault (stub) |
 | Data | Postgres, Neo4j, Qdrant, Redis, MinIO |
 | LLM (Compose) | Ollama (`qwen2.5:0.5b`) / MOCK |
 
-## Секреты и LLM
+## Secrets and LLM
 
-- **Secrets:** Vault file stub / env — никогда в образах.
-- **LLM:** Ollama на хосте (hybrid) или MOCK ([ADR-001](adr/ADR-001-llm-serving.md)).
+- **Secrets:** Vault file stub / env, never in images.
+- **LLM:** Ollama on the host (hybrid) or MOCK ([ADR-001](adr/ADR-001-llm-serving.md)).
 - **Observability:** [ADR-006](adr/ADR-006-observability.md) (LGTM).
 
 ```mermaid

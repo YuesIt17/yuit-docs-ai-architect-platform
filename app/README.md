@@ -1,12 +1,12 @@
 # App — runnable Knowledge Platform
 
-| Каталог | Назначение |
+| Directory | Purpose |
 |---------|------------|
 | `backend/` | FastAPI, LangGraph, GraphRAG, pipelines, tests — [README](backend/README.md) |
 | `frontend/` | Vite + React UI |
 | `infra/` | Docker Compose, Helm, kind, Grafana/Prometheus/Loki/Tempo |
-| `datasets/` | Seed и fixtures |
+| `datasets/` | Seed data and fixtures |
 | `scripts/` | hybrid / k8s / ollama / sec |
 | `evals/` | Eval stubs |
 
-Карта репозитория, запуск и ADD — в [корневом README](../README.md) и [docs/SETUP.md](../docs/SETUP.md).
+The repository map, run instructions and ADD are in the [root README](../README.md) and [docs/SETUP.md](../docs/SETUP.md).

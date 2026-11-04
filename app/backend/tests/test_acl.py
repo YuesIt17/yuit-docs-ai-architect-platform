@@ -35,7 +35,7 @@ async def test_agent_denies_secret_to_manager(seeded):
     state = await c.agent.arun(
         {
             "request_id": "t1",
-            "message": "Расскажи про Q4 Closed Promo Margin Playbook и маржу 42%",
+            "message": "Tell me about the Q4 Closed Promo Margin Playbook and the 42% margin",
             "modality": "chat",
             "role": "category_manager",
             "user_id": "u-mgr",
@@ -55,7 +55,7 @@ async def test_agent_allows_secret_to_compliance(seeded):
     state = await c.agent.arun(
         {
             "request_id": "t2",
-            "message": "Расскажи про Q4 Closed Promo Margin Playbook и маржу 42%",
+            "message": "Tell me about the Q4 Closed Promo Margin Playbook and the 42% margin",
             "modality": "chat",
             "role": "compliance_officer",
             "user_id": "u-comp",
