@@ -8,7 +8,7 @@ Grounded answers for store associates, category managers and compliance staff, b
 
 ## Out of scope
 
-Medical advice, legal opinions, foundation model training, and **real OCR** of complex PDFs/scans (deferred; the current OCR is MOCK).
+Medical advice, legal opinions and foundation model training.
 
 ## Models
 
@@ -18,7 +18,7 @@ Medical advice, legal opinions, foundation model training, and **real OCR** of c
 | Chat LLM submission | `Qwen/Qwen2.5-1.5B-Instruct-AWQ` via vLLM | AWQ, ctx 4096; **runtime not verified** without a GPU |
 | Chat CI | MOCK | Deterministic |
 | Embeddings | `intfloat/multilingual-e5-small` (384) or MOCK | LOCAL optional extra `.[embeddings]` |
-| Vision / OCR | **MOCK** (`provider=MOCK`) | Pipeline contract demo only |
+| Vision / OCR | MOCK (default) or RapidOCR (PaddleOCR models on ONNX) | Set `OCR_PROVIDER=RAPIDOCR` for real reading; tested on generated labels only |
 
 ## Safety
 
@@ -34,7 +34,7 @@ Audit `cost_est`; cache-hit does not re-count inference tokens. Prefer MOCK in C
 
 ## Limitations
 
-- OCR mock — not real document recognition
+- OCR accuracy on real label photos is not measured yet
 - Demo-auth
 - vLLM GPU may be unverified
 - Vault planned

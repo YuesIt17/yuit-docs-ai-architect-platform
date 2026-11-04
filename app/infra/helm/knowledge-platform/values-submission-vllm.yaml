@@ -23,5 +23,8 @@ persistence:
 
 networkPolicy:
   enabled: true
+  # vLLM and Tempo run outside the cluster on the host network.
+  apiEgress:
+    - {cidr: 192.168.65.0/24, ports: [8000, 4318]}
 
 # Secrets stay in Secret object (kp-secrets); do not paste production credentials here.

@@ -12,7 +12,7 @@
 | OpenAPI boundary | hw-2 | FastAPI OpenAPI |
 | Model Card / FinOps | hw-10 | docs + audit `cost_est` |
 | Soft degrade | hw-9 | LLM failure → mock + `degraded=true` |
-| Multimodal labels | final MVP | **OCR provider=MOCK**; real OCR deferred |
+| Multimodal labels | final MVP | RapidOCR (`OCR_PROVIDER=RAPIDOCR`) or MOCK by default |
 | GraphRAG | critical | graph resolve + vector hybrid + graph-on/off |
 | Serving | hw-7 | Ollama desktop + vLLM AWQ profile (GPU may be unverified) |
 | Control/Data Plane | PE | compose + Helm + NetworkPolicy templates |

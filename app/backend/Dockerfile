@@ -17,6 +17,10 @@ RUN pip install --no-cache-dir \
     pillow pypdfium2 \
     "langgraph-checkpoint-postgres>=3.2,<4" "psycopg[binary,pool]>=3.2"
 
+# OCR without apt: rapidocr pulls opencv-python, which needs libGL, so the headless build replaces it.
+RUN pip install --no-cache-dir opencv-python-headless onnxruntime pyclipper shapely pyyaml six tqdm numpy \
+    && pip install --no-cache-dir --no-deps "rapidocr-onnxruntime>=1.2,<2"
+
 COPY app/backend/kp ./kp
 COPY app/backend/pipelines ./pipelines
 COPY app/backend/scripts ./scripts

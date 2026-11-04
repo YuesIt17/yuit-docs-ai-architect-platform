@@ -25,14 +25,22 @@ RetailPartnerX processes label scans (PDF, PNG and others). The platform must ex
 
 ## Decision
 
-Accept **PDF, PNG, JPEG, WEBP, TIFF**. Pipeline: MIME → rasterize PDF → **OCR provider=MOCK** extract → structured JSON → policy_check (GraphRAG). Raw and recognized objects are stored in MinIO. CI uses deterministic fixtures.
+Accept **PDF, PNG, JPEG, WEBP, TIFF**. Pipeline: MIME → rasterize PDF → OCR → structured JSON → policy_check (GraphRAG). Raw and recognized objects are stored in MinIO.
 
-**Real OCR** of complex scans/drawings is **outside the current MVP** (a known deviation that requires separate agreement). The API and UI explicitly return `ocr_provider=MOCK`. The mock must not be presented as real document recognition.
+`OCR_PROVIDER` selects the engine:
+
+- **RAPIDOCR:** PaddleOCR models on ONNX Runtime. The 14 MB of models ship inside the package, so it runs on CPU with no downloads, which fits the closed perimeter.
+- **MOCK** (default): a deterministic pipeline contract for demos and CI without the OCR dependency.
+
+An unknown provider fails at startup rather than silently falling back to the mock. The API and UI return the active `ocr_provider`, and MOCK responses carry a warning that nothing was read.
+
+OCR text is untrusted input: PII is redacted, and prompts treat it as data rather than instructions.
 
 ## Consequences
 
 - (+) Demonstrates the multimodal path contract; handoff through exports/outbox
-- (−) No production OCR accuracy; meeting the course's overall OCR goal remains a risk until agreed
+- (+) Reads real labels locally, including blocks in non-linear layouts
+- (−) Accuracy is verified only on generated labels; real photos with glare or curved packaging may need a vision model such as Qwen2-VL
 
 ## References
 

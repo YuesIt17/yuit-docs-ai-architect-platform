@@ -68,7 +68,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | Hybrid desktop | K8s data plane + Compose LLM/obs | `app/scripts/hybrid/` |
 | Observability LGTM | Grafana / Prometheus / Loki / Tempo | [ADR-006](architecture/adr/ADR-006-observability.md) |
 | Model Card / SRE / Setup | ops documentation | [docs/](docs/) |
-| Label OCR | **MOCK** pipeline contract (real OCR deferred) | ADR-007 |
+| Label OCR | local RapidOCR (PaddleOCR models), or MOCK by default | [ADR-007](architecture/adr/ADR-007-multimodal-labels.md) |
 | Demo auth | Bearer roles (not an IdP) | `DEMO_AUTH_ENABLED` |
 | Vault | stub | `app/infra/vault/` |
 
@@ -80,7 +80,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | LLM desktop | Ollama `qwen2.5:0.5b` | — |
 | LLM submission | vLLM AWQ profile | runtime on a GPU |
 | Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
-| OCR | MOCK | Real vision OCR (outside the MVP) |
+| OCR | RapidOCR on CPU; MOCK by default | Accuracy measured on real label photos |
 | Vault | Stub README | Live Vault agent |
 | Session memory | LangGraph checkpoints in PostgreSQL ([ADR-004](architecture/adr/ADR-004-orchestration.md)) | Retention policy |
 | Video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` in the manifest | — |
@@ -106,7 +106,7 @@ Calculations: **[docs/capacity-planning.md](docs/capacity-planning.md)**.
 | Chat desktop | Ollama `qwen2.5:0.5b` |
 | Chat submission | `Qwen/Qwen2.5-1.5B-Instruct-AWQ` via vLLM (AWQ, ctx 4096) |
 | Embeddings | `intfloat/multilingual-e5-small` (384) or MOCK |
-| OCR | MOCK (`provider=MOCK`) |
+| OCR | MOCK, or `OCR_PROVIDER=RAPIDOCR` for local recognition |
 
 ## Repository structure
 
@@ -152,7 +152,7 @@ Demo auth: Bearer `guest` | `associate` | `manager` | `compliance`.
 
 1. **Monorepo paths:** `app/infra`, `app/backend` instead of root `/infra`, `/backend`.
 2. **Observability:** Tempo instead of Jaeger; Ollama logs instead of vLLM (no GPU).
-3. **OCR = MOCK:** a pipeline contract, not real vision.
+3. **OCR defaults to MOCK:** real local OCR needs `OCR_PROVIDER=RAPIDOCR`, and is tested on generated labels only.
 4. **Demo auth:** learning Bearer tokens.
 5. **Vault:** planned stub.
 6. **vLLM GPU:** the profile exists, but its runtime is not verified on this setup.

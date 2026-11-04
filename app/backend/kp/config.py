@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     semantic_cache_threshold: float = 0.92
     enable_vlm: bool = False
     enable_vision_ocr: bool = True
+    # MOCK (pipeline contract, no reading) | RAPIDOCR (local, needs the `ocr` extra).
+    ocr_provider: str = "MOCK"
 
     # memory = in-process store + cache; live = Neo4j/Qdrant/Redis/MinIO on request path
     store_backend: str = "memory"

@@ -37,6 +37,9 @@ dev = [
 eval = [
   "deepeval>=4.3,<5",
 ]
+ocr = [
+  "rapidocr-onnxruntime>=1.2,<2",
+]
 embeddings = [
   "sentence-transformers>=3.0.0",
 ]

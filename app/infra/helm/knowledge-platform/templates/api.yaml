@@ -35,6 +35,8 @@ spec:
               value: {{ .Values.llm.baseUrl | quote }}
             - name: STORE_BACKEND
               value: {{ .Values.api.env.STORE_BACKEND | quote }}
+            - name: OCR_PROVIDER
+              value: {{ .Values.api.env.OCR_PROVIDER | default "MOCK" | quote }}
             - name: EMBEDDING_PROVIDER
               value: {{ .Values.api.env.EMBEDDING_PROVIDER | quote }}
             - name: DEMO_AUTH_ENABLED

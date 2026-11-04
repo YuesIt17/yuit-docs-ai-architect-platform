@@ -1,4 +1,4 @@
-"""Label normalize + OCR/extract for PDF/PNG/JPEG/WEBP/TIFF."""
+"""Label normalize + OCR/extract for PDF/PNG/JPEG/WEBP/TIFF. OCR text is untrusted input."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from PIL import Image
 
 from kp.config import Settings
+from kp.infrastructure.ocr import RapidOcrEngine
+from kp.security.guardrails import sanitize_pii
 
 
 @dataclass
@@ -23,6 +25,7 @@ class VisionResult:
     ingredients: str | None
     allergens: list[str]
     confidence: float
+    provider: str = "MOCK"
 
 
 ALLERGEN_LEXICON = [
@@ -41,11 +44,28 @@ ALLERGEN_LEXICON = [
     "sesame",
     "sulfite",
 ]
+# A line starting with one of these ends a multi-line ingredients block.
+_NEXT_FIELD = re.compile(
+    r"^(?:brand|barcode|net\s*weight|contains|allergen|may\s+contain|best\s+before|store|nutrition)\b", re.I
+)
 
 
 class VisionService:
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.provider = settings.ocr_provider.upper()
+        if self.provider not in {"MOCK", "RAPIDOCR"}:
+            raise RuntimeError(
+                f"Unknown OCR_PROVIDER={settings.ocr_provider!r}. Use MOCK or RAPIDOCR. Refusing silent mock fallback."
+            )
+        self._ocr = RapidOcrEngine() if self.provider == "RAPIDOCR" else None
+
+    def _read_pages(self, pages: list[bytes]) -> tuple[str, float]:
+        """Return page text and the mean recognition score, which is 0.0 when nothing was read."""
+        lines = [line for page in pages for line in self._ocr.read(page)]
+        if not lines:
+            return "", 0.0
+        return "\n".join(line.text for line in lines), sum(line.score for line in lines) / len(lines)
 
     def detect_format(self, filename: str, data: bytes) -> str:
         name = filename.lower()
@@ -126,7 +146,8 @@ class VisionService:
         if m:
             brand = m.group(1).strip()
         barcode = None
-        m = re.search(r"Barcode:\s*(\d+)", ocr_text, re.I)
+        # OCR confuses letters and digits in the field name, so a standalone EAN/UPC length also counts.
+        m = re.search(r"Barc[o0]de:\s*(\d+)", ocr_text, re.I) or re.search(r"\b(\d{13}|\d{12}|\d{8})\b", ocr_text)
         if m:
             barcode = m.group(1)
         net_weight = None
@@ -137,10 +158,15 @@ class VisionService:
         m = re.search(r"Ingredients:\s*(.+)", ocr_text, re.I)
         if m:
             ingredients = m.group(1).strip()
+            for line in ocr_text[m.end() :].splitlines()[1:]:
+                if not line.strip() or _NEXT_FIELD.match(line.strip()):
+                    break
+                ingredients = f"{ingredients} {line.strip()}"
         allergens: list[str] = []
         low = ocr_text.lower()
         for a in ALLERGEN_LEXICON:
-            if a in low:
+            # Whole words: "peanut" and "doughnut" must not report the "nut" allergen.
+            if re.search(rf"\b{a}s?\b", low):
                 allergens.append(a)
         seen: set[str] = set()
         allergens = [x for x in allergens if not (x in seen or seen.add(x))]
@@ -156,12 +182,14 @@ class VisionService:
 
     def recognize(self, filename: str, data: bytes, page_limit: int = 3) -> VisionResult:
         fmt, pages = self.normalize(filename, data, page_limit=page_limit)
+        score = None
         if not self.settings.enable_vision_ocr:
             ocr_text = ""
-        elif self.settings.enable_vlm and self.settings.llm_provider.upper() != "MOCK":
-            ocr_text = self._mock_ocr_from_bytes(filename, data, pages)
+        elif self.provider == "RAPIDOCR":
+            ocr_text, score = self._read_pages(pages)
         else:
             ocr_text = self._mock_ocr_from_bytes(filename, data, pages)
+        ocr_text = sanitize_pii(ocr_text)
         structured = self.extract_structured(ocr_text)
         return VisionResult(
             source_format=fmt,
@@ -173,5 +201,6 @@ class VisionService:
             net_weight=structured["net_weight"],
             ingredients=structured["ingredients"],
             allergens=structured["allergens"],
-            confidence=structured["confidence"],
+            confidence=structured["confidence"] if score is None else score,
+            provider=self.provider,
         )
