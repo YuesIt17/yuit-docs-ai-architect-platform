@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str | None = None
+    # Send the same id to continue a dialog; omit it for a stateless request.
+    session_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
     stream: bool = True
 
 
@@ -61,8 +62,28 @@ class LabelResponse(BaseModel):
     ocr_provider: str = "MOCK"
 
 
+class IngestEntity(BaseModel):
+    name: str
+    type: str
+
+
+class IngestDocument(BaseModel):
+    doc_id: str = Field(min_length=1, max_length=128)
+    title: str = Field(max_length=500)
+    corpus: str = Field(max_length=64)
+    classification: Literal["public", "internal", "secret"]
+    allowed_roles: list[Literal["guest", "store_associate", "category_manager", "compliance_officer"]]
+    text: str = Field(min_length=1, max_length=200_000)
+    entities: list[IngestEntity] = Field(default_factory=list)
+    topics: list[str] = Field(default_factory=list)
+
+
+class IngestRequest(BaseModel):
+    documents: list[IngestDocument] = Field(min_length=1, max_length=1000)
+
+
 class JobCreateRequest(BaseModel):
-    job_type: Literal["batch_label", "multi_hop_chat"] = "batch_label"
+    job_type: Literal["batch_label", "multi_hop_chat", "ingest_documents"] = "batch_label"
     payload: dict[str, Any] = Field(default_factory=dict)
 
 

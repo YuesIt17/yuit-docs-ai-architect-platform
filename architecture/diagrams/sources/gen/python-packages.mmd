@@ -33,12 +33,12 @@ flowchart TB
     object_store[object_store]
     qdrant_vectors[qdrant_vectors]
   end
-  subgraph layer_obs [observability]
-    observability[observability]
-    logging_json[logging_json]
+  subgraph layer_other [other]
+    ocr[ocr]
+    session_memory[session_memory]
   end
   agent --> api
   api --> application
   application --> domain
   domain --> infrastructure
-  infrastructure --> observability
+  infrastructure --> ocr

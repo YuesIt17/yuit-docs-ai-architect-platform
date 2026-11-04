@@ -20,6 +20,7 @@ api:
   env:
     STORE_BACKEND: memory
     EMBEDDING_PROVIDER: MOCK
+    OCR_PROVIDER: MOCK # MOCK | RAPIDOCR
     DEMO_AUTH_ENABLED: "true"
     ENABLE_SEMANTIC_CACHE: "false"
     LLM_ALLOW_RUNTIME_URL_OVERRIDE: "false"
@@ -28,7 +29,7 @@ api:
 
 frontend:
   replicas: 1
-  port: 80
+  port: 8080
 
 ingress:
   enabled: true
@@ -51,7 +52,7 @@ neo4j:
 
 qdrant:
   enabled: true
-  image: qdrant/qdrant:v1.13.2
+  image: qdrant/qdrant:v1.13.2-unprivileged
 
 redis:
   enabled: true
@@ -75,10 +76,52 @@ persistence:
   qdrantSize: 5Gi
   minioSize: 10Gi
 
+podSecurity:
+  # Enforced by the API server through namespace labels.
+  level: restricted
+
 networkPolicy:
   enabled: true
+  ingressNamespace: ingress-nginx
+  # Host network allowed to reach NodePorts. Empty blocks it.
+  hostAccessCidr: ""
+  # Allowed egress from the API beyond the stores, as {cidr, ports}, such as an LLM or tracing host.
+  apiEgress: []
+  stores:
+    - {app: postgres, ports: [5432]}
+    - {app: neo4j, ports: [7474, 7687], hostPorts: [7474, 7687]}
+    - {app: qdrant, ports: [6333]}
+    - {app: redis, ports: [6379]}
+    - {app: minio, ports: [9000, 9001], hostPorts: [9001]}
+
+# Admission policies. Install Kyverno first: see docs/infra/k8s-hardening.md.
+kyverno:
+  enabled: false
+
+secrets:
+  # helm: from these values, for a local demo. external-secrets: from Vault (docs/infra/secrets.md).
+  provider: helm
+  vault:
+    server: http://vault.vault.svc:8200
+    kvMount: secret
+    databaseMount: database
+    databaseRole: kp-api
+    role: kp-eso
+    staticRefresh: 1h
+    # Shorter than the role's 1h default_ttl.
+    dynamicRefresh: 30m
+
+# Celery worker for catalog ingest. Off: jobs run inside the API process.
+worker:
+  enabled: false
+  replicas: 1
+  concurrency: 2
 
 resources:
+  worker:
+    requests:
+      cpu: 100m
+      memory: 256Mi
   api:
     requests:
       cpu: 100m

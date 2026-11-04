@@ -1,13 +1,13 @@
-﻿# Диаграммы Knowledge Platform
+# Knowledge Platform Diagrams
 
-| Путь | Содержимое |
+| Path | Contents |
 |------|------------|
-| [`model/`](model/) | Structurizr DSL + source-map (модель C4, не Mermaid) |
-| [`sources/manual/`](sources/manual/) | Ручные Mermaid (C4 views, sequence, data-flow, ER, target) |
+| [`model/`](model/) | Structurizr DSL + source-map (C4 model, not Mermaid) |
+| [`sources/manual/`](sources/manual/) | Hand-written Mermaid (C4 views, sequence, data-flow, ER, target) |
 | [`sources/gen/`](sources/gen/) | Generated Mermaid / manifests (LangGraph, Pyreverse, Helm) |
-| [`images/`](images/) | **Канонические SVG** (из `manual/` + `gen/`) |
+| [`images/`](images/) | **Canonical SVGs** (from `manual/` + `gen/`) |
 
-| Диаграмма | SVG | Origin |
+| Diagram | SVG | Origin |
 |-----------|-----|--------|
 | C4 L1 Context | [images/c4-context.svg](images/c4-context.svg) | manual |
 | C4 L2 Containers | [images/c4-container.svg](images/c4-container.svg) | manual |
@@ -22,7 +22,7 @@
 | K8s topology (desktop, Mermaid) | [images/k8s-topology-desktop.svg](images/k8s-topology-desktop.svg) | gen |
 | K8s topology (KubeDiagrams icons) | [images/k8s-topology-desktop-kube.svg](images/k8s-topology-desktop-kube.svg) | gen |
 
-Сборка: [`docs/DIAGRAMS.md`](../../docs/DIAGRAMS.md)
+Build: [`docs/DIAGRAMS.md`](../../docs/DIAGRAMS.md)
 
 ```powershell
 python tools/diagrams/build.py --profile desktop

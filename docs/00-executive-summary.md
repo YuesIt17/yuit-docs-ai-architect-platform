@@ -1,40 +1,40 @@
-﻿# Резюме для защиты — RetailPartnerX Knowledge Platform
+﻿# Executive Summary — RetailPartnerX Knowledge Platform
 
-**Заказчик:** RetailPartnerX — крупный FMCG-ритейлер.  
-**Роль:** Platform Engineer / AI Architect — Internal Developer Platform для AI knowledge workloads.
+**Customer:** RetailPartnerX, a large FMCG retailer.  
+**Role:** Platform Engineer / AI Architect, building an Internal Developer Platform for AI knowledge workloads.
 
-## Проблема
+## Problem
 
-Неструктурированные знания (политики, выдержки НПА, сканы этикеток) приводят к галлюцинациям и потере контекста. Чувствительные promo/margin документы не должны утекать между ролями.
+Unstructured knowledge (policies, regulatory excerpts, label scans) leads to hallucinations and lost context. Sensitive promo and margin documents must not leak between roles.
 
-## Решение
+## Solution
 
-On-premise **GraphRAG Knowledge Platform**:
+An on-premises **GraphRAG Knowledge Platform**:
 
-- **Control Plane:** AuthZ/RBAC, Input/Output Guardrails, LangGraph, ACL на retrieval
-- **Data Plane:** Neo4j, Qdrant (compose + in-memory MVP), MinIO, Postgres, Ollama/MOCK
-- **Модальности:** text chat + распознавание этикеток (PDF/PNG/…)
-- **Handoff:** JSON в MinIO `exports/` + outbox `label.recognized` → PIM/ERP
+- **Control Plane:** AuthZ/RBAC, Input/Output Guardrails, LangGraph, ACL at retrieval
+- **Data Plane:** Neo4j, Qdrant (Compose + in-memory MVP), MinIO, Postgres, Ollama/MOCK
+- **Modalities:** text chat + label recognition (PDF/PNG/…)
+- **Handoff:** JSON in MinIO `exports/` + `label.recognized` outbox → PIM/ERP
 
-## Преемственность
+## Continuity
 
-Развитие кейса из `yuit-docs-ai-architect` (hw-1…hw-10) и pointer [hw-11](../../yuit-docs-ai-architect/hw-11/): dual KB, LangGraph, security layer, inference sizing, sync/async, FinOps/Model Card. **Инверсия hw-4:** self-hosted Ollama вместо SaaS.
+This project develops the case from `yuit-docs-ai-architect` (hw-1…hw-10) and the [hw-11](../../yuit-docs-ai-architect/hw-11/) pointer: dual KB, LangGraph, security layer, inference sizing, sync/async, FinOps/Model Card. **Reversal of hw-4:** self-hosted Ollama instead of SaaS.
 
-## Доказательства на демо
+## What the demo proves
 
-1. `category_manager` не получает secret promo; `compliance_officer` — получает  
-2. Upload этикетки → OCR extract → policy citations  
+1. `category_manager` does not receive the secret promo; `compliance_officer` does  
+2. Label upload → OCR extract → policy citations  
 3. Grafana LGTM (Tempo/Loki/Prom) + OTel + Neo4j Browser  
 
-## Карта артефактов
+## Artifact map
 
-| Раздел | Путь |
-| ------ | ---- |
-| Задание / критерии | [README](../README.md) |
-| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagrams SVG](../architecture/diagrams/images/) · [DIAGRAMS.md](DIAGRAMS.md) |
+| Section | Path |
+| ------- | ---- |
+| Assignment / criteria | [README](../README.md) |
+| C4 / Deployment / Sequence / ER / Data Flow | [architecture/](../architecture/) · [diagram SVGs](../architecture/diagrams/images/) · [DIAGRAMS.md](DIAGRAMS.md) |
 | Capacity Planning (VRAM / CPU / RAM) | [capacity-planning.md](capacity-planning.md) |
 | ADR | [adr/](../architecture/adr/) |
-| Демо / нагрузка | [AI_PLATFORM_VIDEO_SCRIPT](../tasks/AI_PLATFORM_VIDEO_SCRIPT.md) · [load-report.md](load-report.md) · [evidence/](evidence/) |
+| Demo / load | [video](https://www.youtube.com/watch?v=y2_mY9_ceuU) (Russian narration) · [load-report.md](load-report.md) · [evidence/](evidence/) |
 | Model Card | [model-card.md](model-card.md) |
 
-Учебный MVP: runtime GraphRAG — in-memory mirror онтологии; Neo4j/Qdrant в compose для Browser и sync.
+Learning MVP: the GraphRAG runtime uses an in-memory mirror of the ontology; Neo4j/Qdrant run in Compose for the Browser and sync.

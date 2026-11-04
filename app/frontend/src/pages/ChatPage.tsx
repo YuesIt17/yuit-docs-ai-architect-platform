@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { chat, chatStream, type ChatResponse, type Citation } from "../api/client";
+import { chat, chatStream, type ChatResponse, type Citation, newSessionId } from "../api/client";
 import { useApp } from "../state/AppContext";
 
 type Msg = {
@@ -11,10 +11,11 @@ type Msg = {
 
 export function ChatPage() {
   const { role, llm } = useApp();
-  const [input, setInput] = useState("Какие аллергены у FreshFarm oats?");
+  const [input, setInput] = useState("What allergens are in FreshFarm oats?");
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(false);
   const [useStream, setUseStream] = useState(true);
+  const [sessionId, setSessionId] = useState(newSessionId);
   const [error, setError] = useState<string | null>(null);
 
   async function send() {
@@ -29,6 +30,7 @@ export function ChatPage() {
         await chatStream(
           role,
           userMsg.text,
+          sessionId,
           (m) => {
             meta = m;
           },
@@ -50,7 +52,7 @@ export function ChatPage() {
           },
         );
       } else {
-        const data: ChatResponse = await chat(role, userMsg.text, false);
+        const data: ChatResponse = await chat(role, userMsg.text, sessionId, false);
         setMsgs((prev) => [
           ...prev,
           {
@@ -73,11 +75,17 @@ export function ChatPage() {
     }
   }
 
+  function newChat() {
+    setMsgs([]);
+    setError(null);
+    setSessionId(newSessionId());
+  }
+
   return (
     <div className="grid-2">
       <section className="panel stack">
         <h2>GraphRAG Chat</h2>
-        <p>Запросы идут в Control Plane API → активный LLM ({llm?.provider ?? "…"}).</p>
+        <p>Requests go to the Control Plane API → active LLM ({llm?.provider ?? "…"}).</p>
         <div className="stack">
           {msgs.map((m, i) => (
             <div key={i} className={`msg ${m.role}`}>
@@ -114,6 +122,9 @@ export function ChatPage() {
             <input type="checkbox" checked={useStream} onChange={(e) => setUseStream(e.target.checked)} />
             SSE stream
           </label>
+          <button className="secondary" onClick={newChat} disabled={loading}>
+            New chat
+          </button>
           <button onClick={() => void send()} disabled={loading}>
             {loading ? "Thinking…" : "Ask"}
           </button>
@@ -122,14 +133,14 @@ export function ChatPage() {
       </section>
       <aside className="panel stack">
         <h3>Try ACL</h3>
-        <p>Как manager спросите про «Q4 Closed Promo Margin 42%» — secret не должен утечь. Как compliance — должен.</p>
+        <p>As manager, ask about “Q4 Closed Promo Margin 42%”: the secret must not leak. As compliance, it should be returned.</p>
         <button
           className="secondary"
-          onClick={() => setInput("Расскажи про Q4 Closed Promo Margin Playbook и маржу 42%")}
+          onClick={() => setInput("Tell me about the Q4 Closed Promo Margin Playbook and the 42% margin")}
         >
           Secret promo prompt
         </button>
-        <button className="secondary" onClick={() => setInput("Что говорит политика про аллергены gluten и nuts?")}>
+        <button className="secondary" onClick={() => setInput("What does the policy say about gluten and nuts allergens?")}>
           Allergen policy prompt
         </button>
       </aside>

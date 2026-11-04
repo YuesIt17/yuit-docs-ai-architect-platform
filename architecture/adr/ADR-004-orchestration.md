@@ -1,43 +1,51 @@
 ﻿# ADR-004: Orchestration (LangGraph)
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-Курс запрещает линейные цепочки («скрипт из вызовов LLM»). Нужен stateful агент: guard → route → retrieve/label → synthesize → output guard, с ветвлениями. Это **фиксированная state machine**, а не автономный ReAct / Plan-and-Solve.
+The course rules out linear chains (a script of LLM calls). The platform needs a stateful agent with branching: guard → route → retrieve/label → synthesize → output guard. This is a **fixed state machine**, not autonomous ReAct / Plan-and-Solve.
 
-## Критерии выбора
+## Selection criteria
 
-- Явная state machine / граф состояний
-- Ветвление chat / label / blocked
-- Наблюдаемость шагов (tracing)
-- Continuity с hw-3 (Supervisor / Policy Analyst)
+- Explicit state machine / state graph
+- Chat / label / blocked branching
+- Step observability (tracing)
+- Continuity with hw-3 (Supervisor / Policy Analyst)
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| **LangGraph** | Stateful graph, checkpointing ecosystem | Кривая обучения |
-| LlamaIndex Workflows | Удобен для RAG | Меньше «agent loop» в кейсе |
-| Linear LangChain LCEL | Просто | **Не принимается** критерием курса |
-| CrewAI multi-agent | Роли из коробки | Тяжелее для MVP ACL path |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| **LangGraph** | Stateful graph, checkpointing ecosystem | Learning curve |
+| LlamaIndex Workflows | Convenient for RAG | Weaker agent loop for this case |
+| Linear LangChain LCEL | Simple | **Rejected** by the course criterion |
+| CrewAI multi-agent | Roles out of the box | Too heavy for the MVP ACL path |
 
-## Решение
+## Decision
 
 **LangGraph** state machine:
 
-`guard_input → route → (graph_retrieve → vector_retrieve [→ optional refine] | label_recognize → policy_check) → synthesize → guard_output`
+`guard_input → route → (contextualize → graph_retrieve → vector_retrieve [→ optional refine] | label_recognize → policy_check) → synthesize → guard_output → commit_turn`
 
-`graph_retrieve` передаёт `graph_doc_ids` в `vector_retrieve` (без повторного «театрального» resolve). Опциональный bounded refine (`RETRIEVAL_REFINE_MAX`). Checkpoint / session memory — planned.
+`graph_retrieve` passes `graph_doc_ids` to `vector_retrieve`, so there is no redundant second resolve. Refinement is optional and bounded (`RETRIEVAL_REFINE_MAX`).
 
-## Последствия
+**Session memory** uses a LangGraph checkpointer: PostgreSQL in `live` mode, in-process otherwise.
 
-- (+) Соответствие критерию «не линейный скрипт»; явные точки ACL/guard
-- (−) Сложнее отладка графа; checkpoint persistence — опционально после MVP
+- A thread is keyed by `role:user:session`, so reusing a session id cannot read another user's or role's history.
+- Each turn stores its source document ids. Turns whose sources are gone or no longer accessible are dropped before they reach the LLM.
+- A short question or one with a pronoun is searched together with the previous question.
+- Dialog turns skip the semantic cache, because the question alone no longer identifies the answer.
+- Only the dialog persists: chunk text is cleared at the end of the turn, and all other state resets at the start of the next one.
 
-## Ссылки
+## Consequences
+
+- (+) Meets the "not a linear script" criterion; explicit ACL/guard points
+- (−) Harder graph debugging; checkpoints have no retention policy yet, so old threads must be purged by an operator
+
+## References
 
 - `app/backend/kp/agent/graph.py`, `app/backend/kp/agent/state.py`
 - Sequence: [sequence-chat.md](../docs/sequence-chat.md)

@@ -1,0 +1,63 @@
+name: quality
+
+on:
+  pull_request:
+    paths:
+      - "app/backend/**"
+      - "app/datasets/**"
+      - ".github/workflows/quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/backend/**"
+      - "app/datasets/**"
+      - ".github/workflows/quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kp
+          POSTGRES_PASSWORD: kp
+          POSTGRES_DB: knowledge
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kp"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      OTEL_SDK_DISABLED: "true"
+      TEST_REDIS_URL: redis://localhost:6379/0
+      TEST_POSTGRES_DSN: postgresql://kp:kp@localhost:5432/knowledge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,ocr,queue]"
+      - run: python -m pytest -q
+      - name: RAG eval gate
+        run: python -m evals.run_eval --report eval-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-report
+          path: app/backend/eval-report.json

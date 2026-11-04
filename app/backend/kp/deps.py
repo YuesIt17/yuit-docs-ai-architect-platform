@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 
 from kp.agent.graph import KnowledgeAgent
+from kp.application.jobs import CeleryJobQueue, InlineJobQueue
 from kp.config import Settings, get_settings
 from kp.infrastructure.cache import build_semantic_cache
 from kp.infrastructure.embeddings import EmbeddingService
@@ -43,7 +44,16 @@ class AppContainer:
         self.vision = VisionService(settings)
         self.cache = build_semantic_cache(settings, self.embeddings)
         self.agent = KnowledgeAgent(self.store, self.llm)
+        self.jobs = self._build_job_queue(settings)
         self._seeded = False
+
+    def _build_job_queue(self, settings: Settings):
+        if settings.job_backend == "celery":
+            import redis
+
+            self.job_redis = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+            return CeleryJobQueue(self.job_redis)
+        return InlineJobQueue(self.store)
 
 
 @lru_cache

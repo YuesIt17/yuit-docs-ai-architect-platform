@@ -1,5 +1,5 @@
 # Submission profile: OpenAI-compatible vLLM (GPU). Desktop Ollama remains values-desktop-compose-ollama.yaml.
-# Without an NVIDIA GPU on the host: keep this file for static review — status "runtime не проверен".
+# Without an NVIDIA GPU on the host: keep this file for static review — status "runtime not verified".
 llm:
   provider: VLLM
   baseUrl: http://host.docker.internal:8000/v1
@@ -23,5 +23,8 @@ persistence:
 
 networkPolicy:
   enabled: true
+  # vLLM and Tempo run outside the cluster on the host network.
+  apiEgress:
+    - {cidr: 192.168.65.0/24, ports: [8000, 4318]}
 
 # Secrets stay in Secret object (kp-secrets); do not paste production credentials here.

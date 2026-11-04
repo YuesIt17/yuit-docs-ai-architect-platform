@@ -14,7 +14,12 @@ RUN pip install --no-cache-dir \
     prometheus-client \
     opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp \
     opentelemetry-instrumentation-fastapi \
-    pillow pypdfium2
+    pillow pypdfium2 \
+    "langgraph-checkpoint-postgres>=3.2,<4" "psycopg[binary,pool]>=3.2" "celery[redis]>=5.5,<6"
+
+# OCR without apt: rapidocr pulls opencv-python, which needs libGL, so the headless build replaces it.
+RUN pip install --no-cache-dir opencv-python-headless onnxruntime pyclipper shapely pyyaml six tqdm numpy \
+    && pip install --no-cache-dir --no-deps "rapidocr-onnxruntime>=1.2,<2"
 
 COPY app/backend/kp ./kp
 COPY app/backend/pipelines ./pipelines
@@ -22,5 +27,8 @@ COPY app/backend/scripts ./scripts
 COPY app/datasets /datasets
 
 ENV DATASETS_DIR=/datasets
+
+# A numeric user lets Kubernetes verify runAsNonRoot.
+USER 10001
 EXPOSE 8080
 CMD ["uvicorn", "kp.main:app", "--host", "0.0.0.0", "--port", "8080"]

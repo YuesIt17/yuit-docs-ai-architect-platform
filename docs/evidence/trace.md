@@ -1,17 +1,17 @@
-# Evidence: трассы Tempo
+# Evidence: Tempo Traces
 
-## Сессия захвата (2026-10-26, hybrid-up)
+## Capture session (2026-10-26, hybrid-up)
 
-| Поле | Значение |
+| Field | Value |
 | ---- | -------- |
-| Стек | K8s API (ns `kp`) + Compose Tempo `:3200` / OTLP `:4318` |
-| LLM | Ollama `qwen2.5:0.5b` через `host.docker.internal:11434` |
+| Stack | K8s API (ns `kp`) + Compose Tempo `:3200` / OTLP `:4318` |
+| LLM | Ollama `qwen2.5:0.5b` through `host.docker.internal:11434` |
 | **Trace ID** | `ca1a2261f25b8dbca04cae601bb671d1` |
-| Корневой span | `POST /v1/chat` |
-| Grafana | Explore → Tempo → вставить Trace ID |
+| Root span | `POST /v1/chat` |
+| Grafana | Explore → Tempo → paste the Trace ID |
 | API | `http://127.0.0.1:3200/api/traces/ca1a2261f25b8dbca04cae601bb671d1` |
 
-## Наблюдаемые span (эта трасса)
+## Observed spans (this trace)
 
 | Span |
 | ---- |
@@ -23,15 +23,15 @@
 | `rerank` |
 | `output_guard` |
 
-> Примечание: span `llm` может отсутствовать на коротких/упавших путях synthesize; другие chat-трассы тоже есть под сервисом `kp-api` в поиске Tempo. Имена доменных span — из `kp/observability/spans.py` + agent graph.
+> Note: the `llm` span may be absent on short or failed synthesize paths; other chat traces also appear under the `kp-api` service in Tempo search. Domain span names come from `kp/observability/spans.py` + the agent graph.
 
-## Как обновить
+## How to update
 
 ```powershell
-# После одного chat в UI:
+# After one chat in the UI:
 curl.exe -s "http://127.0.0.1:3200/api/search?limit=20"
-# Выбрать трассу с rootTraceName POST /v1/chat, затем:
+# Pick a trace with rootTraceName POST /v1/chat, then:
 curl.exe -s "http://127.0.0.1:3200/api/traces/<TRACE_ID>"
 ```
 
-Или Grafana Explore → Tempo → Search `service.name=kp-api`.
+Or Grafana Explore → Tempo → Search `service.name=kp-api`.

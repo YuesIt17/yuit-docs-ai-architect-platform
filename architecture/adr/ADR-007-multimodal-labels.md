@@ -1,40 +1,48 @@
 ﻿# ADR-007: Multimodal Label Recognition
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-RetailPartnerX обрабатывает сканы этикеток (PDF/PNG и др.): нужно извлечь структуру, связать с политиками через GraphRAG и отдать handoff в PIM/ERP.
+RetailPartnerX processes label scans (PDF, PNG and others). The platform must extract structure, link it to policies through GraphRAG and hand off to PIM/ERP.
 
-## Критерии выбора
+## Selection criteria
 
-- Поддержка распространённых форматов этикеток
-- Разделение raw / recognized / export в object store
-- CI без тяжёлого OCR (fixtures / mock)
-- Политический check после extract
+- Support for common label formats
+- Separate raw / recognized / export areas in the object store
+- CI without heavy OCR (fixtures / mock)
+- Policy check after extraction
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| Только VLM end-to-end | Меньше пайплайна | Дорого по GPU, хуже audit |
-| **Detect → rasterize → OCR/VLM → JSON → GraphRAG** | Контроль шагов | Больше компонентов |
-| Ручная разметка | Качество | Не масштабируется |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| End-to-end VLM only | Shorter pipeline | Expensive on GPU, weaker audit |
+| **Detect → rasterize → OCR/VLM → JSON → GraphRAG** | Control over each step | More components |
+| Manual annotation | Quality | Does not scale |
 
-## Решение
+## Decision
 
-Принимать **PDF, PNG, JPEG, WEBP, TIFF**. Пайплайн: MIME → rasterize PDF → **OCR provider=MOCK** extract → structured JSON → policy_check (GraphRAG). Raw + recognized в MinIO. CI — детерминированные fixtures.
+Accept **PDF, PNG, JPEG, WEBP, TIFF**. Pipeline: MIME → rasterize PDF → OCR → structured JSON → policy_check (GraphRAG). Raw and recognized objects are stored in MinIO.
 
-**Реальный OCR** сложных сканов/чертежей — **вне текущего MVP** (known deviation; требует отдельного согласования). API/UI явно возвращают `ocr_provider=MOCK`. Не позиционировать mock как распознавание реального документа.
+`OCR_PROVIDER` selects the engine:
 
-## Последствия
+- **RAPIDOCR:** PaddleOCR models on ONNX Runtime. The 14 MB of models ship inside the package, so it runs on CPU with no downloads, which fits the closed perimeter.
+- **MOCK** (default): a deterministic pipeline contract for demos and CI without the OCR dependency.
 
-- (+) Демо контракта multimodal path; handoff через exports/outbox
-- (−) Нет prod OCR accuracy; соответствие общей цели курса по OCR — риск до согласования
+An unknown provider fails at startup rather than silently falling back to the mock. The API and UI return the active `ocr_provider`, and MOCK responses carry a warning that nothing was read.
 
-## Ссылки
+OCR text is untrusted input: PII is redacted, and prompts treat it as data rather than instructions.
+
+## Consequences
+
+- (+) Demonstrates the multimodal path contract; handoff through exports/outbox
+- (+) Reads real labels locally, including blocks in non-linear layouts
+- (−) Accuracy is verified only on generated labels; real photos with glare or curved packaging may need a vision model such as Qwen2-VL
+
+## References
 
 - Sequence: [sequence-label.md](../docs/sequence-label.md)
 - ADR-009 (MinIO prefixes)

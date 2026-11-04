@@ -1,20 +1,20 @@
-﻿# C4 Level 2 — Контейнеры
+# C4 Level 2 — Containers
 
-**Схема:** [c4-container.svg](../diagrams/images/c4-container.svg)
+**Diagram:** [c4-container.svg](../diagrams/images/c4-container.svg)
 
-## Назначение
+## Purpose
 
-Микросервисная (контейнерная) декомпозиция: **Control Plane** (auth, guards, оркестратор) отделён от **Data Plane** (БД, объектное хранилище, LLM Serving). Сети compose: `edge` / `control` / `data`.
+Microservice (container) decomposition: the **Control Plane** (auth, guards, orchestrator) is separated from the **Data Plane** (databases, object store, LLM Serving). Compose networks: `edge` / `control` / `data`.
 
-## Контейнеры
+## Containers
 
-| Контейнер | Ответственность |
+| Container | Responsibility |
 | --------- | --------------- |
 | API Edge (FastAPI) | Ingress, OpenAPI, SSE |
-| AuthN / RBAC | Роли и проверка токена (демо) |
+| AuthN / RBAC | Roles and token validation (demo) |
 | Input / Output Guardrails | Injection, PII, ACL leak |
 | LangGraph Orchestrator | Stateful agent loop |
-| Semantic Cache (Redis) | Кэш ответов после Output Guard |
+| Semantic Cache (Redis) | Answer cache after the Output Guard |
 | Neo4j / Qdrant / Postgres / MinIO | Graph, vectors, audit, blobs |
 | Ollama / MOCK | On-prem LLM Serving |
 
@@ -46,4 +46,4 @@ flowchart TB
   Orch --> PG
 ```
 
-См. [ADR-004](adr/ADR-004-orchestration.md), [ADR-005](adr/ADR-005-security.md).
+See [ADR-004](adr/ADR-004-orchestration.md), [ADR-005](adr/ADR-005-security.md).

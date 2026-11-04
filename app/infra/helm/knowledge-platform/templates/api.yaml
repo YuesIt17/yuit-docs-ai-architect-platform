@@ -18,10 +18,12 @@ spec:
         app: api
         kp.retailpartnerx.io/plane: control
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 10001) | nindent 6 }}
       containers:
         - name: api
           image: {{ .Values.images.api }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           ports:
             - containerPort: {{ .Values.api.port }}
           env:
@@ -33,6 +35,8 @@ spec:
               value: {{ .Values.llm.baseUrl | quote }}
             - name: STORE_BACKEND
               value: {{ .Values.api.env.STORE_BACKEND | quote }}
+            - name: OCR_PROVIDER
+              value: {{ .Values.api.env.OCR_PROVIDER | default "MOCK" | quote }}
             - name: EMBEDDING_PROVIDER
               value: {{ .Values.api.env.EMBEDDING_PROVIDER | quote }}
             - name: DEMO_AUTH_ENABLED
@@ -49,8 +53,22 @@ spec:
               value: redis://redis:6379/0
             - name: MINIO_ENDPOINT
               value: minio:9000
+            {{- if eq .Values.secrets.provider "external-secrets" }}
+            - name: POSTGRES_DSN_FILE
+              value: /var/run/kp-postgres/dsn
+            {{- else }}
             - name: POSTGRES_DSN
-              value: postgresql+asyncpg://{{ .Values.postgres.user }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}
+              valueFrom:
+                secretKeyRef:
+                  name: kp-secrets
+                  key: POSTGRES_DSN
+            {{- end }}
+            {{- include "kp.secretEnv" . | nindent 12 }}
+            - name: JOB_BACKEND
+              value: {{ if .Values.worker.enabled }}celery{{ else }}inline{{ end }}
+            # The root filesystem is read-only; library caches go to the /tmp volume.
+            - name: HOME
+              value: /tmp
             # Compose Tempo on host; app wires OTLP/HTTP traces. Logs → Loki via Alloy (stdout JSON). Prom scrapes /metrics.
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: {{ .Values.api.env.OTEL_EXPORTER_OTLP_ENDPOINT | default "http://host.docker.internal:4318" | quote }}
@@ -66,6 +84,26 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.resources.api | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: object-store-cache
+              mountPath: /app/data
+            {{- if eq .Values.secrets.provider "external-secrets" }}
+            - name: postgres-dsn
+              mountPath: /var/run/kp-postgres
+              readOnly: true
+            {{- end }}
+      volumes:
+        {{- if eq .Values.secrets.provider "external-secrets" }}
+        - name: postgres-dsn
+          secret:
+            secretName: kp-postgres-dsn
+        {{- end }}
+        - name: tmp
+          emptyDir: {}
+        - name: object-store-cache
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

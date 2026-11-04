@@ -1,38 +1,38 @@
 ﻿# ADR-009: Object Store (MinIO / S3 API)
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-Нужно хранить сырые сканы, нормализованные растры, JSON распознавания и exports для PIM/ERP без складывания blobs в graph/SQL.
+The platform must store raw scans, normalized rasters, recognition JSON and PIM/ERP exports without putting blobs into the graph or SQL.
 
-## Критерии выбора
+## Selection criteria
 
-- S3 API on-prem
-- Разделение префиксов жизненного цикла объекта
-- Presign / outbox для downstream
-- URI-only в графе и БД
+- On-prem S3 API
+- Separate prefixes for the object lifecycle
+- Presign / outbox for downstream systems
+- URI-only references in the graph and DB
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| **MinIO** | Self-hosted S3, compose-friendly | Ops дисков |
-| Локальная ФС | Просто | Плохо для K8s / multi-node |
-| Облачный S3 | Управляемость | Нарушает air-gap narrative |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| **MinIO** | Self-hosted S3, Compose-friendly | Disk operations |
+| Local filesystem | Simple | Poor fit for K8s / multi-node |
+| Cloud S3 | Managed | Breaks the air-gap narrative |
 
-## Решение
+## Decision
 
-On-prem **MinIO** с префиксами `raw/`, `normalized/`, `recognized/`, `exports/`. Graph/DB хранят только URI. Downstream PIM/ERP — presigned GET + outbox-событие `label.recognized`.
+On-prem **MinIO** with `raw/`, `normalized/`, `recognized/`, `exports/` prefixes. The graph and DB store URIs only. Downstream PIM/ERP use a presigned GET and a `label.recognized` outbox event.
 
-## Последствия
+## Consequences
 
-- (+) Чистый handoff; соответствие data plane isolation
-- (−) Нужна политика lifecycle / GC для demo volumes
+- (+) Clean handoff; matches data plane isolation
+- (−) Needs a lifecycle / GC policy for demo volumes
 
-## Ссылки
+## References
 
 - Data Flow: [data-flow.md](../docs/data-flow.md)
 - MinIO in Helm (K8s) ports 9000/9001; Compose uses `STORE_BACKEND=memory`

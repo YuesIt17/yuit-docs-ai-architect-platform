@@ -1,39 +1,39 @@
-﻿# SRE / ops runbook (curl, kubectl, Helm, Compose)
+# SRE / ops runbook (curl, kubectl, Helm, Compose)
 
-Шпаргалка для эксплуатации **RetailPartnerX Knowledge Platform** (Docker Desktop + Helm).  
-Подробный setup (Win + Mac): [SETUP.md](SETUP.md). Инфра: [infra/](infra/). Аудит: [infra/sec-ops.md](infra/sec-ops.md) (`make sec-scan`).
+Operations cheat sheet for the **RetailPartnerX Knowledge Platform** (Docker Desktop + Helm).  
+Detailed setup (Win + Mac): [SETUP.md](SETUP.md). Infrastructure: [infra/](infra/). Audit: [infra/sec-ops.md](infra/sec-ops.md) (`make sec-scan`).
 
-**ОС:** блоки **Windows** (`curl.exe`, PowerShell `` ` ``) и **macOS** (`curl`, bash `\`). Где команды одинаковы — один блок `bash`.
+**OS:** **Windows** blocks (`curl.exe`, PowerShell `` ` ``) and **macOS** blocks (`curl`, bash `\`). Where the commands are identical, there is a single `bash` block.
 
-## Контекст и URL
+## Context and URLs
 
-| Режим | UI | API (health) |
+| Mode | UI | API (health) |
 |-------|-----|----------------|
-| **Hybrid** (рекомендуется) | http://kp.local:8088 | http://kp.local:8088/api/health |
+| **Hybrid** (recommended) | http://kp.local:8088 | http://kp.local:8088/api/health |
 
 Hosts → `127.0.0.1 kp.local`:
 
-| ОС | Файл |
+| OS | File |
 |----|------|
 | Windows | `C:\Windows\System32\drivers\etc\hosts` (admin) |
-| macOS | `/etc/hosts` (`sudo`), см. [SETUP.md](SETUP.md) |
+| macOS | `/etc/hosts` (`sudo`), see [SETUP.md](SETUP.md) |
 
-Ingress слушает **:8088** (на Windows `:80` часто занят IIS).
+Ingress listens on **:8088** (on Windows, `:80` is often taken by IIS).
 
 ---
 
-## Ollama: где живёт модель
+## Ollama: where the model lives
 
-| Где API | Где Ollama | Base URL для API |
+| API location | Ollama location | Base URL for the API |
 |---------|------------|------------------|
 | K8s `deploy/api` (hybrid) | Compose | `http://host.docker.internal:11434/v1` |
-| API на хосте + Compose ollama | Compose | `http://localhost:11434/v1` |
+| API on the host + Compose ollama | Compose | `http://localhost:11434/v1` |
 
-В UI на странице LLM отображается тот же URL — это **не** адрес для браузера, а то, куда **API** стучится в Ollama. Для Docker Desktop K8s + Compose-Ollama `host.docker.internal` — правильный хост; `localhost` в Apply сломает probe (localhost внутри пода ≠ Ollama на хосте).
+The LLM page in the UI shows the same URL. It is **not** an address for the browser; it is where the **API** calls Ollama. For Docker Desktop K8s + Compose Ollama, `host.docker.internal` is the correct host; `localhost` in Apply breaks the probe (localhost inside the pod is not Ollama on the host).
 
-Модель **не** попадает в поды при `ollama pull` — в контейнере Compose. После смены env в Helm или Apply в UI достаточно **перезапустить только `deploy/api`** (или `helm upgrade`), не весь namespace.
+`ollama pull` does **not** put the model into the pods; it goes into the Compose container. After changing env in Helm or using Apply in the UI, it is enough to **restart only `deploy/api`** (or run `helm upgrade`), not the whole namespace.
 
-Поднять Ollama и скачать модель:
+Start Ollama and download the model:
 
 **Windows**
 
@@ -49,7 +49,7 @@ make llm-ollama
 curl http://127.0.0.1:11434/v1/models
 ```
 
-Подключить API в K8s к Compose-Ollama (Helm overlay):
+Connect the API in K8s to Compose Ollama (Helm overlay):
 
 **Windows**
 
@@ -75,22 +75,22 @@ kubectl -n kp rollout restart deploy/api
 kubectl -n kp rollout status deploy/api --timeout=120s
 ```
 
-Полный hybrid (без дублей Compose↔K8s):
+Full hybrid (no Compose↔K8s duplicates):
 
-| ОС | Команда |
+| OS | Command |
 |----|---------|
-| Windows | `make demo` или `.\app\scripts\hybrid\hybrid-up.ps1` |
-| macOS | `make demo` или `bash app/scripts/hybrid/hybrid-up.sh` |
+| Windows | `make demo` or `.\app\scripts\hybrid\hybrid-up.ps1` |
+| macOS | `make demo` or `bash app/scripts/hybrid/hybrid-up.sh` |
 
-In-cluster Ollama убран из Helm — только Compose.
+In-cluster Ollama was removed from Helm; it runs only in Compose.
 
 ---
 
-## curl — smoke и API
+## curl: smoke tests and API
 
-### Compose (прямой API)
+### Compose (direct API)
 
-**Windows:** `curl.exe` · **macOS:** `curl` (ниже — macOS; на Windows замените на `curl.exe`).
+**Windows:** `curl.exe` · **macOS:** `curl` (the commands below are for macOS; on Windows, replace with `curl.exe`).
 
 ```bash
 curl -s http://127.0.0.1:8080/health
@@ -121,11 +121,11 @@ curl -s -H "Host: kp.local" http://127.0.0.1:8088/api/v1/llm/health
 
 Prometheus targets: http://127.0.0.1:9090/targets (`kp-api-k8s` UP).  
 Grafana: http://127.0.0.1:3000 → **Knowledge Platform / KP Overview** + Explore Tempo/Loki.  
-Tempo: http://127.0.0.1:3200 → service `kp-api` после chat (UI через Grafana Explore).  
+Tempo: http://127.0.0.1:3200 → service `kp-api` after chat (UI through Grafana Explore).  
 Loki: http://127.0.0.1:3100 → JSON logs API (Alloy).  
-Схема: [ADR-006](../architecture/adr/ADR-006-observability.md).
+Diagram: [ADR-006](../architecture/adr/ADR-006-observability.md).
 
-Ожидание в `/health`: `llm_provider`, `llm_reachable`, `store_backend`.
+Expected in `/health`: `llm_provider`, `llm_reachable`, `store_backend`.
 
 ### Ollama (Compose)
 
@@ -134,9 +134,9 @@ curl -s http://127.0.0.1:11434/v1/models
 curl -s http://127.0.0.1:11434/api/tags
 ```
 
-### Runtime LLM config (Apply без UI)
+### Runtime LLM config (Apply without the UI)
 
-Роли: `Authorization: Bearer manager` или `Bearer compliance`.
+Roles: `Authorization: Bearer manager` or `Bearer compliance`.
 
 **Windows (Compose)**
 
@@ -176,7 +176,7 @@ curl -s -X PUT http://127.0.0.1:8088/api/v1/llm/config \
   -d '{"provider":"OLLAMA","base_url":"http://host.docker.internal:11434/v1","model":"qwen2.5:0.5b"}'
 ```
 
-> Apply в рантайме не меняет env пода — после `helm upgrade` с новым `LLM_*` перезапуск `deploy/api` подхватит values.
+> Apply at runtime does not change the pod's env; after `helm upgrade` with new `LLM_*` values, restarting `deploy/api` picks them up.
 
 ### Observability (Compose) + MinIO (K8s)
 
@@ -210,7 +210,7 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000/minio/health/live
 
 ## kubectl
 
-Одинаково на Windows и macOS:
+The same on Windows and macOS:
 
 ```bash
 kubectl config use-context docker-desktop
@@ -234,7 +234,7 @@ kubectl -n kp rollout restart deploy/api
 kubectl -n kp rollout status deploy/api --timeout=120s
 kubectl -n kp rollout restart deploy/frontend
 
-# port-forward (обход ingress)
+# port-forward (bypasses ingress)
 kubectl -n kp port-forward svc/api 8080:8080
 kubectl -n kp port-forward svc/frontend 5173:80
 ```
@@ -285,39 +285,39 @@ docker compose -f app/infra/docker-compose.yml --profile obs --profile llm ps
 docker compose -f app/infra/docker-compose.yml logs ollama --tail=50
 ```
 
-Pull модели: Windows `.\app\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b` · macOS `bash app/scripts/ollama/ollama-pull.sh qwen2.5:0.5b`
+Model pull: Windows `.\app\scripts\ollama\ollama-pull.ps1 -Model qwen2.5:0.5b` · macOS `bash app/scripts/ollama/ollama-pull.sh qwen2.5:0.5b`
 
 ---
 
-## Браузер vs curl (502 / proxy)
+## Browser vs curl (502 / proxy)
 
-Если **curl** к `127.0.0.1:8088` OK, а Chrome — 502, проверьте системный прокси (например Hiddify). Добавьте `kp.local` и `127.0.0.1` в bypass / ProxyOverride.
+If **curl** to `127.0.0.1:8088` works but Chrome returns 502, check the system proxy (for example Hiddify). Add `kp.local` and `127.0.0.1` to the bypass list / ProxyOverride.
 
 ---
 
-## Быстрый чеклист после изменений LLM
+## Quick checklist after LLM changes
 
-1. `curl` Ollama `:11434/v1/models` → 200, модель в списке  
-2. `helm upgrade` с `values-desktop-compose-ollama.yaml` **или** PUT `/v1/llm/config`  
-3. `kubectl -n kp rollout restart deploy/api` (если меняли Helm env)  
+1. `curl` Ollama `:11434/v1/models` → 200, model is listed  
+2. `helm upgrade` with `values-desktop-compose-ollama.yaml` **or** PUT `/v1/llm/config`  
+3. `kubectl -n kp rollout restart deploy/api` (if the Helm env changed)  
 4. `curl` `/api/health` → `llm_provider=OLLAMA`, `llm_reachable=true`  
-5. UI Chat → ответ с `model_uri` не `mock://`
+5. UI Chat → answer whose `model_uri` is not `mock://`
 
-## Почему чат «отвечает странно»
+## Why the chat may answer oddly
 
-- **`qwen2.5:0.5b`** — крошечная модель для ноутбука; связность/стиль слабые. Качество демо выше на MOCK или 1.5b+.
-- GraphRAG отвечает **только из seed KB** (`datasets/seed`). Нет факта в базе → «недостаточно контекста», а не общие знания модели.
-- Раньше MOCK-embeddings всегда отдавали top‑5 даже по мусорному запросу; теперь фильтр по lexical overlap + score floor.
-- Хорошие демо-вопросы: FreshFarm / oats / gluten / nuts / творог / молоко / allergen policy / secret promo (по роли).
+- **`qwen2.5:0.5b`** is a tiny laptop model with weak coherence and style. Demo quality is higher on MOCK or 1.5b+.
+- GraphRAG answers **only from the seed KB** (`datasets/seed`). If a fact is not in the base, you get "insufficient context", not the model's general knowledge.
+- MOCK embeddings used to return the top 5 even for a garbage query; a lexical overlap filter + score floor now handle this.
+- Good demo questions: FreshFarm / oats / gluten / nuts / cottage cheese / milk / allergen policy / secret promo (by role).
 
-## Качество ответов чата (не «обучение»)
+## Chat answer quality (this is not training)
 
-Модель **не дообучается** на KB. GraphRAG: retrieval → промпт → `qwen2.5:0.5b` (tiny, для ноутбука).
+The model is **not trained further** on the KB. GraphRAG: retrieval → prompt → `qwen2.5:0.5b` (tiny, for a laptop).
 
-| Симптом | Почему |
+| Symptom | Why |
 |---------|--------|
-| Бред / «Возможно, вы не знаете…» + куча чужих политик | Раньше MOCK-embeddings всегда отдавали top‑5; 0.5b «суммировал» шум. Сейчас lexical filter + score floor |
-| Нет фактов про продукт | Продукта нет в `datasets/seed` |
-| Хочется нормальный стиль | Больше модель (`1.5b`+) или MOCK для детерминированного демо |
+| Nonsense or a pile of unrelated policies | MOCK embeddings used to always return the top 5, and 0.5b summarized the noise. A lexical filter + score floor now apply |
+| No facts about a product | The product is not in `datasets/seed` |
+| You want better style | Use a larger model (`1.5b`+) or MOCK for a deterministic demo |
 
-Демо-вопросы с seed: FreshFarm / овсянка, творог / FarmSoft, аллергены gluten/nuts, ACL promo 42%.
+Demo questions with seed data: FreshFarm / oats, cottage cheese / FarmSoft, gluten/nuts allergens, ACL promo 42%.

@@ -1,12 +1,12 @@
-﻿# Data Flow — потоки данных
+# Data Flow
 
-**Схема:** [data-flow.svg](../diagrams/images/data-flow.svg)
+**Diagram:** [data-flow.svg](../diagrams/images/data-flow.svg)
 
-> Обязательный артефакт по критериям курса (анти-reject: «нет Data Flow»).
+> A mandatory artifact under the course criteria (a missing Data Flow is grounds for rejection).
 
-## Text ingest (политики / KB)
+## Text ingest (policies / KB)
 
-Seed JSON (в т.ч. RU law sample) → chunk → embed → Vector Index; параллельно узлы/рёбра в Neo4j (и in-memory mirror для MVP runtime).
+Seed JSON (including a Russian law sample) → chunk → embed → Vector Index; in parallel, nodes/edges go to Neo4j (and the in-memory mirror for the MVP runtime).
 
 ```mermaid
 flowchart LR
@@ -18,7 +18,7 @@ flowchart LR
 
 ## Label ingest + handoff
 
-Upload PDF/PNG → MinIO `raw/` → normalize/rasterize → OCR extract → `recognized/` + `exports/` → Graph + Vectors → PIM/ERP через presign / outbox `label.recognized`.
+Upload PDF/PNG → MinIO `raw/` → normalize/rasterize → OCR extract → `recognized/` + `exports/` → Graph + Vectors → PIM/ERP through presign / outbox `label.recognized`.
 
 ```mermaid
 flowchart LR
@@ -31,8 +31,8 @@ flowchart LR
   Exp --> PIM[PIM_ERP_via_presign_or_outbox]
 ```
 
-## Chat query path (кратко)
+## Chat query path (summary)
 
 Request → Input Guard → (Semantic Cache) → Graph resolve → Vector+ACL → LLM → Output Guard → Audit → SSE/JSON.
 
-См. [sequence-chat.md](sequence-chat.md).
+See [sequence-chat.md](sequence-chat.md).

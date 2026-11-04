@@ -12,7 +12,7 @@ from kp.application.audit import record_request_audit
 from kp.config import Settings
 from kp.deps import AppContainer
 from kp.domain.schemas import ChatRequest, ChatResponse, Citation
-from kp.infrastructure.cache import CacheEntry
+from kp.infrastructure.cache import CacheEntry, document_fingerprint
 from kp.observability import metrics
 from kp.observability.spans import current_trace_id, span
 from kp.security.guardrails import input_guard, output_guard
@@ -25,6 +25,11 @@ class ChatService:
     def __init__(self, container: AppContainer, settings: Settings):
         self.c = container
         self.settings = settings
+
+    @staticmethod
+    def thread_id(principal: Principal, session_id: str) -> str:
+        """Bind a dialog to its owner: reusing an id cannot read another user's or role's history."""
+        return f"{principal.role}:{principal.user_id}:{session_id}"
 
     def _cache_model_uri(self) -> str:
         return self.c.llm.get_config().model_uri
@@ -56,6 +61,17 @@ class ChatService:
                 return False
         return True
 
+    def _changed_sources(self, entry: CacheEntry) -> set[str]:
+        """Sources edited since this answer was cached. Deleted ones are handled by the ACL re-check."""
+        changed = set()
+        for doc_id in entry.source_doc_ids:
+            doc = self.c.store.documents.get(doc_id)
+            if doc is None:
+                continue
+            if entry.source_fingerprints.get(doc_id) != document_fingerprint(doc.text):
+                changed.add(doc_id)
+        return changed
+
     def _lookup_cache(self, message: str, principal: Principal) -> CacheEntry | None:
         entry = self.c.cache.get(
             message,
@@ -66,6 +82,13 @@ class ChatService:
             model_uri=self._cache_model_uri(),
         )
         if not entry:
+            return None
+        changed = self._changed_sources(entry)
+        if changed:
+            metrics.CACHE_EVICTIONS.inc(self.c.cache.evict_documents(changed))
+            self.c.cache.misses += 1
+            if self.c.cache.hits > 0:
+                self.c.cache.hits -= 1
             return None
         if not self._authorize_cached_sources(principal, entry):
             self.c.cache.misses += 1
@@ -92,6 +115,7 @@ class ChatService:
             return
         citations = state.get("citations") or []
         source_ids = [str(c.get("doc_id")) for c in citations if c.get("doc_id")]
+        documents = self.c.store.documents
         self.c.cache.put(
             message,
             principal.role,
@@ -103,6 +127,11 @@ class ChatService:
                 prompt_version=self.settings.prompt_version,
                 model_uri=self._cache_model_uri(),
                 source_doc_ids=source_ids,
+                source_fingerprints={
+                    doc_id: document_fingerprint(documents[doc_id].text)
+                    for doc_id in source_ids
+                    if doc_id in documents
+                },
             ),
         )
 
@@ -130,13 +159,14 @@ class ChatService:
         started = time.perf_counter()
         request_id = str(uuid.uuid4())
         session_id = body.session_id or str(uuid.uuid4())
+        thread = self.thread_id(principal, body.session_id) if body.session_id else None
 
         # SEC-01: Input Guard before cache lookup
         guard = input_guard(body.message)
         if not guard.ok:
             metrics.REQUESTS.labels(endpoint="chat", status="guard_deny").inc()
             denied = {
-                "answer": "Запрос отклонён input guard (подозрение на prompt injection).",
+                "answer": "Request rejected by the input guard (suspected prompt injection).",
                 "citations": [],
                 "acl_decision": "deny_input",
                 "degraded": False,
@@ -159,9 +189,15 @@ class ChatService:
             )
         message = guard.text
 
-        with span("cache", request_id=request_id, role=principal.role):
-            cached = self._lookup_cache(message, principal)
+        # A follow-up depends on the earlier turns, so the question alone cannot key a cached answer.
+        in_dialog = bool(thread and await self.c.agent.session_history(thread))
+        cached = None
+        if not in_dialog:
+            with span("cache", request_id=request_id, role=principal.role):
+                cached = self._lookup_cache(message, principal)
         if cached:
+            if thread:
+                await self.c.agent.record_turn(thread, message, cached.answer, list(cached.source_doc_ids))
             metrics.CACHE_HIT_RATE.set(self.c.cache.hit_rate)
             metrics.REQUESTS.labels(endpoint="chat", status="cache").inc()
             state = {
@@ -182,7 +218,7 @@ class ChatService:
 
         if body.stream:
             metrics.REQUESTS.labels(endpoint="chat", status="stream").inc()
-            return ("stream", self._event_stream(message, principal, request_id, session_id, started))
+            return ("stream", self._event_stream(message, principal, request_id, session_id, started, thread, in_dialog))
 
         state = await self.c.agent.arun(
             {
@@ -193,13 +229,16 @@ class ChatService:
                 "user_id": principal.user_id,
                 "errors": [],
             }
+            ,
+            thread_id=thread,
         )
         # Attach active OTel trace for audit / Loki↔Tempo correlation
         if not state.get("trace_id"):
             state["trace_id"] = current_trace_id()
         record_request_audit(self.c, self.settings, request_id, principal, state, started, "chat")
         citations = [Citation(**x) for x in state.get("citations") or []]
-        self._maybe_put_cache(message, principal, state)
+        if not in_dialog:
+            self._maybe_put_cache(message, principal, state)
         metrics.CACHE_HIT_RATE.set(self.c.cache.hit_rate)
         metrics.REQUESTS.labels(endpoint="chat", status=state.get("acl_decision", "allow")).inc()
         cfg = self.c.llm.get_config()
@@ -275,6 +314,8 @@ class ChatService:
         request_id: str,
         session_id: str,
         started: float,
+        thread: str | None,
+        in_dialog: bool,
     ) -> AsyncIterator[str]:
         state = await self.c.agent.arun(
             {
@@ -285,8 +326,11 @@ class ChatService:
                 "user_id": principal.user_id,
                 "errors": [],
             }
+            ,
+            thread_id=thread,
         )
-        self._maybe_put_cache(message, principal, state)
+        if not in_dialog:
+            self._maybe_put_cache(message, principal, state)
         cfg = self.c.llm.get_config()
         yield (
             "event: meta\ndata: "

@@ -1,14 +1,14 @@
-﻿# Sequence — сложный chat-запрос
+# Sequence — Complex Chat Request
 
-**Схема:** [sequence-chat.svg](../diagrams/images/sequence-chat.svg)
+**Diagram:** [sequence-chat.svg](../diagrams/images/sequence-chat.svg)
 
-## Назначение
+## Purpose
 
-Флоу: User → Guardrails → (cache) → Agent Loop (graph resolve → vector + ACL → LLM) → Output Guard → Response. Соответствует требованию курса Sequence Diagram.
+Flow: User → Guardrails → (cache) → Agent Loop (graph resolve → vector + ACL → LLM) → Output Guard → Response. Meets the course's Sequence Diagram requirement.
 
-## ACL-deny (критичный сценарий)
+## ACL deny (critical scenario)
 
-Если роль `category_manager` запрашивает секретный promo: vector/graph retrieve **не возвращает** secret-чанки; Output Guard дополнительно блокирует утечку маркеров вроде `42%`. Роль `compliance_officer` получает citations по secret.
+When the `category_manager` role requests the secret promo, vector/graph retrieval **does not return** secret chunks, and the Output Guard also blocks leaks of markers such as `42%`. The `compliance_officer` role receives citations from the secret document.
 
 ```mermaid
 sequenceDiagram

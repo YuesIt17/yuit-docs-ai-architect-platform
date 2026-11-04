@@ -144,7 +144,7 @@ elements:
   - id: postgres
     type: container
     status: current
-    runtime: deployed-unused
+    runtime: dialog-checkpoints
     source:
       path: app/infra/postgres/init.sql
       kind: ddl

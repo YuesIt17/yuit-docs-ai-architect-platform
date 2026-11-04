@@ -189,7 +189,7 @@ def build_inventory(profile: str = "desktop") -> dict[str, Any]:
             "compose_services": compose_services(),
             "langgraph": langgraph_inventory(),
             "gpu_profile": "pending",
-            "postgres_status": "deployed-unused",
+            "postgres_status": "dialog-checkpoints",
         }
     )
     # Fail if known secret fixture strings from chart appear (real passwords)
@@ -215,7 +215,7 @@ def build_inventory(profile: str = "desktop") -> dict[str, Any]:
         "compose_services": compose_services(),
         "langgraph": langgraph_inventory(),
         "gpu_profile": "pending",
-        "postgres_status": "deployed-unused",
+        "postgres_status": "dialog-checkpoints",
         "sanitized_manifest_sha256": hashlib.sha256(sanitized.encode()).hexdigest(),
     }
     return inv, sanitized

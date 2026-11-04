@@ -1,0 +1,79 @@
+{{- if .Values.kyverno.enabled }}
+{{- /* Requires Kyverno 1.13+ (see docs/infra/k8s-hardening.md). These block unsafe manifests at admission. */ -}}
+{{- $labels := include "kp.labels" . }}
+{{- $ns := .Values.namespace }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kp-pod-security-restricted
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  background: true
+  rules:
+    - name: restricted
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: [{{ $ns | quote }}]
+      validate:
+        failureAction: Enforce
+        podSecurity:
+          level: restricted
+          version: latest
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kp-read-only-rootfs
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  background: true
+  rules:
+    - name: read-only-rootfs
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: [{{ $ns | quote }}]
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchExpressions:
+                  - key: kp.retailpartnerx.io/writable-rootfs
+                    operator: Exists
+      validate:
+        failureAction: Enforce
+        message: "Containers need a read-only root filesystem, or a kp.retailpartnerx.io/writable-rootfs label stating why not."
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  readOnlyRootFilesystem: true
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kp-disallow-mutable-images
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  background: true
+  rules:
+    - name: no-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: [{{ $ns | quote }}]
+      validate:
+        failureAction: Enforce
+        message: "Images must use an explicit tag other than latest."
+        pattern:
+          spec:
+            containers:
+              - image: "*:* & !*:latest"
+{{- end }}

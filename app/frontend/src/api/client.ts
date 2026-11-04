@@ -113,15 +113,22 @@ export async function probeLlm(role: RoleKey): Promise<LLMConfig> {
   return res.json();
 }
 
+/** crypto.randomUUID needs a secure context, and the demo runs on plain http://kp.local. */
+export function newSessionId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export async function chat(
   role: RoleKey,
   message: string,
+  sessionId: string,
   stream = false,
 ): Promise<ChatResponse> {
   const res = await fetch(`${API_BASE}/v1/chat`, {
     method: "POST",
     headers: headers(role, true),
-    body: JSON.stringify({ message, stream }),
+    body: JSON.stringify({ message, session_id: sessionId, stream }),
   });
   if (!res.ok) await parseError(res);
   return res.json();
@@ -130,13 +137,14 @@ export async function chat(
 export async function chatStream(
   role: RoleKey,
   message: string,
+  sessionId: string,
   onMeta: (meta: Record<string, unknown>) => void,
   onFinal: (data: ChatResponse) => void,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/v1/chat`, {
     method: "POST",
     headers: headers(role, true),
-    body: JSON.stringify({ message, stream: true }),
+    body: JSON.stringify({ message, session_id: sessionId, stream: true }),
   });
   if (!res.ok) await parseError(res);
   const reader = res.body?.getReader();

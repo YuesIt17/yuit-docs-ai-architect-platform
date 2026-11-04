@@ -18,14 +18,22 @@ spec:
         app: frontend
         kp.retailpartnerx.io/plane: edge
     spec:
+      {{- include "kp.podSecurity" (dict "uid" 101) | nindent 6 }}
       containers:
         - name: frontend
           image: {{ .Values.images.frontend }}
           imagePullPolicy: {{ .Values.images.pullPolicy }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           ports:
             - containerPort: {{ .Values.frontend.port }}
           resources:
             {{- toYaml .Values.resources.frontend | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

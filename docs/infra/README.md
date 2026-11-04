@@ -1,10 +1,11 @@
-﻿# Инфраструктура Knowledge Platform
+# Knowledge Platform Infrastructure
 
-| Путь | Когда | Документ | Схема |
+| Path | When | Document | Diagram |
 |------|-------|----------|-------|
-| **Hybrid (рекомендуется)** | Desktop демо / защита | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg) |
-| **K8s + Helm primer** | Сущности кластера, схема связей, поставка фич | [k8s-primer.md](k8s-primer.md) | mermaid в документе |
-| **DevSecOps lab** | Аудит `kp` (Trivy / Semgrep / Nmap / ZAP / Nuclei / Checkov / kube-bench) | [sec-ops.md](sec-ops.md) | — |
+| **Hybrid (recommended)** | Desktop demo | [compose-dev.md](compose-dev.md) + [k8s-architecture.md](k8s-architecture.md) | [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg) |
+| **K8s + Helm primer** | Cluster objects, relationship map, feature delivery | [k8s-primer.md](k8s-primer.md) | Mermaid in the document |
+| **Hardening** | Restricted pods, default-deny network, Kyverno admission | [k8s-hardening.md](k8s-hardening.md) | — |
+| **DevSecOps lab** | `kp` audit (Trivy / Semgrep / Nmap / ZAP / Nuclei / Checkov / kube-bench) | [sec-ops.md](sec-ops.md) | — |
 
 ## Zero-overlap (hybrid)
 
@@ -20,32 +21,32 @@
 
 ```powershell
 .\app\scripts\hybrid\hybrid-up.ps1
-# или: make demo
+# or: make demo
 
 .\app\scripts\sec\sec-scan.ps1
-# или: make sec-scan  → tmp/sec-ops/
-# глубокий (+ ZAP): $env:SEC_SCAN_DEEP = "1"; make sec-scan
+# or: make sec-scan  → tmp/sec-ops/
+# deep (+ ZAP): $env:SEC_SCAN_DEEP = "1"; make sec-scan
 ```
 
 **macOS**
 
 ```bash
 bash app/scripts/hybrid/hybrid-up.sh
-# или: make demo
+# or: make demo
 
 bash app/scripts/sec/sec-scan.sh
-# или: make sec-scan  → tmp/sec-ops/
-# глубокий (+ ZAP): SEC_SCAN_DEEP=1 make sec-scan
+# or: make sec-scan  → tmp/sec-ops/
+# deep (+ ZAP): SEC_SCAN_DEEP=1 make sec-scan
 ```
 
-## Запуск и ops
+## Startup and ops
 
-| Что | Где |
+| What | Where |
 |-----|-----|
 | How-to (Win + Mac) | [SETUP.md](../SETUP.md) |
 | curl / kubectl / Helm | [SRE.md](../SRE.md) |
-| Сущности K8s / Helm / поставка | [k8s-primer.md](k8s-primer.md) |
+| K8s objects / Helm / delivery | [k8s-primer.md](k8s-primer.md) |
 | DevSecOps / Security Engineer lab | [sec-ops.md](sec-ops.md) |
 | Chart / compose | [`app/infra/`](../../app/infra/) |
 
-Логические DMZ / Control / Data / GPU: [architecture/docs/deployment.md](../../architecture/docs/deployment.md).
+Logical DMZ / Control / Data / GPU: [architecture/docs/deployment.md](../../architecture/docs/deployment.md).

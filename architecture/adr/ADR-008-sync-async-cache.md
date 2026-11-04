@@ -1,40 +1,45 @@
-# ADR-008: Sync / Async и Semantic Cache
+# ADR-008: Sync / Async and Semantic Cache
 
-## Статус
+## Status
 
 Accepted
 
-## Контекст
+## Context
 
-Интерактивный чат и распознавание этикетки требуют низкой latency (sync/SSE). Тяжёлые multi-hop / batch — async. Continuity hw-9: semantic cache снижает RPS на LLM.
+Interactive chat and label recognition need low latency (sync/SSE). Heavy multi-hop and batch work is async. Continuity with hw-9: the semantic cache reduces RPS to the LLM.
 
-## Критерии выбора
+## Selection criteria
 
-- Sync для UX чата
-- Async для batch
-- Инвалидация кэша при смене индекса
-- Кэш только после Output Guard (не кэшировать утечки)
+- Sync for chat UX
+- Async for batch
+- Cache invalidation when the index changes
+- Cache only after the Output Guard (never cache leaks)
 
-## Варианты
+## Options
 
-| Вариант | Плюсы | Минусы |
-| ------- | ----- | ------ |
-| Всё sync | Просто | Timeout на heavy |
-| Всё async | Масштаб | Плохой UX чата |
-| **Sync/SSE + async jobs + semantic cache** | Баланс | Два API-пути |
+| Option | Pros | Cons |
+| ------ | ---- | ---- |
+| Everything sync | Simple | Timeouts on heavy work |
+| Everything async | Scale | Poor chat UX |
+| **Sync/SSE + async jobs + semantic cache** | Balanced | Two API paths |
 
-## Решение
+## Decision
 
-- Sync/SSE для interactive chat и label extract
-- Async `/v1/jobs` для batch / multi-hop
-- Semantic cache **после** Output Guard; invalidate через `index_version` (hw-9)
+- Sync/SSE for interactive chat and label extraction
+- Async `/v1/jobs` for batch work. Catalog ingest (`ingest_documents`) runs in a Celery worker on the live stack, and in-process otherwise
+- Celery over Temporal: Redis is already in the stack, and catalog ingest is a single idempotent task with no multi-step workflow to orchestrate
+- Only `compliance_officer` can ingest, since ingest sets a document's classification. A failed document is reported per job and does not abort the catalog
+- API replicas follow a Redis stream to update their in-memory mirrors with documents the worker stored
+- Semantic cache **after** the Output Guard; invalidation through `index_version` (hw-9)
+- Partial invalidation: each entry stores content hashes of its sources, and a changed hash evicts only the entries citing that document
+- The similarity threshold is configurable and calibrated per embedding model ([evaluation.md](../../docs/evaluation.md))
 
-## Последствия
+## Consequences
 
-- (+) Снижение OpEx LLM; сохранение UX
-- (−) Риск stale cache при ошибке versioning
+- (+) Lower LLM OpEx; UX preserved
+- (−) Risk of a stale cache if versioning is wrong
 
-## Ссылки
+## References
 
 - hw-9 high-load architecture
-- Redis в Data Plane
+- Redis in the Data Plane

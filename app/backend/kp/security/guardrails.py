@@ -10,14 +10,15 @@ INJECTION_PATTERNS = [
     r"system\s*prompt",
     r"jailbreak",
     r"reveal\s+secret",
-    r"игнорируй\s+(все\s+)?(предыдущие|приор)",
-    r"покажи\s+системн",
 ]
 
 PII_PATTERNS = [
-    (re.compile(r"\b\d{3}-\d{3}-\d{3}\s*\d{2}\b"), "[INN_REDACTED]"),
+    (re.compile(r"\b\d{3}-\d{3}-\d{3}\s*\d{2}\b"), "[NATIONAL_ID_REDACTED]"),
+    (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[SSN_REDACTED]"),
     (re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"), "[EMAIL_REDACTED]"),
     (re.compile(r"(?<!\d)(?:\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}(?!\d)"), "[PHONE_REDACTED]"),
+    # Separators are required so that 13-digit product barcodes are not redacted.
+    (re.compile(r"(?<!\d)(?:\+?1[\s\-.]?)?\(?\d{3}\)?[\s\-.]\d{3}[\s\-.]\d{4}(?!\d)"), "[PHONE_REDACTED]"),
 ]
 
 
@@ -62,7 +63,7 @@ def output_guard(
             reasons=reasons,
         )
     # Prefer grounded answers for knowledge questions
-    if not citations and len(answer) > 40 and "недостаточно" not in answer.lower():
+    if not citations and len(answer) > 40 and "insufficient" not in answer.lower():
         # soft warning — still allow OCR-only / degrade paths
         reasons.append("no_citations")
     return GuardResult(ok=True, text=sanitize_pii(answer), reasons=reasons)

@@ -1,4 +1,4 @@
-from kp.security.guardrails import input_guard, vision_input_guard
+from kp.security.guardrails import input_guard, sanitize_pii, vision_input_guard
 
 
 def test_blocks_prompt_injection():
@@ -7,8 +7,15 @@ def test_blocks_prompt_injection():
 
 
 def test_allows_normal_query():
-    r = input_guard("Какие аллергены у овсянки FreshFarm?")
+    r = input_guard("What allergens are in FreshFarm oatmeal?")
     assert r.ok
+
+
+def test_pii_redacts_us_formats_but_keeps_barcodes():
+    out = sanitize_pii("Call (415) 555-0134 or +1 415-555-0134, SSN 123-45-6789, barcode 4609876543210")
+    assert "555-0134" not in out
+    assert "123-45-6789" not in out
+    assert "4609876543210" in out
 
 
 def test_vision_accepts_png_pdf():

@@ -26,7 +26,10 @@ def parse_act(path: Path) -> DocumentNode | None:
     body = root.findtext(".//textIPS") or ""
     status = root.find(".//statusIPS")
     classification = "public"
-    if status is not None and (status.get("val") or "").lower().find("секрет") >= 0:
+    # RusLawOD is a Russian-language corpus: its status values must be matched as published.
+    # Dropping this term would ingest classified acts as public.
+    status_val = (status.get("val") or "").lower() if status is not None else ""
+    if "секрет" in status_val or "secret" in status_val:
         classification = "secret"
     doc_id = f"reg-{path.stem}"
     return DocumentNode(

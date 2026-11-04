@@ -1,84 +1,84 @@
-# Capacity Planning (учебный стенд)
+# Capacity Planning (lab environment)
 
-> **Smoke ≠ capacity.** [`docs/load-report.md`](load-report.md) и `scripts/load_smoke.py` измеряют потолок API+RAG на малой серии запросов. Этот документ — расчёт железа и целевой нагрузки для демо / submission-профиля.
+> **A smoke test is not a capacity test.** [`docs/load-report.md`](load-report.md) and `scripts/load_smoke.py` measure the API+RAG ceiling on a small series of requests. This document covers hardware sizing and target load for the demo and submission profiles.
 
-Связанные артефакты: [ADR-001](../architecture/adr/ADR-001-llm-serving.md) · [vllm-profile](infra/vllm-profile.md) · [model-card](model-card.md) · Helm [`values.yaml`](../app/infra/helm/knowledge-platform/values.yaml).
+Related artifacts: [ADR-001](../architecture/adr/ADR-001-llm-serving.md) · [vllm-profile](infra/vllm-profile.md) · [model-card](model-card.md) · Helm [`values.yaml`](../app/infra/helm/knowledge-platform/values.yaml).
 
-## Целевая нагрузка (учебный / demo)
+## Target load (learning / demo)
 
-| Параметр | Desktop demo | Submission (vLLM, design) |
-| -------- | ------------ | ------------------------- |
-| Concurrent chat | 1–2 | до `max-num-seqs=2` |
-| Chat RPS (E2E с LLM) | &lt; 1–2 | ограничено GPU KV / seqs |
-| Chat RPS (API+RAG, MOCK LLM) | ~100+ (smoke) | не целевой SLO |
+| Parameter | Desktop demo | Submission (vLLM, design) |
+| --------- | ------------ | ------------------------- |
+| Concurrent chat | 1–2 | up to `max-num-seqs=2` |
+| Chat RPS (E2E with LLM) | &lt; 1–2 | limited by GPU KV / seqs |
+| Chat RPS (API+RAG, MOCK LLM) | ~100+ (smoke) | not a target SLO |
 | Context | 2–4k tokens | 4096 |
-| Semantic cache | off (default) | off рекомендуется для воспроизводимого evidence |
+| Semantic cache | off (default) | off recommended for reproducible evidence |
 
-Узкое место продакшен-пути — **LLM Serving**, не GraphRAG/ACL слой (подтверждено MOCK smoke в load-report).
+The bottleneck on the production path is **LLM Serving**, not the GraphRAG/ACL layer (confirmed by the MOCK smoke test in the load report).
 
-## Формулы (ориентиры)
+## Formulas (rough guides)
 
-**Веса модели (приблизительно):**
+**Model weights (approximate):**
 
 \[
 \text{VRAM}_{\text{weights}} \approx N_{\text{params}} \times b_{\text{byte/param}}
 \]
 
-| Квантование | \(b\) |
-| ----------- | --- |
+| Quantization | \(b\) |
+| ------------ | --- |
 | FP16 | ~2 |
-| AWQ / INT4 | ~0.5 (+ ядра/overhead) |
-| GGUF Q4 (Ollama) | ~0.5–0.6 в **системной RAM** |
+| AWQ / INT4 | ~0.5 (+ kernels/overhead) |
+| GGUF Q4 (Ollama) | ~0.5–0.6 in **system RAM** |
 
-**KV-cache (грубо, decoder-only):**
+**KV cache (rough, decoder-only):**
 
 \[
 \text{VRAM}_{\text{KV}} \propto L_{\text{layers}} \times H \times \text{ctx} \times \text{batch} \times 2 \times b_{\text{kv}}
 \]
 
-Для учебного расчёта достаточно: weights + **30–50% запас** на KV/activations при ctx 4096 и batch ≤ 2.
+For a learning estimate, weights plus a **30–50% margin** for KV/activations is enough at ctx 4096 and batch ≤ 2.
 
-**Data-plane RAM (сумма requests, не peak):** взять Helm `resources.*.requests` + типовые heap datastore.
+**Data-plane RAM (sum of requests, not peak):** take Helm `resources.*.requests` plus typical datastore heaps.
 
 ## Desktop — Ollama (`qwen2.5:0.5b`)
 
-Измеренный host для evidence (владелец репозитория):
+Measured host for the evidence (repository owner's machine):
 
-| Ресурс | Значение |
-| ------ | -------- |
+| Resource | Value |
+| -------- | ----- |
 | CPU | Intel Core i7-8550U @ 1.80 GHz (4c / 8t) |
 | RAM | ~32 GB |
-| GPU | нет (CPU-only Ollama) |
+| GPU | none (CPU-only Ollama) |
 
-| Компонент | Оценка footprint |
-| --------- | ---------------- |
+| Component | Estimated footprint |
+| --------- | ------------------- |
 | Ollama + `qwen2.5:0.5b` (Q4 GGUF) | ~0.4–0.8 GB RAM |
 | API pod/process | ≥ 256 Mi (Helm request) |
-| Embeddings MOCK | пренебрежимо; LOCAL e5-small ~100–200 MB |
-| Compose obs (Prom/Grafana/Tempo/Loki/Alloy) | ~1–2 GB суммарно |
-| K8s data-plane (Desktop) | см. ниже |
+| Embeddings MOCK | negligible; LOCAL e5-small ~100–200 MB |
+| Compose obs (Prom/Grafana/Tempo/Loki/Alloy) | ~1–2 GB total |
+| K8s data plane (Desktop) | see below |
 
-**Вывод desktop:** 16 GB RAM достаточно для hybrid demo; 32 GB комфортно с LGTM. GPU не требуется.
+**Desktop conclusion:** 16 GB RAM is enough for the hybrid demo; 32 GB is comfortable with LGTM. No GPU is required.
 
-## Submission — vLLM AWQ (design-time)
+## Submission — vLLM AWQ (design time)
 
-Профиль: [vllm-profile.md](infra/vllm-profile.md). **Runtime на этом хосте не проверен** (нет NVIDIA GPU).
+Profile: [vllm-profile.md](infra/vllm-profile.md). **Runtime not verified on this host** (no NVIDIA GPU).
 
-| Модель | Params | Квант | VRAM weights (оценка) | + KV/запас (ctx 4096, seqs 2) | Итого VRAM |
-| ------ | ------ | ----- | --------------------- | ---------------------------- | ---------- |
+| Model | Params | Quant | VRAM weights (estimate) | + KV/margin (ctx 4096, seqs 2) | Total VRAM |
+| ----- | ------ | ----- | ----------------------- | ------------------------------ | ---------- |
 | `Qwen/Qwen2.5-1.5B-Instruct-AWQ` | 1.5B | AWQ ~4-bit | \(1.5 \times 0.5 \approx 0.75\) GB | ~0.5–1.0 GB | **~2–3 GB** |
 | `Qwen/Qwen2.5-0.5B-Instruct` FP16 (&lt;6 GB card) | 0.5B | FP16 | \(0.5 \times 2 = 1.0\) GB | ~0.5–1.0 GB | **~2–3 GB** |
 
-Рекомендация: карта **≥ 6 GB VRAM** с запасом под драйвер/CUDA; для &lt;6 GB — 0.5B FP16 (зафиксировать в model-card).
+Recommendation: a card with **≥ 6 GB VRAM**, leaving headroom for the driver/CUDA; for &lt;6 GB, use 0.5B FP16 (record this in the model card).
 
-CPU/RAM host под vLLM: ≥ 4 vCPU, ≥ 16 GB system RAM + диск под HF cache.
+vLLM host CPU/RAM: ≥ 4 vCPU, ≥ 16 GB system RAM, plus disk for the HF cache.
 
-## Data-plane (Helm requests / PVC)
+## Data plane (Helm requests / PVC)
 
-Из [`values.yaml`](../app/infra/helm/knowledge-platform/values.yaml):
+From [`values.yaml`](../app/infra/helm/knowledge-platform/values.yaml):
 
-| Сервис | CPU request | Memory request | PVC |
-| ------ | ----------- | -------------- | --- |
+| Service | CPU request | Memory request | PVC |
+| ------- | ----------- | -------------- | --- |
 | API | 100m | 256Mi | — |
 | Frontend | 50m | 64Mi | — |
 | Postgres | (image default) | ~256–512 Mi typ. | 5Gi |
@@ -87,14 +87,14 @@ CPU/RAM host под vLLM: ≥ 4 vCPU, ≥ 16 GB system RAM + диск под HF 
 | Redis | ~64 Mi typ. | | — |
 | MinIO | ~256 Mi typ. | | 10Gi |
 
-**Суммарно (ориентир desktop K8s):** ~4–8 GB RAM data-plane + API/frontend; диск ≥ 25 Gi PVC. Это **не** кластерный capacity plan — только lab sizing.
+**Total (desktop K8s guide):** ~4–8 GB RAM for the data plane + API/frontend; disk ≥ 25 Gi PVC. This is **not** a cluster capacity plan, only lab sizing.
 
-## Связь с замерами
+## Link to measurements
 
-| Замер | Что доказывает | Что не доказывает |
-| ----- | -------------- | ----------------- |
-| MOCK load smoke | потолок API+GraphRAG+ACL | latency реальной модели |
-| Ollama E2E smoke | p95 chat на laptop CPU | vLLM / GPU SLO |
-| Capacity tables выше | выбор железа под demo/submission | автоскейлинг / multi-tenant |
+| Measurement | What it proves | What it does not prove |
+| ----------- | -------------- | ---------------------- |
+| MOCK load smoke | API+GraphRAG+ACL ceiling | real model latency |
+| Ollama E2E smoke | chat p95 on a laptop CPU | vLLM / GPU SLO |
+| Capacity tables above | hardware choice for demo/submission | autoscaling / multi-tenancy |
 
-Повторить Ollama E2E после `hybrid-up` + `LLM_PROVIDER=OLLAMA`; сырые JSON — в [`docs/evidence/load/`](evidence/load/).
+Repeat the Ollama E2E run after `hybrid-up` with `LLM_PROVIDER=OLLAMA`; raw JSON is in [`docs/evidence/load/`](evidence/load/).

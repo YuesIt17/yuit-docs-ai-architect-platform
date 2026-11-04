@@ -6,6 +6,10 @@ metadata:
     app.kubernetes.io/name: knowledge-platform
     app.kubernetes.io/part-of: retailpartnerx-kp
     kp.retailpartnerx.io/plane: mixed
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
   name: kp
 ---
 apiVersion: networking.k8s.io/v1
@@ -15,33 +19,10 @@ metadata:
     app.kubernetes.io/instance: kp
     app.kubernetes.io/name: knowledge-platform
     app.kubernetes.io/part-of: retailpartnerx-kp
-    kp.retailpartnerx.io/plane: data
-  name: kp-data-plane-ingress
+  name: kp-default-deny
   namespace: kp
 spec:
-  egress:
-  - {}
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          kp.retailpartnerx.io/plane: control
-    ports:
-    - port: 5432
-      protocol: TCP
-    - port: 6379
-      protocol: TCP
-    - port: 6333
-      protocol: TCP
-    - port: 7474
-      protocol: TCP
-    - port: 7687
-      protocol: TCP
-    - port: 9000
-      protocol: TCP
-  podSelector:
-    matchLabels:
-      kp.retailpartnerx.io/plane: data
+  podSelector: {}
   policyTypes:
   - Ingress
   - Egress
@@ -53,27 +34,276 @@ metadata:
     app.kubernetes.io/instance: kp
     app.kubernetes.io/name: knowledge-platform
     app.kubernetes.io/part-of: retailpartnerx-kp
-    kp.retailpartnerx.io/plane: control
-  name: kp-control-plane-egress
+  name: kp-allow-dns
   namespace: kp
 spec:
   egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          kp.retailpartnerx.io/plane: data
   - ports:
     - port: 53
       protocol: UDP
     - port: 53
       protocol: TCP
     to:
-    - namespaceSelector: {}
-  podSelector:
-    matchLabels:
-      kp.retailpartnerx.io/plane: control
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+  podSelector: {}
   policyTypes:
   - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-frontend
+  namespace: kp
+spec:
+  egress:
+  - ports:
+    - port: 8080
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: api
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    ports:
+    - port: 8080
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-api
+  namespace: kp
+spec:
+  egress:
+  - ports:
+    - port: 5432
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+  - ports:
+    - port: 7474
+      protocol: TCP
+    - port: 7687
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: neo4j
+  - ports:
+    - port: 6333
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: qdrant
+  - ports:
+    - port: 6379
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: redis
+  - ports:
+    - port: 9000
+      protocol: TCP
+    - port: 9001
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: minio
+  - ports:
+    - port: 11434
+      protocol: TCP
+    - port: 8000
+      protocol: TCP
+    - port: 4318
+      protocol: TCP
+    to:
+    - ipBlock:
+        cidr: 192.168.65.0/24
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    - podSelector:
+        matchLabels:
+          app: frontend
+    - ipBlock:
+        cidr: 192.168.65.0/24
+    ports:
+    - port: 8080
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-postgres
+  namespace: kp
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - port: 5432
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-neo4j
+  namespace: kp
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - port: 7474
+      protocol: TCP
+    - port: 7687
+      protocol: TCP
+  - from:
+    - ipBlock:
+        cidr: 192.168.65.0/24
+    ports:
+    - port: 7474
+      protocol: TCP
+    - port: 7687
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: neo4j
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-qdrant
+  namespace: kp
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - port: 6333
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: qdrant
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-redis
+  namespace: kp
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - port: 6379
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-minio
+  namespace: kp
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - port: 9000
+      protocol: TCP
+    - port: 9001
+      protocol: TCP
+  - from:
+    - ipBlock:
+        cidr: 192.168.65.0/24
+    ports:
+    - port: 9001
+      protocol: TCP
+  podSelector:
+    matchLabels:
+      app: minio
+  policyTypes:
+  - Ingress
 ---
 apiVersion: v1
 data: {}
@@ -89,7 +319,9 @@ stringData:
   JWT_SECRET: fixture-value
   MINIO_ROOT_PASSWORD: fixture-value
   MINIO_ROOT_USER: fixture-value
+  NEO4J_AUTH: fixture-value
   NEO4J_PASSWORD: fixture-value
+  POSTGRES_DSN: fixture-value
   POSTGRES_PASSWORD: fixture-value
 type: Opaque
 ---
@@ -258,7 +490,7 @@ metadata:
 spec:
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: 8080
   selector:
     app: frontend
 ---
@@ -284,6 +516,7 @@ spec:
         app: api
         kp.retailpartnerx.io/plane: control
     spec:
+      automountServiceAccountToken: false
       containers:
       - env:
         - name: LLM_PROVIDER
@@ -294,6 +527,8 @@ spec:
           value: http://host.docker.internal:11434/v1
         - name: STORE_BACKEND
           value: live
+        - name: OCR_PROVIDER
+          value: MOCK
         - name: EMBEDDING_PROVIDER
           value: MOCK
         - name: DEMO_AUTH_ENABLED
@@ -311,7 +546,34 @@ spec:
         - name: MINIO_ENDPOINT
           value: minio:9000
         - name: POSTGRES_DSN
-          value: fixture-value
+          valueFrom:
+            secretKeyRef:
+              key: POSTGRES_DSN
+              name: kp-secrets
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: JWT_SECRET
+              name: kp-secrets
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: NEO4J_PASSWORD
+              name: kp-secrets
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: MINIO_ROOT_USER
+              name: kp-secrets
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: MINIO_ROOT_PASSWORD
+              name: kp-secrets
+        - name: JOB_BACKEND
+          value: inline
+        - name: HOME
+          value: /tmp
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://host.docker.internal:4318
         - name: OTEL_METRICS_EXPORTER
@@ -333,6 +595,29 @@ spec:
           requests:
             cpu: 100m
             memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /app/data
+          name: object-store-cache
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: object-store-cache
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -353,10 +638,13 @@ spec:
         app: postgres
         kp.retailpartnerx.io/plane: data
     spec:
+      automountServiceAccountToken: false
       containers:
       - env:
         - name: POSTGRES_USER
           value: kp
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -368,13 +656,34 @@ spec:
         name: postgres
         ports:
         - containerPort: 5432
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /var/lib/postgresql/data
           name: data
+        - mountPath: /var/run/postgresql
+          name: run
+        - mountPath: /tmp
+          name: tmp
+      securityContext:
+        fsGroup: 70
+        runAsGroup: 70
+        runAsNonRoot: true
+        runAsUser: 70
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: data
         persistentVolumeClaim:
           claimName: kp-postgres-data
+      - emptyDir: {}
+        name: run
+      - emptyDir: {}
+        name: tmp
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -394,11 +703,16 @@ spec:
       labels:
         app: neo4j
         kp.retailpartnerx.io/plane: data
+        kp.retailpartnerx.io/writable-rootfs: image-entrypoint-writes-config
     spec:
+      automountServiceAccountToken: false
       containers:
       - env:
         - name: NEO4J_AUTH
-          value: neo4j/retailpartnerx
+          valueFrom:
+            secretKeyRef:
+              key: NEO4J_AUTH
+              name: kp-secrets
         - name: NEO4J_server_config_strict__validation_enabled
           value: 'false'
         image: neo4j:5.26-community
@@ -406,10 +720,23 @@ spec:
         ports:
         - containerPort: 7474
         - containerPort: 7687
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
         volumeMounts:
         - mountPath: /data
           name: data
       enableServiceLinks: false
+      securityContext:
+        fsGroup: 7474
+        runAsGroup: 7474
+        runAsNonRoot: true
+        runAsUser: 7474
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -433,15 +760,30 @@ spec:
       labels:
         app: qdrant
         kp.retailpartnerx.io/plane: data
+        kp.retailpartnerx.io/writable-rootfs: app-writes-init-marker
     spec:
+      automountServiceAccountToken: false
       containers:
-      - image: qdrant/qdrant:v1.13.2
+      - image: qdrant/qdrant:v1.13.2-unprivileged
         name: qdrant
         ports:
         - containerPort: 6333
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
         volumeMounts:
         - mountPath: /qdrant/storage
           name: data
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -466,11 +808,31 @@ spec:
         app: redis
         kp.retailpartnerx.io/plane: data
     spec:
+      automountServiceAccountToken: false
       containers:
       - image: redis:7-alpine
         name: redis
         ports:
         - containerPort: 6379
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      securityContext:
+        fsGroup: 999
+        runAsGroup: 999
+        runAsNonRoot: true
+        runAsUser: 999
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: data
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -490,7 +852,9 @@ spec:
       labels:
         app: minio
         kp.retailpartnerx.io/plane: data
+        kp.retailpartnerx.io/writable-rootfs: image-entrypoint-writes-config
     spec:
+      automountServiceAccountToken: false
       containers:
       - env:
         - name: MINIO_ROOT_USER
@@ -510,13 +874,40 @@ spec:
         ports:
         - containerPort: 9000
         - containerPort: 9001
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
         volumeMounts:
         - mountPath: /bitnami/minio/data
           name: data
+        - mountPath: /opt/bitnami/minio/tmp
+          name: runtime
+          subPath: tmp
+        - mountPath: /opt/bitnami/minio/secrets
+          name: runtime
+          subPath: secrets
+        - mountPath: /opt/bitnami/minio/log
+          name: runtime
+          subPath: log
+        - mountPath: /.mc
+          name: runtime
+          subPath: mc
+      securityContext:
+        fsGroup: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
       - name: data
         persistentVolumeClaim:
           claimName: kp-minio-data
+      - emptyDir: {}
+        name: runtime
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -540,16 +931,36 @@ spec:
         app: frontend
         kp.retailpartnerx.io/plane: edge
     spec:
+      automountServiceAccountToken: false
       containers:
       - image: kp-frontend:dev
         imagePullPolicy: Never
         name: frontend
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         resources:
           requests:
             cpu: 50m
             memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      securityContext:
+        fsGroup: 101
+        runAsGroup: 101
+        runAsNonRoot: true
+        runAsUser: 101
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: tmp
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

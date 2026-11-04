@@ -1,24 +1,24 @@
-﻿# Kubernetes — архитектура (Docker Desktop + Helm)
+# Kubernetes Architecture (Docker Desktop + Helm)
 
-**Схема:** [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg)
+**Diagram:** [k8s-topology-desktop.svg](../../architecture/diagrams/images/k8s-topology-desktop.svg)
 
-Источник правды: Helm chart [`app/infra/helm/knowledge-platform/`](../../app/infra/helm/knowledge-platform/), [`app/scripts/k8s/k8s-up.ps1`](../../app/scripts/k8s/k8s-up.ps1).  
-Запуск: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).  
-Что такое сущности K8s / Helm и как катить фичи: [k8s-primer.md](k8s-primer.md).  
-Логические сегменты: [architecture/docs/deployment.md](../../architecture/docs/deployment.md).
+Source of truth: Helm chart [`app/infra/helm/knowledge-platform/`](../../app/infra/helm/knowledge-platform/), [`app/scripts/k8s/k8s-up.ps1`](../../app/scripts/k8s/k8s-up.ps1).  
+Startup: [SETUP.md](../SETUP.md) · ops: [SRE.md](../SRE.md).  
+K8s / Helm objects and how to roll out features: [k8s-primer.md](k8s-primer.md).  
+Logical segments: [architecture/docs/deployment.md](../../architecture/docs/deployment.md).
 
 ## Nodes
 
-| Режим | Как | Ноды |
+| Mode | How | Nodes |
 |-------|-----|------|
-| **Desktop (default)** | `kubectl` context `docker-desktop` | Одна нода Docker Desktop Kubernetes |
-| **Legacy kind** | `$env:KP_K8S='kind'` | Кластер `retailpartnerx-kp`: 1× control-plane, label `ingress-ready=true`, hostPort `8088→80` / `8443→443` ([`app/infra/kind/kind-config.yaml`](../../app/infra/kind/kind-config.yaml)) |
+| **Desktop (default)** | `kubectl` context `docker-desktop` | One Docker Desktop Kubernetes node |
+| **Legacy kind** | `$env:KP_K8S='kind'` | Cluster `retailpartnerx-kp`: 1× control-plane, label `ingress-ready=true`, hostPort `8088→80` / `8443→443` ([`app/infra/kind/kind-config.yaml`](../../app/infra/kind/kind-config.yaml)) |
 
-В chart **нет** nodeSelector / affinity / taints — все поды на единственной ноде ноутбука.
+The chart has **no** nodeSelector / affinity / taints; all pods run on the laptop's single node.
 
-## Namespace и labels
+## Namespace and labels
 
-| Ресурс | Значение |
+| Resource | Value |
 |--------|----------|
 | Namespace | `kp` |
 | Helm release | `kp` |
@@ -30,27 +30,27 @@
 | `edge` | `frontend` |
 | `control` | `api` |
 | `data` | `postgres`, `neo4j`, `qdrant`, `redis`, `minio` |
-| `mixed` | label на Namespace `kp` |
+| `mixed` | label on Namespace `kp` |
 
-## Pods и Services (desktop default)
+## Pods and Services (desktop default)
 
-По умолчанию **7 подов**. Ollama **не** в Helm — только Compose (`make llm-ollama`).
+By default there are **7 pods**. Ollama is **not** in Helm, only in Compose (`make llm-ollama`).
 
 | Deployment | Service | Port(s) | Replicas | Plane | Resources (requests) |
 |------------|---------|---------|----------|-------|----------------------|
 | `api` | `api` | 8080 | 1 | control | cpu 100m, mem 256Mi |
-| `frontend` | `frontend` | 80 | 1 | edge | cpu 50m, mem 64Mi |
+| `frontend` | `frontend` | 80 → 8080 | 1 | edge | cpu 50m, mem 64Mi |
 | `postgres` | `postgres` | 5432 | 1 | data | — |
 | `neo4j` | `neo4j` | 7474, 7687 | 1 | data | — |
 | `qdrant` | `qdrant` | 6333 | 1 | data | — |
 | `redis` | `redis` | 6379 | 1 | data | — |
 | `minio` | `minio` | 9000, 9001 | 1 | data | — |
 
-Другие ресурсы chart:
+Other chart resources:
 
 - Secret `kp-secrets`
 - Ingress `kp-api`, `kp-ui`
-- Images: `kp-api:dev`, `kp-frontend:dev` (`pullPolicy: Never` на desktop)
+- Images: `kp-api:dev`, `kp-frontend:dev` (`pullPolicy: Never` on desktop)
 
 Desktop overlay: `STORE_BACKEND=live`, MinIO on, `LLM_PROVIDER=MOCK`.
 
@@ -63,8 +63,8 @@ Desktop overlay: `STORE_BACKEND=live`, MinIO on, `LLM_PROVIDER=MOCK`.
 
 - Host: `kp.local`
 - Class: `nginx`
-- Host access: ingress-nginx LoadBalancer на **:8088** / **:8443** (Windows `:80` часто занят IIS)
-- Annotations: body size `20m`, buffering off на API
+- Host access: ingress-nginx LoadBalancer on **:8088** / **:8443** (on Windows, `:80` is often taken by IIS)
+- Annotations: body size `20m`, buffering off on the API
 
 Hosts: `127.0.0.1 kp.local` → UI http://kp.local:8088 · health http://kp.local:8088/api/health
 
@@ -76,9 +76,9 @@ Browser → ingress-nginx :8088
 
 ## Helm values overlays
 
-| File | Роль |
+| File | Role |
 |------|------|
-| [`values.yaml`](../../app/infra/helm/knowledge-platform/values.yaml) | База: MOCK LLM, все stores on (вкл. MinIO), replicas=1 |
+| [`values.yaml`](../../app/infra/helm/knowledge-platform/values.yaml) | Base: MOCK LLM, all stores on (including MinIO), replicas=1 |
 | [`values-desktop.yaml`](../../app/infra/helm/knowledge-platform/values-desktop.yaml) | Desktop: `pullPolicy: Never`, live MinIO, MOCK LLM |
 | [`values-desktop-compose-ollama.yaml`](../../app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml) | Hybrid: `OLLAMA` → `http://host.docker.internal:11434/v1`, model `qwen2.5:0.5b` |
 
@@ -89,21 +89,21 @@ Browser → ingress-nginx :8088
 | unset | desktop + MOCK |
 | `compose-ollama` | + compose-ollama overlay |
 
-Скрипт: build images → install ingress-nginx (desktop) → `helm upgrade --install kp ... -n kp --create-namespace --wait`.  
-Снос: `.\app\scripts\k8s\k8s-down.ps1` (desktop оставляет shared ingress-nginx).
+Script: build images → install ingress-nginx (desktop) → `helm upgrade --install kp ... -n kp --create-namespace --wait`.  
+Teardown: `.\app\scripts\k8s\k8s-down.ps1` (desktop keeps the shared ingress-nginx).
 
-## Что не в Helm (Compose side-stack)
+## What is not in Helm (Compose side-stack)
 
-| Компонент | Где |
+| Component | Where |
 |-----------|-----|
 | Prometheus / Grafana / Loki / Tempo | Compose (`obs` profile) |
 | Ollama | Compose (`llm` profile) |
 
-**Zero-overlap:** MinIO/stores/api/frontend — только Helm. Ollama + obs — только Compose (`make side`).
+**Zero-overlap:** MinIO/stores/api/frontend are only in Helm. Ollama + obs are only in Compose (`make side`).
 
-Frontend **никогда** не ходит в Ollama напрямую — только через API (`/v1/chat`, `/v1/llm/*`).
+The frontend **never** calls Ollama directly, only through the API (`/v1/chat`, `/v1/llm/*`).
 
-## Топология (Mermaid)
+## Topology (Mermaid)
 
 ```mermaid
 flowchart TB
@@ -138,9 +138,9 @@ flowchart TB
   API -.->|"host.docker.internal"| HostOLL
 ```
 
-## Templates chart
+## Chart templates
 
-| Template | Содержимое |
+| Template | Contents |
 |----------|------------|
 | `namespace.yaml` | Namespace `kp` |
 | `api.yaml` / `frontend.yaml` | Control / edge Deployments + Services |

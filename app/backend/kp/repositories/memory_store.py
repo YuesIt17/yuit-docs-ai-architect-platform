@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import uuid
 from typing import Any
 
@@ -14,43 +13,11 @@ from kp.domain.nodes import (
     RetrievedChunk,
 )
 from kp.infrastructure.embeddings import EmbeddingService
+from kp.repositories.text_match import lexical_hits as _lexical_hits
 from kp.security.rbac import Principal, can_access
 
 # MOCK embeddings are bag-of-hash — always return a top-k. Drop noise via lexical overlap + score floor.
 _MIN_VECTOR_SCORE = 0.18
-_STOP = {
-    "что",
-    "как",
-    "про",
-    "для",
-    "это",
-    "или",
-    "the",
-    "and",
-    "for",
-    "about",
-    "with",
-    "know",
-    "знаешь",
-    "расскажи",
-    "какие",
-}
-
-
-def _tokens(text: str) -> set[str]:
-    return {
-        t
-        for t in re.findall(r"[\wа-яё]+", text.lower(), flags=re.IGNORECASE)
-        if len(t) > 2 and t not in _STOP
-    }
-
-
-def _lexical_hits(query: str, text: str) -> int:
-    q = _tokens(query)
-    if not q:
-        return 0
-    return len(q & _tokens(text))
-
 
 class MemoryKnowledgeStore:
     """Process-local GraphRAG index used as the memory backend and write-through cache."""

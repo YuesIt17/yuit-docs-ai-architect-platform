@@ -88,8 +88,8 @@ export function OpsPage() {
         <pre className="mono">{JSON.stringify(health, null, 2)}</pre>
         <h3>Deep links (hybrid)</h3>
         <p>
-          Compose LGTM: Grafana / Prometheus / Loki / Tempo. K8s NodePort: Neo4j / MinIO / API metrics. Нужен
-          side-stack <code>make obs</code> + Desktop Helm.
+          Compose LGTM: Grafana / Prometheus / Loki / Tempo. K8s NodePort: Neo4j / MinIO / API metrics. Requires
+          the side-stack (<code>make obs</code>) and the Desktop Helm release.
         </p>
         <ul className="ops-links">
           {OPS_LINKS.map((link) => (

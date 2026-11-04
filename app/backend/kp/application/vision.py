@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 import uuid
 
@@ -15,6 +16,8 @@ from kp.domain.schemas import Citation, LabelExtract, LabelResponse
 from kp.observability import metrics
 from kp.security.guardrails import vision_input_guard
 from kp.security.rbac import Principal
+
+LOW_OCR_CONFIDENCE = 0.7
 
 
 class VisionServiceApp:
@@ -67,7 +70,10 @@ class VisionServiceApp:
 
         asset_id = str(uuid.uuid4())
         etag = self.c.object_store.content_hash(data)
-        vision = self.c.vision.recognize(filename or "label.png", data, page_limit=page_limit)
+        # Real OCR takes seconds of CPU, which must not block the event loop for other requests.
+        vision = await asyncio.to_thread(
+            self.c.vision.recognize, filename or "label.png", data, page_limit=page_limit
+        )
         # Server-generated storage name; client filename kept as metadata only (SEC-03).
         storage_name = self.c.object_store.safe_storage_name(
             filename, default_ext=vision.source_format or "bin"
@@ -164,9 +170,13 @@ class VisionServiceApp:
         record_request_audit(self.c, self.settings, request_id, principal, state, started, "label")
         metrics.REQUESTS.labels(endpoint="vision", status="ok").inc()
 
-        warnings = [
-            "OCR provider=MOCK — demo of pipeline contract, not real scan recognition",
-        ]
+        warnings = []
+        if vision.provider == "MOCK":
+            warnings.append("OCR provider=MOCK: a demo of the pipeline contract, not real scan recognition")
+        elif not vision.ocr_text:
+            warnings.append("No text was recognized on this label")
+        elif vision.confidence < LOW_OCR_CONFIDENCE:
+            warnings.append(f"Low OCR confidence ({vision.confidence:.2f}): verify against the source label")
         if vision.allergens:
             warnings.append(f"Detected allergens: {', '.join(vision.allergens)}")
         cfg = self.c.llm.get_config()
@@ -182,5 +192,5 @@ class VisionServiceApp:
             degraded=state.get("degraded", False),
             model_uri=state.get("model_uri") or cfg.model_uri,
             llm_provider=cfg.provider,
-            ocr_provider="MOCK",
+            ocr_provider=vision.provider,
         )

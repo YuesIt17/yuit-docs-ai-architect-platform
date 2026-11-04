@@ -1,14 +1,14 @@
 # Architecture (ADD)
 
-C4, data-flow, sequences, ER, deployment, ADR и диаграммы.
+C4, data flow, sequences, ER, deployment, ADRs and diagrams.
 
-Карта репозитория и быстрый старт — в [корневом README](../README.md).
+The repository map and quick start are in the [root README](../README.md).
 
-| Раздел | Путь |
+| Section | Path |
 |--------|------|
-| Описания views (C4 L1–L4, sequences, …) | [`docs/`](docs/) |
+| View descriptions (C4 L1–L4, sequences, …) | [`docs/`](docs/) |
 | Capacity Planning (VRAM / CPU / RAM) | [`../docs/capacity-planning.md`](../docs/capacity-planning.md) |
 | ADR | [`adr/`](adr/) |
-| Диаграммы (модель + SVG) | [`diagrams/`](diagrams/) · [docs/DIAGRAMS.md](../docs/DIAGRAMS.md) |
+| Diagrams (model + SVG) | [`diagrams/`](diagrams/) · [docs/DIAGRAMS.md](../docs/DIAGRAMS.md) |
 | Infra how-to / DevSec | [`docs/infra/`](../docs/infra/) |
-| Код платформы | [`app/`](../app/) |
+| Platform code | [`app/`](../app/) |

@@ -70,8 +70,8 @@ export function LlmSettingsPage() {
       <section className="panel stack">
         <h2>LLM Settings</h2>
         <p>
-          Frontend управляет provider через Control Plane API. Serving (Ollama) — Compose side-stack.
-          Смена доступна ролям manager / compliance.
+          The frontend switches the provider through the Control Plane API. Serving (Ollama) runs in the Compose side-stack.
+          Only the manager and compliance roles can change it.
         </p>
         <div className="row">
           {PROVIDERS.map((p) => (
@@ -120,14 +120,14 @@ export function LlmSettingsPage() {
         ) : (
           <p>Loading…</p>
         )}
-        <h3>Ollama base URL (куда ходит API, не браузер)</h3>
+        <h3>Ollama base URL (called by the API, not the browser)</h3>
         <p className="mono">
-          Hybrid (make demo, API в K8s): http://host.docker.internal:11434/v1{"\n"}
-          API на хосте (make dev-llm): http://127.0.0.1:11434/v1, model qwen2.5:0.5b
+          Hybrid (make demo, API in K8s): http://host.docker.internal:11434/v1{"\n"}
+          API on the host (make dev-llm): http://127.0.0.1:11434/v1, model qwen2.5:0.5b
         </p>
         <p>
-          Platform в K8s, Ollama только в Compose — без дублей. Из пода API base URL —{" "}
-          <code>host.docker.internal</code>. С хоста (<code>make dev-llm</code>) —{" "}
+          The platform runs in K8s and Ollama only in Compose, so nothing is duplicated. From the API pod, use{" "}
+          <code>host.docker.internal</code>. From the host (<code>make dev-llm</code>), use{" "}
           <code>127.0.0.1</code>.
         </p>
       </aside>

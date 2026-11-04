@@ -1,0 +1,13 @@
+{
+  "deterministic": {
+    "acl_leaks_max": 0,
+    "refusal_accuracy_min": 1.0,
+    "retrieval_recall_min": 0.9
+  },
+  "judge": {
+    "faithfulness_min": 0.7,
+    "answer_relevancy_min": 0.7,
+    "contextual_precision_min": 0.6,
+    "contextual_recall_min": 0.6
+  }
+}
