@@ -71,6 +71,13 @@ def test_application_pods_have_read_only_rootfs(manifests):
             assert security["readOnlyRootFilesystem"] is True
 
 
+def test_minio_runtime_paths_are_writable_without_group_root(manifests):
+    minio = next(d for d in deployments(manifests) if d["metadata"]["name"] == "minio")
+    assert minio["spec"]["template"]["spec"]["securityContext"]["runAsGroup"] != 0
+    mounts = {m["mountPath"] for m in minio["spec"]["template"]["spec"]["containers"][0]["volumeMounts"]}
+    assert {"/opt/bitnami/minio/tmp", "/opt/bitnami/minio/secrets", "/.mc"} <= mounts
+
+
 def test_namespace_enforces_restricted(manifests):
     namespace = next(d for d in manifests if d["kind"] == "Namespace")
     assert namespace["metadata"]["labels"]["pod-security.kubernetes.io/enforce"] == "restricted"

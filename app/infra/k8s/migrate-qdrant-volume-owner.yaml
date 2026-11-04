@@ -1,0 +1,30 @@
+# One-off for clusters created before Qdrant ran as non-root. It keeps the existing vectors.
+# Docker Desktop's hostpath volumes ignore fsGroup, so files created as root stay unreadable by uid 1000.
+#
+# It needs root and a hostPath, so it runs outside the Restricted `kp` namespace, then gets deleted:
+#   kubectl apply -f app/infra/k8s/migrate-qdrant-volume-owner.yaml
+#   kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/kp-migrate-qdrant-volume-owner --timeout=120s
+#   kubectl delete -f app/infra/k8s/migrate-qdrant-volume-owner.yaml
+#   kubectl -n kp rollout restart deploy/qdrant
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kp-migrate-qdrant-volume-owner
+  namespace: default
+spec:
+  restartPolicy: Never
+  containers:
+    - name: chown
+      image: redis:7-alpine # Already on the node, since the platform's Redis uses it.
+      imagePullPolicy: IfNotPresent
+      command: ["chown", "-R", "1000:1000", "/volume"]
+      securityContext:
+        runAsUser: 0
+      volumeMounts:
+        - name: qdrant
+          mountPath: /volume
+  volumes:
+    - name: qdrant
+      hostPath:
+        path: /var/lib/k8s-pvs/kp-qdrant-data
+        type: Directory

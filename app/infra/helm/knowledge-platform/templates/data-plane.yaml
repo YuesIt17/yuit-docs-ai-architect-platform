@@ -286,17 +286,32 @@ spec:
           ports:
             - containerPort: 9000
             - containerPort: 9001
-          {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: data
               mountPath: /bitnami/minio/data
-          {{- end }}
-      {{- if .Values.persistence.enabled }}
+            # The image makes these writable through group root, which this pod does not use.
+            - name: runtime
+              mountPath: /opt/bitnami/minio/tmp
+              subPath: tmp
+            - name: runtime
+              mountPath: /opt/bitnami/minio/secrets
+              subPath: secrets
+            - name: runtime
+              mountPath: /opt/bitnami/minio/log
+              subPath: log
+            - name: runtime
+              mountPath: /.mc
+              subPath: mc
       volumes:
         - name: data
+          {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: kp-minio-data
-      {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: runtime
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

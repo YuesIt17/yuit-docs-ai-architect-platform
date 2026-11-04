@@ -223,6 +223,7 @@ See [.env.example](../.env.example).
 
 | Symptom | What to do |
 |---------|-------------|
+| `kubectl`: `Unable to connect to the server: EOF` | A system proxy is intercepting the request. Add `kubernetes.docker.internal` to `NO_PROXY` |
 | OLLAMA unreachable | Base URL `host.docker.internal`, not `localhost` from the pod |
 | Ingress `:8088` 404 IIS (Windows) | Hosts `kp.local`, LB on 8088 |
 | `ollama pull` TLS timeout | `ollama-pull.ps1` / `ollama-pull.sh` |

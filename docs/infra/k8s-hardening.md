@@ -50,10 +50,16 @@ helm upgrade --install kp app/infra/helm/knowledge-platform -n kp -f app/infra/h
 | Check | Status |
 | ----- | ------ |
 | Rendered manifests meet the controls (`pytest tests/architecture/test_chart_security.py`) | Automated |
-| All pods start under Restricted with the new users and volumes | **Not run yet: requires a live cluster** |
+| All pods start under Restricted with the new users and volumes | Verified on Docker Desktop, 2026-11-04: chat, ACL, label upload to MinIO and dialog history in PostgreSQL across an API restart |
 | Policies block traffic | **Not run yet: requires a CNI that enforces them** |
 | Kyverno rejects an unsafe pod | **Not run yet: requires Kyverno installed** |
 
 The default Docker Desktop CNI accepts NetworkPolicy objects without enforcing them. To test enforcement, use kind with `disableDefaultCNI: true` and Calico.
 
-After upgrading an existing cluster, recreate the data volumes with `k8s-down` first. Files created by the earlier root containers may not be readable by the new users.
+## Upgrading an existing cluster
+
+Docker Desktop's `hostpath` volumes ignore `fsGroup`, so files created by the earlier root containers stay unreadable by the new users. Qdrant is affected and crashes with `Permission denied`. To keep its data, follow the steps in [`migrate-qdrant-volume-owner.yaml`](../../app/infra/k8s/migrate-qdrant-volume-owner.yaml). PostgreSQL starts a new database in a `pgdata` subdirectory, which holds only dialog checkpoints.
+
+A new install is not affected.
+
+During a Qdrant rollout, the new pod can crash once with `Can't init WAL: WouldBlock` while the old pod still holds the volume. It recovers on its own after a restart.
