@@ -4,6 +4,14 @@ import operator
 from typing import Annotated, Any, TypedDict
 
 
+MAX_STORED_TURNS = 20
+
+
+def append_turns(existing: list[dict[str, Any]] | None, new: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Keep a bounded dialog so checkpoints do not grow without limit."""
+    return ((existing or []) + (new or []))[-MAX_STORED_TURNS:]
+
+
 class AgentState(TypedDict, total=False):
     request_id: str
     message: str
@@ -26,3 +34,8 @@ class AgentState(TypedDict, total=False):
     tokens_out: int
     model_uri: str
     errors: Annotated[list[str], operator.add]
+    # Dialog memory. Only history outlives a turn; see TURN_RESET in graph.py.
+    history: Annotated[list[dict[str, Any]], append_turns]
+    visible_history: list[dict[str, Any]]
+    retrieval_query: str
+    session_bound: bool

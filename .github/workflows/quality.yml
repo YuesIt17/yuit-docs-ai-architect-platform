@@ -22,8 +22,22 @@ jobs:
     defaults:
       run:
         working-directory: app/backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kp
+          POSTGRES_PASSWORD: kp
+          POSTGRES_DB: knowledge
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kp"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       OTEL_SDK_DISABLED: "true"
+      TEST_POSTGRES_DSN: postgresql://kp:kp@localhost:5432/knowledge
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

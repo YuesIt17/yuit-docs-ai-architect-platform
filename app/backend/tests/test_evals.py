@@ -8,7 +8,14 @@ import httpx
 import pytest
 
 from evals.calibrate_cache import calibrate, score_threshold
-from evals.harness import GoldenCase, check_deterministic, load_golden, run_case, score_state, summarize
+from evals.harness import (
+    GoldenCase,
+    check_deterministic,
+    load_golden,
+    run_case,
+    score_state,
+    summarize,
+)
 from evals.judge import check_judge, complete, require_local_url
 from kp.deps import get_container
 from pipelines.seed_all import seed_store

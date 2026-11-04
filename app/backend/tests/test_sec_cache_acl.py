@@ -30,7 +30,7 @@ async def test_cache_hit_then_classification_revoke(chat_env):
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
     # Use a public/internal product question that returns citations
-    body = ChatRequest(message="FreshFarm oats allergens", session_id="s1", stream=False)
+    body = ChatRequest(message="FreshFarm oats allergens", stream=False)
     first = await svc.handle(body, mgr)
     assert first.acl_decision in {"allow", "allow_cache"}
     assert first.citations, "need citations to test revoke"
@@ -55,7 +55,7 @@ async def test_cache_miss_when_source_deleted(chat_env):
     c = chat_env
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
-    body = ChatRequest(message="DairyPure milk ingredients", session_id="s2", stream=False)
+    body = ChatRequest(message="DairyPure milk ingredients", stream=False)
     first = await svc.handle(body, mgr)
     if not first.citations:
         pytest.skip("no citations for seed query")
@@ -71,8 +71,8 @@ async def test_editing_a_source_evicts_only_answers_that_cite_it(chat_env):
     c = chat_env
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
-    edited_query = ChatRequest(message="Tokenized loyalty IDs", session_id="s4", stream=False)
-    other_query = ChatRequest(message="FarmSoft cottage cheese ingredients", session_id="s5", stream=False)
+    edited_query = ChatRequest(message="Tokenized loyalty IDs", stream=False)
+    other_query = ChatRequest(message="FarmSoft cottage cheese ingredients", stream=False)
     edited_docs = {cit.doc_id for cit in (await svc.handle(edited_query, mgr)).citations}
     other_docs = {cit.doc_id for cit in (await svc.handle(other_query, mgr)).citations}
     only_edited = edited_docs - other_docs
@@ -100,7 +100,7 @@ async def test_policy_version_invalidates_cache(chat_env):
     c = chat_env
     svc = ChatService(c, c.settings)
     mgr = Principal(user_id="u-mgr", role="category_manager")
-    body = ChatRequest(message="allergen labeling policy", session_id="s3", stream=False)
+    body = ChatRequest(message="allergen labeling policy", stream=False)
     await svc.handle(body, mgr)
     hit = await svc.handle(body, mgr)
     if hit.acl_decision != "allow_cache":

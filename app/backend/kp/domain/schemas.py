@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str | None = None
+    # Send the same id to continue a dialog; omit it for a stateless request.
+    session_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
     stream: bool = True
 
 

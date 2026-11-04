@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { chat, chatStream, type ChatResponse, type Citation } from "../api/client";
+import { chat, chatStream, type ChatResponse, type Citation, newSessionId } from "../api/client";
 import { useApp } from "../state/AppContext";
 
 type Msg = {
@@ -15,6 +15,7 @@ export function ChatPage() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(false);
   const [useStream, setUseStream] = useState(true);
+  const [sessionId, setSessionId] = useState(newSessionId);
   const [error, setError] = useState<string | null>(null);
 
   async function send() {
@@ -29,6 +30,7 @@ export function ChatPage() {
         await chatStream(
           role,
           userMsg.text,
+          sessionId,
           (m) => {
             meta = m;
           },
@@ -50,7 +52,7 @@ export function ChatPage() {
           },
         );
       } else {
-        const data: ChatResponse = await chat(role, userMsg.text, false);
+        const data: ChatResponse = await chat(role, userMsg.text, sessionId, false);
         setMsgs((prev) => [
           ...prev,
           {
@@ -71,6 +73,12 @@ export function ChatPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function newChat() {
+    setMsgs([]);
+    setError(null);
+    setSessionId(newSessionId());
   }
 
   return (
@@ -114,6 +122,9 @@ export function ChatPage() {
             <input type="checkbox" checked={useStream} onChange={(e) => setUseStream(e.target.checked)} />
             SSE stream
           </label>
+          <button className="secondary" onClick={newChat} disabled={loading}>
+            New chat
+          </button>
           <button onClick={() => void send()} disabled={loading}>
             {loading ? "Thinking…" : "Ask"}
           </button>

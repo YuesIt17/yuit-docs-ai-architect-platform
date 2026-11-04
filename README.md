@@ -81,7 +81,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
 | OCR | MOCK | Real vision OCR (outside the MVP) |
 | Vault | Stub README | Live Vault agent |
-| Session memory | `session_id` only | Dialog persistence |
+| Session memory | LangGraph checkpoints in PostgreSQL ([ADR-004](architecture/adr/ADR-004-orchestration.md)) | Retention policy |
 | Video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` in the manifest | — |
 
 ---

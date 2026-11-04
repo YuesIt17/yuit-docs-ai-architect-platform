@@ -51,7 +51,11 @@ class Settings(BaseSettings):
     # Optional bounded retrieve→evaluate→refine loop (max iterations).
     retrieval_refine_max: int = 1
 
-    # Helm still injects these; postgres reserved for a future metadata store.
+    # memory | postgres. Empty: postgres when STORE_BACKEND=live, otherwise memory.
+    session_backend: str = ""
+    session_pool_size: int = 5
+
+    # Helm injects these. Postgres holds dialog checkpoints.
     postgres_dsn: str = "postgresql+asyncpg://kp:kp@localhost:5432/knowledge"
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"

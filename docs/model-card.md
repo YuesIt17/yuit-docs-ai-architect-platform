@@ -38,4 +38,4 @@ Audit `cost_est`; cache-hit does not re-count inference tokens. Prefer MOCK in C
 - Demo-auth
 - vLLM GPU may be unverified
 - Vault planned
-- Session id ≠ dialog memory
+- Dialog memory has no retention policy yet
