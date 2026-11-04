@@ -56,6 +56,13 @@ class Settings(BaseSettings):
     # memory | postgres. Empty: postgres when STORE_BACKEND=live, otherwise memory.
     session_backend: str = ""
     session_pool_size: int = 5
+    # Under Vault dynamic credentials: a mounted file read on each new connection, and a
+    # connection lifetime shorter than the lease.
+    postgres_dsn_file: str = ""
+    session_pool_max_lifetime: float = 1800.0
+
+    # inline (in-process, dev and CI) | celery (live stack, needs a worker).
+    job_backend: str = "inline"
 
     # Helm injects these. Postgres holds dialog checkpoints.
     postgres_dsn: str = "postgresql+asyncpg://kp:kp@localhost:5432/knowledge"

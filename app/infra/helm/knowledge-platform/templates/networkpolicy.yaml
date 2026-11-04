@@ -139,6 +139,11 @@ spec:
         - podSelector:
             matchLabels:
               app: api
+        {{- if $.Values.worker.enabled }}
+        - podSelector:
+            matchLabels:
+              app: worker
+        {{- end }}
       ports:
         {{- range $port := $store.ports }}
         - protocol: TCP

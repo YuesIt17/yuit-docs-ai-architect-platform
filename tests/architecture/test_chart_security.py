@@ -104,6 +104,39 @@ def test_no_plaintext_password_in_pod_env(manifests):
                     assert "valueFrom" in env, f"{deployment['metadata']['name']}: {env['name']}"
 
 
+def test_external_secrets_replaces_the_helm_secret_and_mounts_the_dsn():
+    docs = render("--set", "secrets.provider=external-secrets")
+    assert not [d for d in docs if d["kind"] == "Secret"]
+    assert {d["metadata"]["name"] for d in docs if d["kind"] == "ExternalSecret"} == {"kp-secrets", "kp-postgres-dsn"}
+    api = next(d for d in deployments(docs) if d["metadata"]["name"] == "api")
+    env = {e["name"] for e in api["spec"]["template"]["spec"]["containers"][0]["env"]}
+    assert "POSTGRES_DSN_FILE" in env
+    assert "POSTGRES_DSN" not in env
+
+
+def test_dsn_refresh_is_shorter_than_the_vault_lease():
+    docs = render("--set", "secrets.provider=external-secrets")
+    dynamic = next(d for d in docs if d["kind"] == "ExternalSecret" and d["metadata"]["name"] == "kp-postgres-dsn")
+    assert dynamic["spec"]["refreshInterval"] == "30m"
+
+
+def test_api_gets_store_credentials_from_the_secret(manifests):
+    api = next(d for d in deployments(manifests) if d["metadata"]["name"] == "api")
+    env = {e["name"]: e for e in api["spec"]["template"]["spec"]["containers"][0]["env"]}
+    for name in ("NEO4J_PASSWORD", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY", "JWT_SECRET"):
+        assert "secretKeyRef" in env[name]["valueFrom"]
+
+
+def test_worker_is_hardened_and_can_reach_stores_when_enabled():
+    docs = render("--set", "worker.enabled=true")
+    worker = next(d for d in deployments(docs) if d["metadata"]["name"] == "worker")
+    spec = worker["spec"]["template"]["spec"]
+    assert spec["securityContext"]["runAsNonRoot"] is True
+    assert spec["containers"][0]["securityContext"]["readOnlyRootFilesystem"] is True
+    postgres = next(d for d in docs if d["kind"] == "NetworkPolicy" and d["metadata"]["name"] == "kp-postgres")
+    assert {"podSelector": {"matchLabels": {"app": "worker"}}} in postgres["spec"]["ingress"][0]["from"]
+
+
 def test_kyverno_policies_are_optional_and_enforcing():
     assert not [d for d in render() if d["kind"] == "ClusterPolicy"]
     policies = [d for d in render("--set", "kyverno.enabled=true") if d["kind"] == "ClusterPolicy"]

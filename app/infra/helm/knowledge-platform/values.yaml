@@ -98,7 +98,30 @@ networkPolicy:
 kyverno:
   enabled: false
 
+secrets:
+  # helm: from these values, for a local demo. external-secrets: from Vault (docs/infra/secrets.md).
+  provider: helm
+  vault:
+    server: http://vault.vault.svc:8200
+    kvMount: secret
+    databaseMount: database
+    databaseRole: kp-api
+    role: kp-eso
+    staticRefresh: 1h
+    # Shorter than the role's 1h default_ttl.
+    dynamicRefresh: 30m
+
+# Celery worker for catalog ingest. Off: jobs run inside the API process.
+worker:
+  enabled: false
+  replicas: 1
+  concurrency: 2
+
 resources:
+  worker:
+    requests:
+      cpu: 100m
+      memory: 256Mi
   api:
     requests:
       cpu: 100m

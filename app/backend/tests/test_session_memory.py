@@ -193,6 +193,26 @@ async def test_cache_hit_is_recorded_so_follow_ups_keep_context(env):
     assert [t["question"] for t in await history(container, ASSOCIATE, "second")] == [question]
 
 
+def test_dsn_file_is_reread_so_rotated_credentials_apply(tmp_path):
+    from kp.config import Settings
+    from kp.infrastructure.session_memory import current_dsn
+
+    dsn_file = tmp_path / "dsn"
+    dsn_file.write_text("postgresql://user-1:p@postgres:5432/knowledge\n", encoding="utf-8")
+    settings = Settings(postgres_dsn_file=str(dsn_file))
+    assert current_dsn(settings) == "postgresql://user-1:p@postgres:5432/knowledge"
+    dsn_file.write_text("postgresql://user-2:p@postgres:5432/knowledge\n", encoding="utf-8")
+    assert current_dsn(settings) == "postgresql://user-2:p@postgres:5432/knowledge"
+
+
+def test_sqlalchemy_dsn_is_converted_for_psycopg():
+    from kp.config import Settings
+    from kp.infrastructure.session_memory import current_dsn
+
+    settings = Settings(postgres_dsn="postgresql+asyncpg://kp:kp@db:5432/knowledge")
+    assert current_dsn(settings) == "postgresql://kp:kp@db:5432/knowledge"
+
+
 @pytest.mark.parametrize("bad", ["a:b", "../x", "x" * 65, "has space"])
 def test_session_id_format_is_validated(bad):
     with pytest.raises(ValidationError):

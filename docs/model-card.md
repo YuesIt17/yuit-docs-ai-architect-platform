@@ -37,5 +37,5 @@ Audit `cost_est`; cache-hit does not re-count inference tokens. Prefer MOCK in C
 - OCR accuracy on real label photos is not measured yet
 - Demo-auth
 - vLLM GPU may be unverified
-- Vault planned
+- Vault rotation is not verified on a live cluster
 - Dialog memory has no retention policy yet

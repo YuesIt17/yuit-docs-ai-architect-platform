@@ -53,11 +53,19 @@ spec:
               value: redis://redis:6379/0
             - name: MINIO_ENDPOINT
               value: minio:9000
+            {{- if eq .Values.secrets.provider "external-secrets" }}
+            - name: POSTGRES_DSN_FILE
+              value: /var/run/kp-postgres/dsn
+            {{- else }}
             - name: POSTGRES_DSN
               valueFrom:
                 secretKeyRef:
                   name: kp-secrets
                   key: POSTGRES_DSN
+            {{- end }}
+            {{- include "kp.secretEnv" . | nindent 12 }}
+            - name: JOB_BACKEND
+              value: {{ if .Values.worker.enabled }}celery{{ else }}inline{{ end }}
             # The root filesystem is read-only; library caches go to the /tmp volume.
             - name: HOME
               value: /tmp
@@ -81,7 +89,17 @@ spec:
               mountPath: /tmp
             - name: object-store-cache
               mountPath: /app/data
+            {{- if eq .Values.secrets.provider "external-secrets" }}
+            - name: postgres-dsn
+              mountPath: /var/run/kp-postgres
+              readOnly: true
+            {{- end }}
       volumes:
+        {{- if eq .Values.secrets.provider "external-secrets" }}
+        - name: postgres-dsn
+          secret:
+            secretName: kp-postgres-dsn
+        {{- end }}
         - name: tmp
           emptyDir: {}
         - name: object-store-cache

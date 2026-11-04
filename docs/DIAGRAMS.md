@@ -88,5 +88,5 @@ If `diagrams-check` fails:
 - The Structurizr Mermaid export is not the native Structurizr renderer.  
 - Pyreverse is static analysis; DI/duck typing are incomplete.  
 - KubeDiagrams shows the **declared** topology from `helm template`, not a live cluster.  
-- Postgres: **deployed-unused**; audit/jobs are in-memory.  
-- OCR: MOCK/planned.
+- Postgres holds dialog checkpoints; audit and inline jobs are in-memory.  
+- OCR: MOCK by default, RapidOCR when enabled.

@@ -1,0 +1,84 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: worker
+    kp.retailpartnerx.io/plane: control
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+        kp.retailpartnerx.io/plane: control
+    spec:
+      {{- include "kp.podSecurity" (dict "uid" 10001) | nindent 6 }}
+      containers:
+        - name: worker
+          image: {{ .Values.images.api }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["celery", "-A", "kp.worker", "worker", "--loglevel=INFO", "--concurrency={{ .Values.worker.concurrency }}"]
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          env:
+            - name: STORE_BACKEND
+              value: live
+            - name: EMBEDDING_PROVIDER
+              value: {{ .Values.api.env.EMBEDDING_PROVIDER | quote }}
+            - name: NEO4J_URI
+              value: bolt://neo4j:7687
+            - name: QDRANT_URL
+              value: http://qdrant:6333
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+            - name: MINIO_ENDPOINT
+              value: minio:9000
+            - name: HOME
+              value: /tmp
+            {{- include "kp.secretEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources.worker | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: object-store-cache
+              mountPath: /app/data
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: object-store-cache
+          emptyDir: {}
+{{- if .Values.networkPolicy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-worker
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: worker
+  policyTypes: ["Ingress", "Egress"]
+  egress:
+    {{- range $store := .Values.networkPolicy.stores }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ $store.app }}
+      ports:
+        {{- range $port := $store.ports }}
+        - protocol: TCP
+          port: {{ $port }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

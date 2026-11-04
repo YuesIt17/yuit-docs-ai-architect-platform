@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir \
     opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp \
     opentelemetry-instrumentation-fastapi \
     pillow pypdfium2 \
-    "langgraph-checkpoint-postgres>=3.2,<4" "psycopg[binary,pool]>=3.2"
+    "langgraph-checkpoint-postgres>=3.2,<4" "psycopg[binary,pool]>=3.2" "celery[redis]>=5.5,<6"
 
 # OCR without apt: rapidocr pulls opencv-python, which needs libGL, so the headless build replaces it.
 RUN pip install --no-cache-dir opencv-python-headless onnxruntime pyclipper shapely pyyaml six tqdm numpy \

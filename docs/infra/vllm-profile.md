@@ -39,6 +39,23 @@ helm upgrade --install kp ./app/infra/helm/knowledge-platform \
 Static configs and Helm values can be reviewed without a GPU.
 **Status: runtime not verified** until `curl /v1/models` succeeds on a machine with NVIDIA GPU + drivers.
 
+## Benchmark
+
+[`scripts/bench_vllm.py`](../../app/backend/scripts/bench_vllm.py) measures time to first token, p95 latency and token throughput at each parallelism level, and writes `docs/evidence/load/bench_<label>.json`. Run it on the GPU host from `app/backend`:
+
+```bash
+python scripts/bench_vllm.py --model Qwen/Qwen2.5-1.5B-Instruct-AWQ --concurrency 1 2 4 --label awq-seqs2
+```
+
+To size the KV cache for a VRAM limit:
+
+1. Start vLLM with `--gpu-memory-utilization 0.6`. Watch `nvidia-smi` and the `vllm:gpu_cache_usage_perc` metric during a run.
+2. Raise `--max-num-seqs` and repeat. Throughput rises until requests queue or preempt, which shows as rising TTFT and `vllm:num_preemptions_total`.
+3. Choose the highest setting where p95 TTFT still meets the target, and leave at least 10% of VRAM free for the driver.
+4. Record the chosen values in this file and in [capacity-planning.md](../capacity-planning.md).
+
+**No GPU results are recorded yet.** The script is tested against a scripted streaming server, which checks its measurements but not vLLM itself.
+
 Do **not** rename Ollama to vLLM. Do **not** claim GGUF Ollama weights are interchangeable with AWQ vLLM.
 
 ## Offline prep

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from fastapi import FastAPI
@@ -11,6 +12,7 @@ from starlette.responses import Response
 
 from kp import __version__
 from kp.api.router import router
+from kp.application.jobs import follow_mirror_stream
 from kp.config import get_settings
 from kp.deps import get_container
 from kp.infrastructure.session_memory import open_postgres_checkpointer, uses_postgres
@@ -51,6 +53,8 @@ def create_app() -> FastAPI:
         if uses_postgres(settings):
             saver, app.state.session_pool = await open_postgres_checkpointer(settings)
             c.agent.attach_checkpointer(saver)
+        if settings.job_backend == "celery":
+            app.state.mirror_task = asyncio.create_task(follow_mirror_stream(c.store, c.job_redis))
         logger.info(
             "KP started store=%s live=%s llm=%s otel=%s docs=%s",
             settings.store_backend,
@@ -62,6 +66,9 @@ def create_app() -> FastAPI:
 
     @app.on_event("shutdown")
     async def _shutdown() -> None:
+        mirror = getattr(app.state, "mirror_task", None)
+        if mirror is not None:
+            mirror.cancel()
         pool = getattr(app.state, "session_pool", None)
         if pool is not None:
             await pool.close()

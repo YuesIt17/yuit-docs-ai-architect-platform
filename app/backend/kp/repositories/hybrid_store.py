@@ -87,7 +87,17 @@ class HybridKnowledgeStore:
     def live_enabled(self) -> bool:
         return self._use_live
 
-    def upsert_document(self, doc: DocumentNode, chunk_texts: list[str] | None = None) -> None:
+    def mirror_document(self, doc: DocumentNode) -> None:
+        """Update only this process's in-memory index with a document another process already stored."""
+        self._memory.upsert_document(doc)
+
+    def upsert_document(
+        self,
+        doc: DocumentNode,
+        chunk_texts: list[str] | None = None,
+        *,
+        raise_on_live_error: bool = False,
+    ) -> None:
         self._memory.upsert_document(doc, chunk_texts)
         if not self._use_live:
             return
@@ -101,6 +111,9 @@ class HybridKnowledgeStore:
                     self._qdrant.upsert_chunk(chunk, doc)
         except Exception as exc:
             logger.warning("live upsert_document failed: %s", exc)
+            # A background job must report this: its document would be missing from search.
+            if raise_on_live_error:
+                raise
 
     def upsert_entity(self, name: str, entity_type: str, doc_ids: list[str]) -> str:
         eid = self._memory.upsert_entity(name, entity_type, doc_ids)

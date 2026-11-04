@@ -26,7 +26,10 @@ Interactive chat and label recognition need low latency (sync/SSE). Heavy multi-
 ## Decision
 
 - Sync/SSE for interactive chat and label extraction
-- Async `/v1/jobs` for batch / multi-hop
+- Async `/v1/jobs` for batch work. Catalog ingest (`ingest_documents`) runs in a Celery worker on the live stack, and in-process otherwise
+- Celery over Temporal: Redis is already in the stack, and catalog ingest is a single idempotent task with no multi-step workflow to orchestrate
+- Only `compliance_officer` can ingest, since ingest sets a document's classification. A failed document is reported per job and does not abort the catalog
+- API replicas follow a Redis stream to update their in-memory mirrors with documents the worker stored
 - Semantic cache **after** the Output Guard; invalidation through `index_version` (hw-9)
 - Partial invalidation: each entry stores content hashes of its sources, and a changed hash evicts only the entries citing that document
 - The similarity threshold is configurable and calibrated per embedding model ([evaluation.md](../../docs/evaluation.md))

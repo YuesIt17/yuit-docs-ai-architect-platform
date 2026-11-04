@@ -70,7 +70,8 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | Model Card / SRE / Setup | ops documentation | [docs/](docs/) |
 | Label OCR | local RapidOCR (PaddleOCR models), or MOCK by default | [ADR-007](architecture/adr/ADR-007-multimodal-labels.md) |
 | Demo auth | Bearer roles (not an IdP) | `DEMO_AUTH_ENABLED` |
-| Vault | stub | `app/infra/vault/` |
+| Secrets | Vault through External Secrets Operator, with rotating PostgreSQL credentials (optional) | [docs/infra/secrets.md](docs/infra/secrets.md) |
+| Background ingest | Celery jobs for document catalogs, with per-document failure reporting | [ADR-008](architecture/adr/ADR-008-sync-async-cache.md) |
 
 ### Current state vs plan (additional functionality)
 
@@ -81,7 +82,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | LLM submission | vLLM AWQ profile | runtime on a GPU |
 | Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
 | OCR | RapidOCR on CPU; MOCK by default | Accuracy measured on real label photos |
-| Vault | Stub README | Live Vault agent |
+| Secrets | Chart values by default; Vault + ESO optional | Verify rotation on a live cluster |
 | Session memory | LangGraph checkpoints in PostgreSQL ([ADR-004](architecture/adr/ADR-004-orchestration.md)) | Retention policy |
 | Video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` in the manifest | — |
 
@@ -154,8 +155,8 @@ Demo auth: Bearer `guest` | `associate` | `manager` | `compliance`.
 2. **Observability:** Tempo instead of Jaeger; Ollama logs instead of vLLM (no GPU).
 3. **OCR defaults to MOCK:** real local OCR needs `OCR_PROVIDER=RAPIDOCR`, and is tested on generated labels only.
 4. **Demo auth:** learning Bearer tokens.
-5. **Vault:** planned stub.
-6. **vLLM GPU:** the profile exists, but its runtime is not verified on this setup.
+5. **Vault and ESO:** implemented, but the full flow has not run on a live cluster.
+6. **vLLM GPU:** the profile and [benchmark](docs/infra/vllm-profile.md) exist, but no GPU results have been recorded.
 
 ## Author
 

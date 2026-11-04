@@ -37,6 +37,9 @@ dev = [
 eval = [
   "deepeval>=4.3,<5",
 ]
+queue = [
+  "celery[redis]>=5.5,<6",
+]
 ocr = [
   "rapidocr-onnxruntime>=1.2,<2",
 ]
