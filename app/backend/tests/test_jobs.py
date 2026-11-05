@@ -95,7 +95,8 @@ def test_ingest_makes_the_document_retrievable_with_its_acl(client):
     officer = Principal(user_id="c", role="compliance_officer")
     associate = Principal(user_id="a", role="store_associate")
     assert any(h.document.doc_id == "cat-001" for h in store.hybrid_retrieve("xylitol labeling", officer, top_k=5))
-    assert not any(h.document.doc_id == "cat-001" for h in store.hybrid_retrieve("xylitol labeling", associate, top_k=5))
+    hits = store.hybrid_retrieve("xylitol labeling", associate, top_k=5)
+    assert not any(h.document.doc_id == "cat-001" for h in hits)
 
 
 class FlakyStore:
@@ -150,7 +151,8 @@ def test_failed_document_is_not_mirrored_to_api_replicas():
 async def test_inline_queue_reports_partial_failure():
     store = FlakyStore()
     queue = InlineJobQueue(store)
-    job_id = await queue.submit(IngestRequest(documents=[IngestDocument(**document("bad")), IngestDocument(**document("a"))]))
+    documents = [IngestDocument(**document("bad")), IngestDocument(**document("a"))]
+    job_id = await queue.submit(IngestRequest(documents=documents))
     await asyncio.gather(*queue._tasks)
     assert queue.get(job_id)["result"]["ingested"] == 1
     assert queue.get(job_id)["result"]["failed"][0]["doc_id"] == "bad"
@@ -160,7 +162,9 @@ async def test_inline_queue_reports_partial_failure():
 async def test_celery_queue_records_status_before_enqueueing(monkeypatch):
     celery_worker = pytest.importorskip("kp.worker")
     sent = {}
-    monkeypatch.setattr(celery_worker.ingest_documents, "delay", lambda job_id, docs: sent.update(job_id=job_id, docs=docs))
+    monkeypatch.setattr(
+        celery_worker.ingest_documents, "delay", lambda job_id, docs: sent.update(job_id=job_id, docs=docs)
+    )
     redis_client = FakeRedis()
     queue = CeleryJobQueue(redis_client)
     job_id = await queue.submit(IngestRequest(documents=[IngestDocument(**document())]))

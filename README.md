@@ -2,7 +2,7 @@
 
 **A secure platform for multimodal analysis of corporate knowledge (GraphRAG)**, built for the AI Architect course.
 
-> **Glossary:** [docs/Glossary.md](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Evidence:** [docs/evidence/](docs/evidence/) · **Video (Russian narration):** [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU)
+> **Glossary:** [docs/Glossary.md](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Evidence:** [docs/evidence/](docs/evidence/) · **Video:** [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU)
 
 RetailPartnerX store associates, category managers and compliance officers get grounded answers from the Product/Policy KB and demo labels **inside a closed perimeter** (no SaaS OpenAI/Anthropic), with role-based ACL and a verifiable GraphRAG path (product → allergen → policy).
 

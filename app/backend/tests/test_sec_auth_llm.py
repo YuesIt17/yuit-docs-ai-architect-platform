@@ -6,7 +6,7 @@ import pytest
 
 from kp.config import Settings
 from kp.infrastructure.llm import LLMClient
-from kp.security.rbac import AuthDisabledError, LLM_ADMIN_ROLES, resolve_principal
+from kp.security.rbac import LLM_ADMIN_ROLES, AuthDisabledError, resolve_principal
 
 
 def test_demo_auth_disabled_rejects():

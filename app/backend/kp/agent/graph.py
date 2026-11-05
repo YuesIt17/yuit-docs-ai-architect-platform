@@ -51,7 +51,7 @@ TURN_RESET: dict[str, Any] = {
 }
 
 
-def build_graph(store, llm: LLMClient, *, agent: "KnowledgeAgent | None" = None, checkpointer=None):
+def build_graph(store, llm: LLMClient, *, agent: KnowledgeAgent | None = None, checkpointer=None):
     """Compile the agent StateGraph with injected deps (no DI / network side effects).
 
     Used by KnowledgeAgent and by tools/diagrams/export_langgraph.py with no-I/O doubles.

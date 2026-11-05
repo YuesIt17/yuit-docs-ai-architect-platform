@@ -10,7 +10,7 @@ import asyncio
 import json
 import statistics
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
@@ -121,7 +121,7 @@ async def main() -> None:
     success_rate = len(ok) / len(results) if results else 0.0
 
     meta = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "base_url": args.base_url,
         "scenario": args.scenario,
         "count": args.count,

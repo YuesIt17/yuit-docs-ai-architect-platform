@@ -218,7 +218,8 @@ class ChatService:
 
         if body.stream:
             metrics.REQUESTS.labels(endpoint="chat", status="stream").inc()
-            return ("stream", self._event_stream(message, principal, request_id, session_id, started, thread, in_dialog))
+            events = self._event_stream(message, principal, request_id, session_id, started, thread, in_dialog)
+            return ("stream", events)
 
         state = await self.c.agent.arun(
             {

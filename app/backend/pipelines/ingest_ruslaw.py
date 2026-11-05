@@ -26,7 +26,7 @@ def parse_act(path: Path) -> DocumentNode | None:
     body = root.findtext(".//textIPS") or ""
     status = root.find(".//statusIPS")
     classification = "public"
-    # RusLawOD is a Russian-language corpus: its status values must be matched as published.
+    # The corpus publishes status values in its original language, so match them as published.
     # Dropping this term would ingest classified acts as public.
     status_val = (status.get("val") or "").lower() if status is not None else ""
     if "секрет" in status_val or "secret" in status_val:
