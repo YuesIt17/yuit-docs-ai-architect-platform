@@ -40,6 +40,7 @@ app/backend/.venv/Scripts/python.exe -m pytest -q tests/architecture
 | Helm security settings | Run `tests/architecture` and update `docs/infra/k8s-hardening.md` |
 | Retrieval, routing or the answer flow | Run the eval gate. See [`docs/evaluation.md`](docs/evaluation.md) |
 | Python code or tests | Run ruff and pytest |
+| `app/bff` | Run `go vet`, `go test -race` and `golangci-lint`. See [`app/bff/README.md`](app/bff/README.md) |
 
 ## Git
 

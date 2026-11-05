@@ -206,6 +206,8 @@ manager cannot see the secret promo (`42%`); compliance can.
 
 ---
 
+With real login (`KP_AUTH=oidc make k8s-up`, Docker Desktop only), the role comes from a Keycloak account instead of the switcher, which is hidden. Open <http://kp.localhost:8088/>, with no hosts entry needed. The demo users are in [`values-desktop-oidc.yaml`](../app/infra/helm/knowledge-platform/values-desktop-oidc.yaml). Keycloak's first start took about 3 minutes on a 4 GB VM. See [ADR-010](../architecture/adr/ADR-010-bff-auth.md).
+
 ## Variables
 
 See [.env.example](../.env.example).

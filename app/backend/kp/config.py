@@ -2,7 +2,11 @@
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Asymmetric only: an HMAC entry would let the public JWKS key act as a shared secret.
+_ALLOWED_OIDC_ALGORITHMS = frozenset({"RS256", "RS384", "RS512", "PS256", "ES256", "ES384", "EdDSA"})
 
 
 class Settings(BaseSettings):
@@ -12,6 +16,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # Demo Bearer role tokens (not production IdP). Set false to deny protected ops without real auth.
     demo_auth_enabled: bool = True
+    # OIDC: setting the issuer turns on JWT validation and requires DEMO_AUTH_ENABLED=false.
+    oidc_issuer: str = ""
+    oidc_audience: str = "kp-api"
+    oidc_algorithms: str = "RS256"
+    # Where to fetch keys from when the issuer's public URL is not reachable inside the cluster.
+    oidc_jwks_url: str = ""
     jwt_secret: str = "dev-retailpartnerx-change-me"
     index_version: str = "v1"
     policy_version: str = "v1"
@@ -87,6 +97,23 @@ class Settings(BaseSettings):
     embedding_local_path: str = ""  # air-gap: local weights dir; empty = HF id / hub cache
 
     datasets_dir: str = "../datasets"
+
+    @property
+    def oidc_algorithm_list(self) -> list[str]:
+        return [a.strip() for a in self.oidc_algorithms.split(",") if a.strip()]
+
+    @model_validator(mode="after")
+    def _auth_modes_cannot_mix(self) -> "Settings":
+        if not self.oidc_issuer:
+            return self
+        if self.demo_auth_enabled:
+            raise ValueError("OIDC_ISSUER requires DEMO_AUTH_ENABLED=false: the two auth modes cannot be mixed")
+        if not self.oidc_audience:
+            raise ValueError("OIDC_ISSUER requires OIDC_AUDIENCE")
+        algorithms = self.oidc_algorithm_list
+        if not algorithms or not set(algorithms) <= _ALLOWED_OIDC_ALGORITHMS:
+            raise ValueError(f"OIDC_ALGORITHMS must be a subset of {sorted(_ALLOWED_OIDC_ALGORITHMS)}")
+        return self
 
 
 @lru_cache

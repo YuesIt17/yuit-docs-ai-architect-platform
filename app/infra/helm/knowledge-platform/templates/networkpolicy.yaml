@@ -62,6 +62,7 @@ spec:
       ports:
         - protocol: TCP
           port: {{ .Values.frontend.port }}
+  {{- if not .Values.bff.enabled }}
   egress:
     - to:
         - podSelector:
@@ -70,6 +71,7 @@ spec:
       ports:
         - protocol: TCP
           port: {{ .Values.api.port }}
+  {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -85,6 +87,11 @@ spec:
   policyTypes: ["Ingress", "Egress"]
   ingress:
     - from:
+        {{- if .Values.bff.enabled }}
+        - podSelector:
+            matchLabels:
+              app: bff
+        {{- else }}
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: {{ $ingressNs }}
@@ -94,6 +101,7 @@ spec:
         {{- if $hostCidr }}
         - ipBlock:
             cidr: {{ $hostCidr }}
+        {{- end }}
         {{- end }}
       ports:
         - protocol: TCP
@@ -109,6 +117,15 @@ spec:
         - protocol: TCP
           port: {{ $port }}
         {{- end }}
+    {{- end }}
+    {{- if .Values.keycloak.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: keycloak
+      ports:
+        - protocol: TCP
+          port: 8080
     {{- end }}
     {{- range $rule := .Values.networkPolicy.apiEgress }}
     - to:
@@ -144,6 +161,11 @@ spec:
             matchLabels:
               app: worker
         {{- end }}
+        {{- if and $.Values.bff.enabled (eq $store.app "redis") }}
+        - podSelector:
+            matchLabels:
+              app: bff
+        {{- end }}
       ports:
         {{- range $port := $store.ports }}
         - protocol: TCP
@@ -159,5 +181,101 @@ spec:
           port: {{ $port }}
         {{- end }}
     {{- end }}
+{{- end }}
+{{- if .Values.bff.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-bff
+  namespace: {{ $ns }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: bff
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ingressNs }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.bff.port }}
+    {{- if $hostCidr }}
+    # Metrics and probes only. The browser-facing port is not open to the host network.
+    - from:
+        - ipBlock:
+            cidr: {{ $hostCidr }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.bff.adminPort }}
+    {{- end }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: {{ .Values.api.port }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    {{- if .Values.keycloak.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app: keycloak
+      ports:
+        - protocol: TCP
+          port: 8080
+    {{- end }}
+    {{- range $rule := .Values.networkPolicy.bffEgress }}
+    - to:
+        - ipBlock:
+            cidr: {{ $rule.cidr }}
+      ports:
+        {{- range $port := $rule.ports }}
+        - protocol: TCP
+          port: {{ $port }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+{{- if .Values.keycloak.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kp-keycloak
+  namespace: {{ $ns }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  # Egress stays default-deny: Keycloak has an embedded database and calls nothing but DNS.
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ingressNs }}
+        - podSelector:
+            matchLabels:
+              app: bff
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 8080
 {{- end }}
 {{- end }}

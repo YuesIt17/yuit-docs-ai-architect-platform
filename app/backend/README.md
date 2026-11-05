@@ -139,7 +139,7 @@ flowchart TB
 | `application/` | Chat / vision / audit orchestration |
 | `domain/` | Pydantic schemas + GraphRAG nodes |
 | `agent/` | LangGraph state machine; LLM call in `synthesize` |
-| `security/` | Demo Bearer RBAC + input/output/vision guards |
+| `security/` | Keycloak JWT validation or demo Bearer, RBAC, input/output/vision guards |
 | `repositories/` | Protocols + memory + hybrid facade |
 | `infrastructure/` | Neo4j, Qdrant, Redis, MinIO, **LLMClient**, embeddings, vision |
 | `observability/` | Prometheus metrics + OTel→Tempo + JSON logs→Loki |
@@ -197,7 +197,7 @@ pytest -q
 
 Useful Make targets (from the repo root): `make dev-mock` (API+UI, MOCK), `make dev-llm` (API+UI + Ollama), `make api`, `make seed`, `make load-smoke`.
 
-Demo tokens (Bearer): `guest` | `associate` | `manager` | `compliance`.
+Demo tokens (Bearer): `guest` | `associate` | `manager` | `compliance`. With `OIDC_ISSUER` set and `DEMO_AUTH_ENABLED=false`, the API accepts only Keycloak access tokens, and starting with both set is refused. See [ADR-010](../../architecture/adr/ADR-010-bff-auth.md).
 
 ## Intentionally outside the runtime
 

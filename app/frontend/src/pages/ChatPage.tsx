@@ -10,7 +10,7 @@ type Msg = {
 };
 
 export function ChatPage() {
-  const { role, llm } = useApp();
+  const { llm } = useApp();
   const [input, setInput] = useState("What allergens are in FreshFarm oats?");
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,6 @@ export function ChatPage() {
       if (useStream) {
         let meta: Record<string, unknown> = {};
         await chatStream(
-          role,
           userMsg.text,
           sessionId,
           (m) => {
@@ -52,7 +51,7 @@ export function ChatPage() {
           },
         );
       } else {
-        const data: ChatResponse = await chat(role, userMsg.text, sessionId, false);
+        const data: ChatResponse = await chat(userMsg.text, sessionId, false);
         setMsgs((prev) => [
           ...prev,
           {

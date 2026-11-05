@@ -13,3 +13,4 @@ ADR registry for the RetailPartnerX Knowledge Platform. Format: Status → Conte
 | [ADR-007](ADR-007-multimodal-labels.md) | Multimodal labels | Accepted |
 | [ADR-008](ADR-008-sync-async-cache.md) | Sync/Async + Semantic Cache | Accepted |
 | [ADR-009](ADR-009-object-store.md) | Object Store (MinIO) | Accepted |
+| [ADR-010](ADR-010-bff-auth.md) | Real login: Keycloak and a Go BFF | Accepted, optional |

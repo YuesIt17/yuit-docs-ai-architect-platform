@@ -1,4 +1,4 @@
-﻿# RetailPartnerX Knowledge Platform (learning MVP)
+# RetailPartnerX Knowledge Platform (learning MVP)
 
 **A secure platform for multimodal analysis of corporate knowledge (GraphRAG)**, built for the AI Architect course.
 
@@ -69,7 +69,8 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | Observability LGTM | Grafana / Prometheus / Loki / Tempo | [ADR-006](architecture/adr/ADR-006-observability.md) |
 | Model Card / SRE / Setup | ops documentation | [docs/](docs/) |
 | Label OCR | local RapidOCR (PaddleOCR models), or MOCK by default | [ADR-007](architecture/adr/ADR-007-multimodal-labels.md) |
-| Demo auth | Bearer roles (not an IdP) | `DEMO_AUTH_ENABLED` |
+| Demo auth | Bearer roles (not an IdP), the default | `DEMO_AUTH_ENABLED` |
+| Real login | Keycloak and a Go BFF: tokens stay server-side, the API validates each one. Optional | [ADR-010](architecture/adr/ADR-010-bff-auth.md) |
 | Secrets | Vault through External Secrets Operator, with rotating PostgreSQL credentials (optional) | [docs/infra/secrets.md](docs/infra/secrets.md) |
 | Background ingest | Celery jobs for document catalogs, with per-document failure reporting | [ADR-008](architecture/adr/ADR-008-sync-async-cache.md) |
 
@@ -77,7 +78,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 
 | Area | Now | Plan |
 |------|-----|------|
-| Auth | Demo Bearer | Corporate IdP / JWT |
+| Auth | Demo Bearer by default; optional bundled Keycloak with a Go BFF | Corporate IdP |
 | LLM desktop | Ollama `qwen2.5:0.5b` | — |
 | LLM submission | vLLM AWQ profile | runtime on a GPU |
 | Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
@@ -148,12 +149,14 @@ cd app/backend && .venv/Scripts/python -m pytest -q   # Windows venv
 
 Demo auth: Bearer `guest` | `associate` | `manager` | `compliance`.
 
+Real login on Docker Desktop: `KP_AUTH=oidc make k8s-up`, then open <http://kp.localhost:8088/>. See [`app/bff`](app/bff/README.md).
+
 ## Known deviations
 
 1. **Monorepo paths:** `app/infra`, `app/backend` instead of root `/infra`, `/backend`.
 2. **Observability:** Tempo instead of Jaeger; Ollama logs instead of vLLM (no GPU).
 3. **OCR defaults to MOCK:** real local OCR needs `OCR_PROVIDER=RAPIDOCR`, and is tested on generated labels only.
-4. **Demo auth:** learning Bearer tokens.
+4. **Demo auth by default:** learning Bearer tokens. Real login is optional, and [ADR-010](architecture/adr/ADR-010-bff-auth.md) lists what it has not been verified on.
 5. **Vault and ESO:** implemented, but the full flow has not run on a live cluster.
 6. **vLLM GPU:** the profile and [benchmark](docs/infra/vllm-profile.md) exist, but no GPU results have been recorded.
 

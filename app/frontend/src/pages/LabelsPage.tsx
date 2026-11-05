@@ -14,7 +14,7 @@ export function LabelsPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await uploadLabel(role, file);
+        const res = await uploadLabel(file);
         setResult(res);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));

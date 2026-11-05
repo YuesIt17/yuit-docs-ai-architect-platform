@@ -1,0 +1,44 @@
+name: bff
+
+on:
+  pull_request:
+    paths:
+      - "app/bff/**"
+      - ".github/workflows/bff.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/bff/**"
+      - ".github/workflows/bff.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bff:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/bff
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-go@v5.5.0
+        with:
+          go-version-file: app/bff/go.mod
+          cache-dependency-path: app/bff/go.sum
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test with the race detector
+        run: go test -race -count=1 ./...
+
+      # Runs the image rather than an action, so CI uses exactly the linter version used locally.
+      - name: Lint
+        run: >-
+          docker run --rm -v "$PWD":/src -w /src golangci/golangci-lint:v2.15.0
+          golangci-lint run ./...
+
+      - name: Build the image
+        run: docker build -t kp-bff:ci .

@@ -3,6 +3,8 @@ namespace: kp
 images:
   api: kp-api:dev
   frontend: kp-frontend:dev
+  bff: kp-bff:dev
+  keycloak: kp-keycloak:dev
   pullPolicy: IfNotPresent
 
 # Ollama is Compose-only (`make llm-ollama`); use values-desktop-compose-ollama.yaml for hybrid.
@@ -30,6 +32,44 @@ api:
 frontend:
   replicas: 1
   port: 8080
+
+# Real login: a backend-for-frontend holds the tokens, and the API validates each one. Off: demo role switcher.
+# Turning it on sets DEMO_AUTH_ENABLED=false on the API. See architecture/adr/ADR-010-bff-auth.md.
+bff:
+  enabled: false
+  replicas: 1
+  port: 8080
+  # Probes and /metrics, never routed by the Ingress.
+  adminPort: 9090
+  # Set this NodePort so Prometheus outside the cluster can scrape the admin port.
+  metricsNodePort: null
+  # The origin the browser uses. It must be https, or http on *.localhost, or the session cookie is dropped.
+  publicUrl: ""
+  sessionTtl: 8h
+  # A separate database from the API's job queue.
+  redisUrl: redis://redis:6379/1
+  # 32 random bytes in base64 (`openssl rand -base64 32`). There is no default on purpose.
+  sessionEncryptionKey: ""
+  oidc:
+    # Empty: the bundled Keycloak. Set it to use an external IdP.
+    issuerUrl: ""
+    clientId: kp-bff
+    clientSecret: ""
+    # The `aud` the API requires in access tokens.
+    audience: kp-api
+
+# A demo IdP with an embedded database, re-imported at each start. Needs bff.enabled. Not for production.
+keycloak:
+  enabled: false
+  realm: kp
+  # Plain-HTTP dev needs "none". Use "external" or "all" behind TLS.
+  sslRequired: external
+  accessTokenLifespan: 300
+  adminUser: admin
+  adminPassword: ""
+  javaHeapOpts: "-Xms128m -Xmx384m"
+  # One per role. values-desktop-oidc.yaml sets them with local demo passwords.
+  demoUsers: []
 
 ingress:
   enabled: true
@@ -87,6 +127,8 @@ networkPolicy:
   hostAccessCidr: ""
   # Allowed egress from the API beyond the stores, as {cidr, ports}, such as an LLM or tracing host.
   apiEgress: []
+  # Allowed egress from the BFF beyond the API, Redis and Keycloak, such as a tracing host or an external IdP.
+  bffEgress: []
   stores:
     - {app: postgres, ports: [5432]}
     - {app: neo4j, ports: [7474, 7687], hostPorts: [7474, 7687]}
@@ -130,3 +172,15 @@ resources:
     requests:
       cpu: 50m
       memory: 64Mi
+  bff:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+  keycloak:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 768Mi

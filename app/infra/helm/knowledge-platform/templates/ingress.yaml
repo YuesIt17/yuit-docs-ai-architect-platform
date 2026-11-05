@@ -1,4 +1,73 @@
 {{- if .Values.ingress.enabled }}
+{{- if .Values.bff.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kp-bff
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    # Chat answers are streamed, and an LLM can pause for a long time between events.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: bff
+                port:
+                  number: 8080
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: bff
+                port:
+                  number: 8080
+{{- if .Values.keycloak.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kp-idp
+  namespace: {{ .Values.namespace }}
+  annotations:
+    # Keycloak's login responses carry large headers.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          # Only what browsers need, as Keycloak's reverse-proxy guide advises. /idp/admin stays internal.
+          - path: /idp/realms
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+          - path: /idp/resources
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+{{- end }}
+{{- else }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -24,6 +93,7 @@ spec:
                 name: api
                 port:
                   number: 8080
+{{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

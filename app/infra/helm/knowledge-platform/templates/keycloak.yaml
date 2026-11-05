@@ -1,0 +1,187 @@
+{{- include "kp.authGuards" . -}}
+{{- if .Values.keycloak.enabled }}
+{{- /*
+A demo identity provider: an embedded database in an emptyDir, re-imported at each start. It keeps no state across
+restarts and is not a production deployment. For production, point bff.oidc.issuerUrl at a managed Keycloak instead.
+*/ -}}
+{{- $public := trimSuffix "/" .Values.bff.publicUrl }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kp-keycloak
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  KC_BOOTSTRAP_ADMIN_USERNAME: {{ .Values.keycloak.adminUser | quote }}
+  KC_BOOTSTRAP_ADMIN_PASSWORD: {{ required "keycloak.adminPassword is required" .Values.keycloak.adminPassword | quote }}
+  # A Secret, not a ConfigMap: the realm holds the client secret and the demo passwords.
+  realm.json: |
+    {
+      "realm": {{ .Values.keycloak.realm | quote }},
+      "enabled": true,
+      "sslRequired": {{ .Values.keycloak.sslRequired | quote }},
+      "registrationAllowed": false,
+      "bruteForceProtected": true,
+      "accessTokenLifespan": {{ .Values.keycloak.accessTokenLifespan }},
+      "ssoSessionIdleTimeout": 1800,
+      "ssoSessionMaxLifespan": 28800,
+      "revokeRefreshToken": true,
+      "refreshTokenMaxReuse": 0,
+      "roles": {
+        "realm": [
+          {"name": "guest"},
+          {"name": "store_associate"},
+          {"name": "category_manager"},
+          {"name": "compliance_officer"}
+        ]
+      },
+      "clients": [
+        {
+          "clientId": {{ .Values.bff.oidc.clientId | quote }},
+          "enabled": true,
+          "protocol": "openid-connect",
+          "publicClient": false,
+          "secret": {{ required "bff.oidc.clientSecret is required" .Values.bff.oidc.clientSecret | quote }},
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": false,
+          "serviceAccountsEnabled": false,
+          "redirectUris": [{{ printf "%s/auth/callback" $public | quote }}],
+          "webOrigins": [],
+          "attributes": {
+            "pkce.code.challenge.method": "S256"
+          },
+          "protocolMappers": [
+            {
+              "name": "api-audience",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-audience-mapper",
+              "config": {
+                "included.custom.audience": {{ .Values.bff.oidc.audience | quote }},
+                "access.token.claim": "true",
+                "id.token.claim": "false"
+              }
+            }
+          ]
+        }
+      ],
+      "users": [
+        {{- range $i, $user := .Values.keycloak.demoUsers }}
+        {{- if $i }},{{ end }}
+        {
+          "username": {{ $user.username | quote }},
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": {{ $user.username | quote }},
+          "lastName": "Demo",
+          "email": {{ printf "%s@example.com" $user.username | quote }},
+          "realmRoles": [{{ $user.role | quote }}],
+          "credentials": [
+            {"type": "password", "value": {{ $user.password | quote }}, "temporary": false}
+          ]
+        }
+        {{- end }}
+      ]
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: keycloak
+    kp.retailpartnerx.io/plane: edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+        kp.retailpartnerx.io/plane: edge
+    spec:
+      {{- include "kp.podSecurity" (dict "uid" 1000) | nindent 6 }}
+      containers:
+        - name: keycloak
+          image: {{ .Values.images.keycloak }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: management
+              containerPort: 9000
+          env:
+            # Browsers and token issuers use the public URL. Discovery on the internal URL answers with internal
+            # token and JWKS endpoints, so the BFF and the API never need the public host.
+            - name: KC_HOSTNAME
+              value: {{ printf "%s/idp" $public | quote }}
+            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+              value: "true"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_PROXY_HEADERS
+              value: xforwarded
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef: {name: kp-keycloak, key: KC_BOOTSTRAP_ADMIN_USERNAME}
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: kp-keycloak, key: KC_BOOTSTRAP_ADMIN_PASSWORD}
+            - name: JAVA_OPTS_KC_HEAP
+              value: {{ .Values.keycloak.javaHeapOpts | quote }}
+          startupProbe:
+            httpGet:
+              path: /idp/health/started
+              port: management
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /idp/health/ready
+              port: management
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources.keycloak | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /opt/keycloak/data
+            - name: realm
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+        - name: realm
+          secret:
+            secretName: kp-keycloak
+            items:
+              - key: realm.json
+                path: realm.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+{{- end }}
