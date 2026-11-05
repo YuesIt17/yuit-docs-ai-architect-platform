@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from fastapi import HTTPException
 
@@ -70,9 +68,7 @@ async def test_manager_cannot_presign_secret_asset(seeded):
     assert ei.value.status_code == 403
 
     compliance = Principal(user_id="u-comp", role="compliance_officer")
-    # Will fail on missing object bytes for presign path resolution — create file first
-    store = ObjectStore(c.settings, local_root=Path(c.settings.minio_bucket and "") or None)
-    # Use container object store with safe write
+    # Presigning needs the object to exist, so write it first.
     name = ObjectStore.safe_storage_name("x.png")
     c.object_store.put_bytes("recognized", asset_id, name, b'{"ok":true}', "application/json")
     # Update URI to match written key

@@ -53,6 +53,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev,ocr,queue]"
+      - name: Lint
+        run: python -m ruff check .
       - run: python -m pytest -q
       - name: RAG eval gate
         run: python -m evals.run_eval --report eval-report.json

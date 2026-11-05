@@ -3,7 +3,6 @@ from __future__ import annotations
 import operator
 from typing import Annotated, Any, TypedDict
 
-
 MAX_STORED_TURNS = 20
 
 

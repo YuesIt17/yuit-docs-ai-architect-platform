@@ -43,7 +43,6 @@ async def test_indirect_injection_in_chunk_does_not_leak_secret(seeded):
             "errors": [],
         }
     )
-    answer = (state.get("answer") or "").lower()
     # Must not surface the secret promo fact from other docs via injection.
     assert "42%" not in (state.get("answer") or "") or all(
         cit.get("classification") != "secret" for cit in (state.get("citations") or [])
