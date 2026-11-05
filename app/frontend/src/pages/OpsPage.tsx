@@ -62,7 +62,7 @@ export function OpsPage() {
       try {
         setHealth(await getHealth());
         try {
-          const a = await getAudit(role);
+          const a = await getAudit();
           setAudit(a.items ?? []);
         } catch {
           setAudit([]);

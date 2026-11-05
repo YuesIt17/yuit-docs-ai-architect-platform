@@ -5,7 +5,7 @@ import { useApp } from "../state/AppContext";
 const PROVIDERS = ["MOCK", "OLLAMA"] as const;
 
 export function LlmSettingsPage() {
-  const { role, llm, setLlm, refreshLlm } = useApp();
+  const { llm, setLlm, refreshLlm } = useApp();
   const [provider, setProvider] = useState("MOCK");
   const [baseUrl, setBaseUrl] = useState("");
   const [model, setModel] = useState("");
@@ -35,7 +35,7 @@ export function LlmSettingsPage() {
     setMessage(null);
     try {
       // Apply draft locally via PUT only on Apply; probe current runtime
-      const res = await probeLlm(role);
+      const res = await probeLlm();
       setLlm(res);
       setMessage(res.reachable ? `Reachable: ${res.detail}` : `Unreachable: ${res.detail}`);
     } catch (e) {
@@ -50,7 +50,7 @@ export function LlmSettingsPage() {
     setError(null);
     setMessage(null);
     try {
-      const res = await putLlmConfig(role, {
+      const res = await putLlmConfig({
         provider,
         base_url: baseUrl,
         model,

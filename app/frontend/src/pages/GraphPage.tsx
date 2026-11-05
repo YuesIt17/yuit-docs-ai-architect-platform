@@ -45,10 +45,10 @@ export function GraphPage() {
     void (async () => {
       try {
         setError(null);
-        setStats(await graphStats(role));
-        setSub(await graphSubgraph(role, seed));
+        setStats(await graphStats());
+        setSub(await graphSubgraph(seed));
         try {
-          const ob = await getOutbox(role);
+          const ob = await getOutbox();
           setEvents(ob.events ?? []);
         } catch {
           setEvents([]);
