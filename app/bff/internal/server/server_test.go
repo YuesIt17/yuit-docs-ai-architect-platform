@@ -526,6 +526,23 @@ func TestProxyDropsSetCookieFromTheAPI(t *testing.T) {
 	}
 }
 
+func TestOversizedUploadIsRefused(t *testing.T) {
+	h := newHarness(t)
+	b := newBrowser(t)
+	h.login(b)
+	token := h.csrf(b)
+	before := h.callCount()
+	res := b.do(http.MethodPost, h.bff.URL+"/api/v1/vision/label",
+		bytes.NewReader(make([]byte, 20<<20+1)), map[string]string{auth.CSRFHeader: token})
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+	if h.callCount() != before {
+		t.Fatal("the oversized upload reached the API")
+	}
+}
+
 func TestCSRFProtectsStateChangingRequests(t *testing.T) {
 	h := newHarness(t)
 	b := newBrowser(t)

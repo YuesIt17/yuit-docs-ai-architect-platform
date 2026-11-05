@@ -72,6 +72,11 @@ func New(upstream *url.URL, transport http.RoundTripper, m *obs.Metrics, log *sl
 				w.WriteHeader(499)
 				return
 			}
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) {
+				writeTooLarge(w)
+				return
+			}
 			m.UpstreamError.Inc()
 			log.ErrorContext(r.Context(), "upstream request failed", "path", r.URL.Path, "error", err.Error())
 			w.Header().Set("Content-Type", "application/json")
@@ -89,9 +94,20 @@ func New(upstream *url.URL, transport http.RoundTripper, m *obs.Metrics, log *sl
 		rc := http.NewResponseController(w)
 		_ = rc.SetWriteDeadline(time.Time{})
 		_ = rc.SetReadDeadline(time.Now().Add(uploadWindow))
+		// Browsers declare the length of an upload, so most are refused without reading them.
+		if r.ContentLength > maxBodyBytes {
+			writeTooLarge(w)
+			return
+		}
 		r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
 		rp.ServeHTTP(w, r)
 	})
+}
+
+func writeTooLarge(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusRequestEntityTooLarge)
+	_, _ = w.Write([]byte(`{"detail":"The upload is too large"}`))
 }
 
 // NewTransport is the upstream transport. It is tuned for streaming: no compression, and a long wait for

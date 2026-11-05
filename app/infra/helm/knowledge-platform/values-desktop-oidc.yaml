@@ -1,0 +1,30 @@
+# Real login on Docker Desktop. Apply after values-desktop.yaml. All credentials here are local demo values.
+#
+# The host is kp.localhost on purpose: browsers treat *.localhost as a secure context, so the same strict
+# __Host- cookie works over plain HTTP, with no insecure mode in the BFF. See docs/infra/k8s-hardening.md.
+ingress:
+  host: kp.localhost
+
+bff:
+  enabled: true
+  publicUrl: http://kp.localhost:8088
+  # Compose Prometheus scrapes this through host.docker.internal.
+  metricsNodePort: 30091
+  sessionEncryptionKey: ZGVtby1vbmx5LWRlbW8tb25seS1kZW1vLW9ubHktMDE=
+  oidc:
+    clientSecret: kp-bff-demo-secret
+
+keycloak:
+  enabled: true
+  sslRequired: none
+  adminPassword: kp-demo-admin
+  demoUsers:
+    - {username: guest, role: guest, password: kp-demo-guest}
+    - {username: associate, role: store_associate, password: kp-demo-associate}
+    - {username: manager, role: category_manager, password: kp-demo-manager}
+    - {username: compliance, role: compliance_officer, password: kp-demo-compliance}
+
+networkPolicy:
+  bffEgress:
+    # Compose Tempo through host.docker.internal.
+    - {cidr: 192.168.65.0/24, ports: [4318]}

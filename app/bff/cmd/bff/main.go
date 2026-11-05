@@ -42,7 +42,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	shutdownTracing, err := obs.InitTracing(ctx)
+	shutdownTracing, err := obs.InitTracing(ctx, log)
 	if err != nil {
 		return err
 	}

@@ -163,8 +163,12 @@ func Instrument(route string, m *Metrics, log *slog.Logger, next http.Handler) h
 
 // InitTracing exports spans over OTLP/HTTP. It reads the standard OTEL_EXPORTER_OTLP_ENDPOINT variable, and
 // OTEL_SDK_DISABLED=true turns it off. The returned function flushes pending spans.
-func InitTracing(ctx context.Context) (func(context.Context) error, error) {
+func InitTracing(ctx context.Context, log *slog.Logger) (func(context.Context) error, error) {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
+	// Without this, an unreachable collector writes plain text to stderr, which breaks the JSON log stream.
+	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
+		log.WarnContext(ctx, "telemetry export failed", "error", err.Error())
+	}))
 	if strings.EqualFold(os.Getenv("OTEL_SDK_DISABLED"), "true") {
 		return func(context.Context) error { return nil }, nil
 	}
