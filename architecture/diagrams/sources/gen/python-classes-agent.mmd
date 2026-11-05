@@ -1,16 +1,15 @@
 %% converted: classDiagram -> flowchart for editor preview
 flowchart TB
   subgraph kp_agent [kp_agent]
-    subgraph row_0 [row_0]
-      direction LR
-      AgentState[AgentState]
-      AuthDisabledError[AuthDisabledError]
-      GuardResult[GuardResult]
-      KnowledgeAgent[KnowledgeAgent]
-    end
-    subgraph row_1 [row_1]
-      direction LR
-      Principal[Principal]
-    end
+    AgentState[AgentState]
+    AuthDisabledError[AuthDisabledError]
+    AuthError[AuthError]
+    AuthUnavailableError[AuthUnavailableError]
+    GuardResult[GuardResult]
+    JwksCache[JwksCache]
+    KnowledgeAgent[KnowledgeAgent]
+    OidcVerifier[OidcVerifier]
+    Principal[Principal]
+    UnknownRoleError[UnknownRoleError]
   end
-  row_0 ~~~ row_1
+  AuthDisabledError --> AuthError

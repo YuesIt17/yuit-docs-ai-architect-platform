@@ -34,7 +34,7 @@ workspace "RetailPartnerX Knowledge Platform" "Curated C4 model with inventory-c
         obsStack = softwareSystem "Observability side-stack" "Tempo Loki Grafana on host." {
             tags "External,HostSide"
         }
-        corporateIdp = softwareSystem "Corporate IdP" "Future OIDC." {
+        corporateIdp = softwareSystem "Corporate IdP" "Future OIDC. An optional bundled Keycloak and Go BFF implement the flow (ADR-010)." {
             tags "Target"
         }
         vault = softwareSystem "HashiCorp Vault" "Future secrets." {
@@ -77,7 +77,7 @@ workspace "RetailPartnerX Knowledge Platform" "Curated C4 model with inventory-c
         hybridStore -> neo4j "graph_resolve"
         hybridStore -> qdrant "hybrid_retrieve"
 
-        kp -> corporateIdp "Authenticate planned" {
+        kp -> corporateIdp "Authenticate through OIDC, planned for a corporate IdP" {
             tags "Target"
         }
         kp -> vault "Secrets planned" {

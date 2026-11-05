@@ -22,7 +22,7 @@ Medical advice, legal opinions and foundation model training.
 
 ## Safety
 
-RBAC at retrieval + asset presign; input injection guard; output ACL; PII redaction. Demo Bearer ≠ IdP. LLM URL allowlist (SEC-04).
+RBAC at retrieval + asset presign; input injection guard; output ACL; PII redaction. Demo Bearer ≠ IdP by default; optional real login is in ADR-010. LLM URL allowlist (SEC-04).
 
 ## Evaluation
 

@@ -77,7 +77,7 @@
   "helm_inputs": [
     {
       "path": "app/infra/helm/knowledge-platform/values.yaml",
-      "sha256": "531e48de5017ac57088ffb26411fb80d87f259397d19da7ffa16f3163e55c443"
+      "sha256": "46a04d55f14381f3411e71f2fa818e52d6677b245e77ff2d1fc1850cffd30947"
     },
     {
       "path": "app/infra/helm/knowledge-platform/values-desktop.yaml",
