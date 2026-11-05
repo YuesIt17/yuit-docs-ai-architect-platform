@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (ignored by git).
+# Find your current public IP with: curl https://checkip.amazonaws.com
+api_public_access_cidrs = ["203.0.113.10/32"]
+
+# Set to 0 to skip the Ollama node while testing with the MOCK LLM.
+ollama_node_count = 1
