@@ -13,4 +13,4 @@ python app/backend/scripts/load_smoke.py --base-url http://127.0.0.1:30080 --cou
 
 If Ollama runs away on long generation: `docker restart retailpartnerx-kp-ollama-1`, then resample from audit or with fewer requests.
 
-The JSON files are unmodified captures, so they contain the Russian-language test questions used at the time.
+The JSON files are unmodified captures, so they contain the test questions exactly as they were used at the time.

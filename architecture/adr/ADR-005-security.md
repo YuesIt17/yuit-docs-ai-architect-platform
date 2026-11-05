@@ -40,4 +40,4 @@ Critical criterion: **User B must not receive an answer based on a secret docume
 ## References
 
 - `app/backend/kp/security/rbac.py`, `guardrails.py`
-- Demo: [video](https://www.youtube.com/watch?v=y2_mY9_ceuU) (Russian narration)
+- Demo: [video](https://www.youtube.com/watch?v=y2_mY9_ceuU)

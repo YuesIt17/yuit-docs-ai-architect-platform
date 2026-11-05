@@ -38,4 +38,4 @@ Fill in `trace.md` / `loki.md` from Grafana Explore (deep links are on the Ops p
 3. After uploading, set `video_url` in `manifest.json`.
 4. Screens: Chat ACL, Graph SVG + Neo4j Browser, Tempo spans, Loki logs, Grafana KP Overview.
 
-Video recording: [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) (Russian narration) · `video_url` in `manifest.json`.
+Video recording: [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` in `manifest.json`.

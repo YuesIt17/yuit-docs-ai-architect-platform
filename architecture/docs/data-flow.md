@@ -6,7 +6,7 @@
 
 ## Text ingest (policies / KB)
 
-Seed JSON (including a Russian law sample) → chunk → embed → Vector Index; in parallel, nodes/edges go to Neo4j (and the in-memory mirror for the MVP runtime).
+Seed JSON (including a regulatory sample) → chunk → embed → Vector Index; in parallel, nodes/edges go to Neo4j (and the in-memory mirror for the MVP runtime).
 
 ```mermaid
 flowchart LR

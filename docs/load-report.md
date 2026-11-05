@@ -2,7 +2,7 @@
 
 > Smoke measurements from a learning environment. This is **not** a production SLO and does not replace a GPU/vLLM test bench. See [capacity-planning.md](capacity-planning.md).
 
-Raw JSON: [`docs/evidence/load/`](evidence/load/). These files are unmodified captures, so they contain the Russian-language test questions used when the measurements were taken.
+Raw JSON: [`docs/evidence/load/`](evidence/load/). These files are unmodified captures, so they contain the test questions exactly as used when the measurements were taken.
 
 ## 1. MOCK smoke (baseline API + GraphRAG + ACL)
 

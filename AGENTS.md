@@ -44,6 +44,6 @@ app/backend/.venv/Scripts/python.exe -m pytest -q tests/architecture
 ## Git
 
 - Work on a branch and merge through a pull request. Do not commit to `main`.
-- Use Conventional Commits: `feat:`, `fix:`, `docs:`.
+- Use Conventional Commits: `feat:`, `fix:`, `docs:`, `chore:`.
 - Keep local notes and scratch files in `tmp/`, which is ignored.
 - The repository is public. Do not commit real credentials. Credentials in the chart and compose files are local demo values.
