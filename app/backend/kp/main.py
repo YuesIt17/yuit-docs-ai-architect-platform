@@ -35,13 +35,15 @@ def create_app() -> FastAPI:
         description="GraphRAG + multimodal label recognition — Google PE style Control/Data Plane",
         version=__version__,
     )
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # Under OIDC the browser only talks to the same-origin BFF, so no cross-origin access is granted.
+    if settings.demo_auth_enabled:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
     app.include_router(router)
 
     setup_otel(app, settings)

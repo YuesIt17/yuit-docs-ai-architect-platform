@@ -55,7 +55,7 @@ async def readiness(
 
 
 @router.get("/v1/graph/stats")
-async def graph_stats(c: AppContainer = Depends(container_dep)):
+async def graph_stats(c: AppContainer = Depends(container_dep), principal=Depends(principal_dep)):
     return c.store.graph_stats()
 
 

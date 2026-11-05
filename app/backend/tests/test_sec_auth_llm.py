@@ -6,7 +6,7 @@ import pytest
 
 from kp.config import Settings
 from kp.infrastructure.llm import LLMClient
-from kp.security.rbac import LLM_ADMIN_ROLES, AuthDisabledError, resolve_principal
+from kp.security.rbac import LLM_ADMIN_ROLES, AuthDisabledError, AuthError, resolve_principal
 
 
 def test_demo_auth_disabled_rejects():
@@ -14,6 +14,19 @@ def test_demo_auth_disabled_rejects():
         resolve_principal("manager", demo_auth_enabled=False)
     with pytest.raises(AuthDisabledError):
         resolve_principal(None, demo_auth_enabled=False)
+
+
+def test_demo_auth_resolves_keys_roles_and_anonymous():
+    assert resolve_principal("Bearer manager").role == "category_manager"
+    assert resolve_principal("compliance_officer").role == "compliance_officer"
+    assert resolve_principal(None).role == "guest"
+
+
+def test_demo_auth_rejects_unknown_token_instead_of_guest():
+    with pytest.raises(AuthError):
+        resolve_principal("Bearer not-a-demo-key")
+    with pytest.raises(AuthError):
+        resolve_principal("Basic bWFuYWdlcg==")
 
 
 def test_llm_rejects_arbitrary_url():

@@ -54,5 +54,5 @@ async def put_llm_config(
 
 
 @router.get("/health", response_model=LLMConfigResponse)
-async def llm_health(c: AppContainer = Depends(container_dep)):
+async def llm_health(c: AppContainer = Depends(container_dep), principal=Depends(principal_dep)):
     return _config_response(c, await c.llm.probe())
