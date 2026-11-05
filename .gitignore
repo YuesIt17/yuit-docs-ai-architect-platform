@@ -26,3 +26,10 @@ app/datasets/ruslaw_raw/
 tasks/
 tmp/sec-ops/
 tmp/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+app/infra/aws/backend.hcl
+app/infra/aws/foundation/backend.tf
