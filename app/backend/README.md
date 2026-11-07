@@ -188,12 +188,16 @@ uvicorn kp.main:app
 
 ## Run locally
 
+Dependencies are locked in `uv.lock`. Install [uv](https://docs.astral.sh/uv/), then:
+
 ```bash
 cd app/backend
-pip install -e ".[dev]"
-uvicorn kp.main:app --reload --port 8080
-pytest -q
+uv sync --extra dev
+uv run uvicorn kp.main:app --reload --port 8080
+uv run pytest -q
 ```
+
+To change a dependency, edit `pyproject.toml` and run `uv lock`. CI rejects a stale lockfile.
 
 Useful Make targets (from the repo root): `make dev-mock` (API+UI, MOCK), `make dev-llm` (API+UI + Ollama), `make api`, `make seed`, `make load-smoke`.
 
@@ -208,4 +212,4 @@ Demo tokens (Bearer): `guest` | `associate` | `manager` | `compliance`. With `OI
 | `openapi/*.yaml` | Contract/boundary; FastAPI generates `/docs` separately |
 | `postgres_dsn` / `jwt_secret` in Settings | Helm env contract / roadmap |
 
-Local `*.egg-info/` is a `pip install -e` artifact and is already in `.gitignore`.
+Local `*.egg-info/` is an editable-install artifact and is already in `.gitignore`.

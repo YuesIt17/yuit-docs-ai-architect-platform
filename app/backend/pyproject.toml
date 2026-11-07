@@ -43,10 +43,16 @@ queue = [
 ]
 ocr = [
   "rapidocr-onnxruntime>=1.2,<2",
+  "opencv-python-headless>=4.8",
 ]
 embeddings = [
   "sentence-transformers>=3.0.0",
 ]
+
+[tool.uv]
+# rapidocr requires opencv-python, which needs libGL and a display stack. The headless build provides the same cv2
+# module, so the GUI build is never installed and the Docker image and CI get the same build.
+override-dependencies = ["opencv-python; sys_platform == 'never'"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
