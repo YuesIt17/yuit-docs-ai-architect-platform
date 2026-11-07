@@ -1,0 +1,174 @@
+{{- include "kp.authGuards" . -}}
+{{- if .Values.bff.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bff
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: bff
+    kp.retailpartnerx.io/plane: edge
+spec:
+  replicas: {{ .Values.bff.replicas }}
+  selector:
+    matchLabels:
+      app: bff
+  template:
+    metadata:
+      labels:
+        app: bff
+        kp.retailpartnerx.io/plane: edge
+    spec:
+      {{- include "kp.podSecurity" (dict "uid" 65532) | nindent 6 }}
+      # Longer than the BFF's own shutdown grace, so open streams can finish on a rollout.
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: bff
+          image: {{ .Values.images.bff }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          {{- include "kp.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.bff.port }}
+            - name: admin
+              containerPort: {{ .Values.bff.adminPort }}
+          env:
+            - name: BFF_PUBLIC_URL
+              value: {{ .Values.bff.publicUrl | quote }}
+            - name: BFF_LISTEN_ADDR
+              value: {{ printf ":%v" .Values.bff.port | quote }}
+            - name: BFF_ADMIN_ADDR
+              value: {{ printf ":%v" .Values.bff.adminPort | quote }}
+            - name: OIDC_ISSUER_URL
+              value: {{ include "kp.oidcIssuer" . | quote }}
+            - name: OIDC_DISCOVERY_URL
+              value: {{ include "kp.oidcInternalUrl" . | quote }}
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.bff.oidc.clientId | quote }}
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef: {name: kp-bff-secrets, key: OIDC_CLIENT_SECRET}
+            - name: SESSION_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef: {name: kp-bff-secrets, key: SESSION_ENCRYPTION_KEY}
+            - name: SESSION_TTL
+              value: {{ .Values.bff.sessionTtl | quote }}
+            - name: API_UPSTREAM_URL
+              value: {{ printf "http://api:%v" 8080 | quote }}
+            - name: REDIS_URL
+              value: {{ .Values.bff.redisUrl | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.api.env.OTEL_EXPORTER_OTLP_ENDPOINT | default "http://host.docker.internal:4318" | quote }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: admin
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: admin
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources.bff | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bff
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: bff
+spec:
+  selector:
+    app: bff
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+{{- if .Values.bff.metricsNodePort }}
+---
+# Probes and metrics only. The browser-facing port is never published this way.
+apiVersion: v1
+kind: Service
+metadata:
+  name: bff-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+    app: bff
+spec:
+  type: NodePort
+  selector:
+    app: bff
+  ports:
+    - name: admin
+      port: {{ .Values.bff.adminPort }}
+      targetPort: admin
+      nodePort: {{ .Values.bff.metricsNodePort }}
+{{- end }}
+---
+# The Ingress sends /api to the BFF, so this listener is never reached by the edge. It no longer proxies to the API.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kp-frontend-nginx
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+data:
+  default.conf: |
+    server {
+        listen {{ .Values.frontend.port }};
+        server_name _;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location /api/ {
+            return 404;
+        }
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }
+{{- if eq .Values.secrets.provider "helm" }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kp-bff-secrets
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  OIDC_CLIENT_SECRET: {{ required "bff.oidc.clientSecret is required" .Values.bff.oidc.clientSecret | quote }}
+  SESSION_ENCRYPTION_KEY: {{ required "bff.sessionEncryptionKey is required" .Values.bff.sessionEncryptionKey | quote }}
+{{- else }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: kp-bff-secrets
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+spec:
+  refreshInterval: {{ .Values.secrets.vault.staticRefresh | quote }}
+  secretStoreRef:
+    name: kp-vault
+    kind: SecretStore
+  target:
+    name: kp-bff-secrets
+    template:
+      data:
+        OIDC_CLIENT_SECRET: "{{ `{{ .oidc_client_secret }}` }}"
+        SESSION_ENCRYPTION_KEY: "{{ `{{ .session_encryption_key }}` }}"
+  dataFrom:
+    - extract:
+        key: kp/bff
+{{- end }}
+{{- end }}

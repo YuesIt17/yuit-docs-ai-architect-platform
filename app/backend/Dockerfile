@@ -1,25 +1,22 @@
+# Dependencies come from uv.lock, so the image gets exactly the versions CI tests.
+FROM python:3.12-slim AS deps
+COPY --from=ghcr.io/astral-sh/uv:0.13.7 /uv /bin/uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PROJECT_ENVIRONMENT=/opt/venv
+WORKDIR /build
+COPY app/backend/pyproject.toml app/backend/uv.lock ./
+# Runtime extras only: the Celery worker and local OCR. Dev, eval and embeddings stay out.
+RUN uv sync --frozen --no-dev --no-install-project --no-cache --extra queue --extra ocr
+
 FROM python:3.12-slim
-
 WORKDIR /app
-# Prefer wheels-only install to avoid apt (flaky networks / air-gapped builds).
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
-
-COPY app/backend/pyproject.toml /tmp/pyproject.toml
-RUN pip install --no-cache-dir \
-    fastapi "uvicorn[standard]" pydantic pydantic-settings python-multipart httpx \
-    langgraph langchain-core langchain-openai neo4j qdrant-client redis minio \
-    prometheus-client \
-    opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp \
-    opentelemetry-instrumentation-fastapi \
-    pillow pypdfium2 \
-    "langgraph-checkpoint-postgres>=3.2,<4" "psycopg[binary,pool]>=3.2" "celery[redis]>=5.5,<6"
-
-# OCR without apt: rapidocr pulls opencv-python, which needs libGL, so the headless build replaces it.
-RUN pip install --no-cache-dir opencv-python-headless onnxruntime pyclipper shapely pyyaml six tqdm numpy \
-    && pip install --no-cache-dir --no-deps "rapidocr-onnxruntime>=1.2,<2"
+    PYTHONPATH=/app \
+    PATH=/opt/venv/bin:$PATH
+COPY --from=deps /opt/venv /opt/venv
 
 COPY app/backend/kp ./kp
 COPY app/backend/pipelines ./pipelines

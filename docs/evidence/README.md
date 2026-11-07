@@ -12,6 +12,7 @@ This folder holds reproducible verification results (numbers and screenshots are
 | `load/` | raw JSON from `load_smoke.py` (MOCK + Ollama) |
 | `trace.md` | Grafana Tempo: trace id + span list for one chat request |
 | `loki.md` | confirmation that API logs are visible in Loki |
+| `bff-overhead.md` | raw latency, memory and refresh results for the BFF |
 | `manifest.template.json` | empty template with field hints |
 
 ## How to update

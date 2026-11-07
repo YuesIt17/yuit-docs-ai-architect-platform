@@ -11,9 +11,10 @@ Rules for coding agents. It covers only what the code does not show. For an over
 
 ## Commands
 
-Run from `app/backend`, using `.venv/bin/python` on macOS and Linux:
+Run from `app/backend`, using `.venv/bin/python` on macOS and Linux. The venv comes from the lockfile:
 
 ```bash
+uv sync --extra dev --extra ocr --extra queue
 OTEL_SDK_DISABLED=true .venv/Scripts/python.exe -m pytest -q
 .venv/Scripts/python.exe -m ruff check .
 .venv/Scripts/python.exe -m evals.run_eval --report eval-report.json
@@ -28,7 +29,8 @@ app/backend/.venv/Scripts/python.exe -m pytest -q tests/architecture
 ## Environment traps
 
 - The local venv may run a newer Python than CI and the Docker images, which use 3.12. If a dependency does not install locally, check it on 3.12 before changing the design. Ragas does not build on 3.14.
-- `app/backend/Dockerfile` lists dependencies by hand. When you add a runtime dependency to `pyproject.toml`, add it there too.
+- Backend dependencies are locked in `app/backend/uv.lock`, and CI fails if it is stale. After editing `pyproject.toml`, run `uv lock` and commit both. The Dockerfile installs from the lockfile, so it needs no change unless you add an extra the image should have.
+- `uv sync` removes packages the lockfile does not list, such as the diagram tools. Reinstall them with `uv pip install -r tools/diagrams/requirements.txt` before building diagrams.
 - On Windows, a system proxy can break `kubectl`. Add `kubernetes.docker.internal` to `NO_PROXY`.
 - Docker Desktop `hostpath` volumes ignore `fsGroup`, and its CNI does not enforce NetworkPolicy. See [`docs/infra/k8s-hardening.md`](docs/infra/k8s-hardening.md).
 
@@ -40,6 +42,7 @@ app/backend/.venv/Scripts/python.exe -m pytest -q tests/architecture
 | Helm security settings | Run `tests/architecture` and update `docs/infra/k8s-hardening.md` |
 | Retrieval, routing or the answer flow | Run the eval gate. See [`docs/evaluation.md`](docs/evaluation.md) |
 | Python code or tests | Run ruff and pytest |
+| `app/bff` | Run `go vet`, `go test -race` and `golangci-lint`. See [`app/bff/README.md`](app/bff/README.md) |
 
 ## Git
 

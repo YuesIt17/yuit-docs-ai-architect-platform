@@ -5,6 +5,8 @@ flowchart TB
   user[Users]
   subgraph kp [Knowledge_Platform]
     frontend[Frontend]
+    bff[Go_BFF_optional]
+    keycloak[Keycloak_optional]
     backend[Backend_API]
     neo4j[(Neo4j)]
     qdrant[(Qdrant)]
@@ -15,7 +17,13 @@ flowchart TB
   ollama[Ollama_host]
   obs[Obs_stack]
   user --> frontend
-  frontend -->|HTTPS_api| backend
+  frontend -->|HTTPS_api_demo_mode| backend
+  user -.->|login_and_api_real_login_mode| bff
+  user -.->|login_form| keycloak
+  bff -.->|bearer_token| backend
+  bff -.->|OIDC| keycloak
+  bff -.->|sessions| redis
+  backend -.->|JWKS| keycloak
   backend --> neo4j
   backend --> qdrant
   backend --> redis

@@ -2,11 +2,18 @@
 # Docker Desktop Kubernetes (default) or kind:
 #   KP_K8S=desktop   # default
 #   KP_K8S=kind
+# Real login with Keycloak and the BFF, on Docker Desktop only:
+#   KP_AUTH=oidc
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$ROOT"
 
 mode="$(echo "${KP_K8S:-desktop}" | tr '[:upper:]' '[:lower:]')"
+auth="$(echo "${KP_AUTH:-demo}" | tr '[:upper:]' '[:lower:]')"
+if [[ "$auth" == "oidc" && "$mode" == "kind" ]]; then
+  echo "KP_AUTH=oidc is set up for Docker Desktop only (values-desktop-oidc.yaml)." >&2
+  exit 1
+fi
 
 echo "==> Checking tools"
 for cmd in helm kubectl docker; do
@@ -19,6 +26,10 @@ fi
 echo "==> Building images"
 docker build -t kp-api:dev -f app/backend/Dockerfile .
 docker build -t kp-frontend:dev app/frontend/
+if [[ "$auth" == "oidc" ]]; then
+  docker build -t kp-bff:dev app/bff/
+  docker build -t kp-keycloak:dev app/infra/keycloak/
+fi
 
 values=()
 if [[ "$mode" == "kind" ]]; then
@@ -72,6 +83,10 @@ if [[ "${KP_LLM:-}" == "compose-ollama" || "${KP_LLM:-}" == "ollama" ]]; then
   extra+=(-f app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml)
 fi
 
+if [[ "$auth" == "oidc" ]]; then
+  extra+=(-f app/infra/helm/knowledge-platform/values-desktop-oidc.yaml)
+fi
+
 echo "==> Helm upgrade --install kp"
 helm upgrade --install kp app/infra/helm/knowledge-platform \
   -n kp --create-namespace \
@@ -84,6 +99,21 @@ echo "==> Rollout restart api/frontend (pick up rebuilt :dev images)"
 kubectl -n kp rollout restart deploy/api deploy/frontend
 kubectl -n kp rollout status deploy/api --timeout=120s
 kubectl -n kp rollout status deploy/frontend --timeout=120s
+if [[ "$auth" == "oidc" ]]; then
+  kubectl -n kp rollout restart deploy/bff
+  kubectl -n kp rollout status deploy/bff --timeout=120s
+fi
+
+if [[ "$auth" == "oidc" ]]; then
+  cat <<EOF
+
+Done (mode=$mode, auth=oidc). No hosts entry is needed: browsers resolve *.localhost themselves.
+  UI  http://kp.localhost:8088/
+  Demo users are in app/infra/helm/knowledge-platform/values-desktop-oidc.yaml
+  Check: python app/scripts/k8s/oidc_e2e.py
+EOF
+  exit 0
+fi
 
 cat <<EOF
 

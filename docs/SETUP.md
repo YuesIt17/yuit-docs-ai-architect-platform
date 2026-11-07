@@ -158,7 +158,7 @@ UI: http://127.0.0.1:5173 · API: http://127.0.0.1:8080. Ctrl+C stops the API an
 
 Separately (two terminals): `make api` and `make frontend`. `make frontend` sets `VITE_API_BASE_URL=http://127.0.0.1:8080` so that Vite calls the API on the host rather than the `/api` ingress.
 
-Before the first run: create a venv and run `pip install -e ".[dev]"` in `app/backend`, and `npm install` in `app/frontend`. `make api` takes Python from `app/backend/.venv`, not from PATH. `dev-llm` requires Docker Desktop.
+Before the first run: run `uv sync --extra dev` in `app/backend`, which creates `.venv` from the lockfile, and `npm install` in `app/frontend`. `make api` takes Python from `app/backend/.venv`, not from PATH. `dev-llm` requires Docker Desktop.
 
 **Windows**
 
@@ -205,6 +205,8 @@ npm run dev
 manager cannot see the secret promo (`42%`); compliance can.
 
 ---
+
+With real login (`KP_AUTH=oidc make k8s-up`, Docker Desktop only), the role comes from a Keycloak account instead of the switcher, which is hidden. Open <http://kp.localhost:8088/>, with no hosts entry needed. The demo users are in [`values-desktop-oidc.yaml`](../app/infra/helm/knowledge-platform/values-desktop-oidc.yaml). Keycloak's first start took about 3 minutes on a 4 GB VM. See [ADR-010](../architecture/adr/ADR-010-bff-auth.md).
 
 ## Variables
 

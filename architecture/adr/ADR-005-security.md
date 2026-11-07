@@ -1,4 +1,4 @@
-﻿# ADR-005: Security and RBAC
+# ADR-005: Security and RBAC
 
 ## Status
 
@@ -29,13 +29,13 @@ Critical criterion: **User B must not receive an answer based on a secret docume
 - Classifications: `public` / `internal` / `secret` on Document/Chunk
 - Retrieval is **always** ACL-filtered; the Output Guard blocks secret leaks
 - Vision: MIME allowlist + size limit
-- Demo tokens in the UI (not a production IdP); a corporate IdP is on the roadmap
+- Demo tokens in the UI by default (not a production IdP). Optional real login through Keycloak and a Go BFF: [ADR-010](ADR-010-bff-auth.md). A corporate IdP is on the roadmap
 - Cluster layer: Restricted Pod Security, default-deny NetworkPolicy, optional Kyverno admission ([k8s-hardening.md](../../docs/infra/k8s-hardening.md))
 
 ## Consequences
 
 - (+) The manager vs compliance demo satisfies the course criterion
-- (−) A demo bearer token is not real authentication; node-level Neo4j ACL is the next stage
+- (−) In the default mode, a demo bearer token is not real authentication; node-level Neo4j ACL is the next stage
 
 ## References
 

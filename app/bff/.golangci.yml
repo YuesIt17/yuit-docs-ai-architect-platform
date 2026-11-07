@@ -1,0 +1,32 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - misspell
+    - noctx
+    - revive
+    - sloglint
+    - unconvert
+    - unparam
+    - whitespace
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - bodyclose
+          - errcheck
+          - gosec
+          - noctx
+          - unparam
+      - path: internal/testidp/
+        linters:
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

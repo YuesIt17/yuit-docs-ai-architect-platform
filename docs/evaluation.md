@@ -33,7 +33,7 @@ The low citation precision is a real weakness. Answers often cite related docume
 ## LLM judge
 
 ```bash
-pip install -e ".[eval]"
+uv sync --extra dev --extra eval
 python -m evals.run_eval --judge --judge-base-url http://127.0.0.1:11434/v1 --judge-model qwen2.5:1.5b
 ```
 

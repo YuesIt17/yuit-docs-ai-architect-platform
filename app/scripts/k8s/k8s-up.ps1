@@ -5,7 +5,13 @@ Set-Location $Root
 # Docker Desktop Kubernetes (default) or kind (legacy):
 #   $env:KP_K8S = "desktop"   # default
 #   $env:KP_K8S = "kind"
+# Real login with Keycloak and the BFF, on Docker Desktop only:
+#   $env:KP_AUTH = "oidc"
 $mode = if ($env:KP_K8S) { $env:KP_K8S.ToLowerInvariant() } else { "desktop" }
+$auth = if ($env:KP_AUTH) { $env:KP_AUTH.ToLowerInvariant() } else { "demo" }
+if ($auth -eq "oidc" -and $mode -eq "kind") {
+  throw "KP_AUTH=oidc is set up for Docker Desktop only (values-desktop-oidc.yaml)."
+}
 
 Write-Host "==> Checking tools"
 foreach ($cmd in @("helm", "kubectl", "docker")) {
@@ -20,6 +26,12 @@ if ($mode -eq "kind" -and -not (Get-Command kind -ErrorAction SilentlyContinue))
 Write-Host "==> Building images"
 docker build -t kp-api:dev -f app/backend/Dockerfile .
 docker build -t kp-frontend:dev app/frontend/
+if ($auth -eq "oidc") {
+  docker build -t kp-bff:dev app/bff/
+  if ($LASTEXITCODE -ne 0) { throw "docker build kp-bff failed" }
+  docker build -t kp-keycloak:dev app/infra/keycloak/
+  if ($LASTEXITCODE -ne 0) { throw "docker build kp-keycloak failed" }
+}
 
 if ($mode -eq "kind") {
   $cluster = "retailpartnerx-kp"
@@ -68,6 +80,9 @@ if ($mode -eq "kind") {
 }
 
 $extra = @()
+if ($auth -eq "oidc") {
+  $extra += @("-f", "app/infra/helm/knowledge-platform/values-desktop-oidc.yaml")
+}
 if ($env:KP_LLM -eq "compose-ollama") {
   $extra += @("-f", "app/infra/helm/knowledge-platform/values-desktop-compose-ollama.yaml")
 } elseif ($env:KP_LLM -eq "ollama") {
@@ -94,6 +109,18 @@ Write-Host "==> Rollout restart api/frontend (pick up rebuilt :dev images)"
 kubectl -n kp rollout restart deploy/api deploy/frontend
 kubectl -n kp rollout status deploy/api --timeout=120s
 kubectl -n kp rollout status deploy/frontend --timeout=120s
+if ($auth -eq "oidc") {
+  kubectl -n kp rollout restart deploy/bff
+  kubectl -n kp rollout status deploy/bff --timeout=120s
+  Write-Host @"
+
+Done (mode=$mode, auth=oidc). No hosts entry is needed: browsers resolve *.localhost themselves.
+  UI  http://kp.localhost:8088/
+  Demo users are in app/infra/helm/knowledge-platform/values-desktop-oidc.yaml
+  Check: python app/scripts/k8s/oidc_e2e.py
+"@
+  exit 0
+}
 
 Write-Host @"
 

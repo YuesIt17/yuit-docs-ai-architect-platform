@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-04T18:57:50Z",
+  "generated_at_utc": "2026-11-05T12:31:54Z",
   "limitations": [
     "sources/gen = codegen; sources/manual = hand-edited Mermaid.",
     "k8s-topology-*.svg is Mermaid from Helm inventory; *-kube.svg is KubeDiagrams with embedded icons.",

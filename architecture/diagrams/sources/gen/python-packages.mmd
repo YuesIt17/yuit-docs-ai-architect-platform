@@ -34,11 +34,11 @@ flowchart TB
     qdrant_vectors[qdrant_vectors]
   end
   subgraph layer_other [other]
+    auth[auth]
     ocr[ocr]
-    session_memory[session_memory]
   end
   agent --> api
   api --> application
   application --> domain
   domain --> infrastructure
-  infrastructure --> ocr
+  infrastructure --> auth

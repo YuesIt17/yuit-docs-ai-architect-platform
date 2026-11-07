@@ -45,6 +45,7 @@ jobs:
           --health-retries 10
     env:
       OTEL_SDK_DISABLED: "true"
+      UV_PYTHON: "3.12"
       TEST_REDIS_URL: redis://localhost:6379/0
       TEST_POSTGRES_DSN: postgresql://kp:kp@localhost:5432/knowledge
     steps:
@@ -52,12 +53,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev,ocr,queue]"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+      # Fails when pyproject.toml changed without regenerating uv.lock.
+      - name: Lockfile is current
+        run: uv lock --check
+      - run: uv sync --frozen --extra dev --extra ocr --extra queue
       - name: Lint
-        run: python -m ruff check .
-      - run: python -m pytest -q
+        run: uv run --frozen ruff check .
+      - run: uv run --frozen pytest -q
       - name: RAG eval gate
-        run: python -m evals.run_eval --report eval-report.json
+        run: uv run --frozen python -m evals.run_eval --report eval-report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

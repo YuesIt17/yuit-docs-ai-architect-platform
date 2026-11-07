@@ -137,7 +137,9 @@
         { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true } } }
       ],
       "datasource": { "type": "prometheus", "uid": "prometheus" }
-    }
+    },
+    {"title": "BFF requests per second by route (real login only)", "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}, "id": 9, "targets": [{"expr": "sum by (route, code) (rate(bff_http_requests_total[5m]))", "legendFormat": "{{route}} {{code}}", "refId": "A"}], "datasource": {"type": "prometheus", "uid": "prometheus"}},
+    {"title": "BFF auth events (real login only)", "type": "timeseries", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}, "id": 10, "targets": [{"expr": "sum by (result) (increase(bff_token_refresh_total[5m]))", "legendFormat": "refresh {{result}}", "refId": "A"}, {"expr": "sum by (result) (increase(bff_logins_total[5m]))", "legendFormat": "login {{result}}", "refId": "B"}, {"expr": "increase(bff_csrf_rejected_total[5m])", "legendFormat": "csrf rejected", "refId": "C"}], "datasource": {"type": "prometheus", "uid": "prometheus"}}
   ],
   "refresh": "10s",
   "schemaVersion": 39,

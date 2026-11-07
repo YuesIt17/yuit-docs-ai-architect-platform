@@ -100,6 +100,17 @@ class PresignResponse(BaseModel):
     expires_seconds: int = 300
 
 
+class AuthModeResponse(BaseModel):
+    mode: Literal["demo", "oidc"]
+
+
+class MeResponse(BaseModel):
+    user_id: str
+    role: str
+    name: str
+    allowed_classifications: list[str]
+
+
 class HealthResponse(BaseModel):
     status: str
     store_backend: str

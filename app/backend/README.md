@@ -139,7 +139,7 @@ flowchart TB
 | `application/` | Chat / vision / audit orchestration |
 | `domain/` | Pydantic schemas + GraphRAG nodes |
 | `agent/` | LangGraph state machine; LLM call in `synthesize` |
-| `security/` | Demo Bearer RBAC + input/output/vision guards |
+| `security/` | Keycloak JWT validation or demo Bearer, RBAC, input/output/vision guards |
 | `repositories/` | Protocols + memory + hybrid facade |
 | `infrastructure/` | Neo4j, Qdrant, Redis, MinIO, **LLMClient**, embeddings, vision |
 | `observability/` | Prometheus metrics + OTel→Tempo + JSON logs→Loki |
@@ -188,16 +188,20 @@ uvicorn kp.main:app
 
 ## Run locally
 
+Dependencies are locked in `uv.lock`. Install [uv](https://docs.astral.sh/uv/), then:
+
 ```bash
 cd app/backend
-pip install -e ".[dev]"
-uvicorn kp.main:app --reload --port 8080
-pytest -q
+uv sync --extra dev
+uv run uvicorn kp.main:app --reload --port 8080
+uv run pytest -q
 ```
+
+To change a dependency, edit `pyproject.toml` and run `uv lock`. CI rejects a stale lockfile.
 
 Useful Make targets (from the repo root): `make dev-mock` (API+UI, MOCK), `make dev-llm` (API+UI + Ollama), `make api`, `make seed`, `make load-smoke`.
 
-Demo tokens (Bearer): `guest` | `associate` | `manager` | `compliance`.
+Demo tokens (Bearer): `guest` | `associate` | `manager` | `compliance`. With `OIDC_ISSUER` set and `DEMO_AUTH_ENABLED=false`, the API accepts only Keycloak access tokens, and starting with both set is refused. See [ADR-010](../../architecture/adr/ADR-010-bff-auth.md).
 
 ## Intentionally outside the runtime
 
@@ -208,4 +212,4 @@ Demo tokens (Bearer): `guest` | `associate` | `manager` | `compliance`.
 | `openapi/*.yaml` | Contract/boundary; FastAPI generates `/docs` separately |
 | `postgres_dsn` / `jwt_secret` in Settings | Helm env contract / roadmap |
 
-Local `*.egg-info/` is a `pip install -e` artifact and is already in `.gitignore`.
+Local `*.egg-info/` is an editable-install artifact and is already in `.gitignore`.
