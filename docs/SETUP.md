@@ -233,6 +233,9 @@ See [.env.example](../.env.example).
 | Grafana is empty | Dashboards: Knowledge Platform → **KP Overview**; `docker compose -f app/infra/docker-compose.yml --profile obs up -d` |
 | Tempo / Loki are empty | Chat traffic is required; OTel `host.docker.internal:4318`; Grafana Explore; rebuild `kp-api:dev` |
 | Prometheus target DOWN | Scrape `host.docker.internal:30080/metrics` |
+| Pods in `ErrImageNeverPull` | Docker Desktop runs Kubernetes as a kind cluster, whose node does not see local images. `make k8s-up` loads them when the `kind` CLI is installed. By hand: `kind load docker-image kp-api:dev kp-frontend:dev --name desktop` |
+| NodePorts `:30080`, `:30474`, `:30901` refuse connections | A kind-based Docker Desktop cluster does not publish NodePorts to the host, only the ingress on `:8088`. Use `kubectl -n kp port-forward svc/api 30080:8080` for Prometheus and the same for the consoles. Not fixed in the chart |
+| Chat returns 500 and `/api/ready` says `degraded` after install | The API started before Neo4j or Qdrant was ready and does not retry. `kubectl -n kp rollout restart deploy/api` |
 
 ---
 

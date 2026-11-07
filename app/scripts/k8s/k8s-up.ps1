@@ -75,7 +75,19 @@ if ($mode -eq "kind") {
     --set controller.service.ports.https=8443 `
     --wait --timeout 5m
 
-  # Local images are visible to Desktop K8s; Never avoids Hub pulls.
+  # Docker Desktop can run Kubernetes as a kind cluster named "desktop". Its node does not see images built
+  # with `docker build`, so pods would fail with ErrImageNeverPull until the images are loaded.
+  $kindClusters = if (Get-Command kind -ErrorAction SilentlyContinue) { kind get clusters 2>$null } else { @() }
+  if ($kindClusters -contains "desktop") {
+    $images = @("kp-api:dev", "kp-frontend:dev")
+    if ($auth -eq "oidc") { $images += @("kp-bff:dev", "kp-keycloak:dev") }
+    Write-Host "==> Loading local images into the Docker Desktop kind node (takes a few minutes)"
+    kind load docker-image @images --name desktop
+    if ($LASTEXITCODE -ne 0) { throw "kind load failed" }
+  } elseif ((docker ps --format "{{.Names}}") -contains "desktop-control-plane") {
+    Write-Warning "Docker Desktop runs Kubernetes with kind, but the kind CLI is missing. Install it, or pods fail with ErrImageNeverPull."
+  }
+
   $values = @("-f", "app/infra/helm/knowledge-platform/values-desktop.yaml")
 }
 
