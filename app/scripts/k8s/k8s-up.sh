@@ -72,6 +72,19 @@ else
     --set controller.service.ports.https=8443 \
     --wait --timeout 5m
 
+  # Docker Desktop can run Kubernetes as a kind cluster named "desktop". Its node does not see images built
+  # with `docker build`, so pods would fail with ErrImageNeverPull until the images are loaded.
+  if command -v kind >/dev/null && kind get clusters 2>/dev/null | grep -qx desktop; then
+    images=(kp-api:dev kp-frontend:dev)
+    if [[ "$auth" == "oidc" ]]; then
+      images+=(kp-bff:dev kp-keycloak:dev)
+    fi
+    echo "==> Loading local images into the Docker Desktop kind node (takes a few minutes)"
+    kind load docker-image "${images[@]}" --name desktop
+  elif docker ps --format '{{.Names}}' | grep -qx desktop-control-plane; then
+    echo "WARN: Docker Desktop runs Kubernetes with kind, but the kind CLI is missing. Install it, or pods fail with ErrImageNeverPull." >&2
+  fi
+
   values+=(-f app/infra/helm/knowledge-platform/values-desktop.yaml)
 fi
 
