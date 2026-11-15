@@ -94,7 +94,7 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | Mode | STORE | LLM | Embeddings | Cache | When |
 |------|-------|-----|------------|-------|------|
 | CI / unit | memory | MOCK | MOCK | off | `pytest` |
-| Desktop hybrid | memory/live | OLLAMA | MOCK/LOCAL | off default | `hybrid-up` |
+| Desktop hybrid | memory/live | OLLAMA | MOCK/LOCAL | off default | `make demo`, with real login |
 | Submission | live strict | VLLM | LOCAL e5-small | off default | [vllm-profile](docs/infra/vllm-profile.md) |
 
 **vLLM GPU:** without NVIDIA, the configuration is static and its status is **"runtime not verified"**.
@@ -147,9 +147,9 @@ bash app/scripts/hybrid/hybrid-up.sh
 cd app/backend && .venv/Scripts/python -m pytest -q   # Windows venv
 ```
 
-Demo auth: Bearer `guest` | `associate` | `manager` | `compliance`.
+`make demo` runs the platform with real login: open <http://kp.localhost:8088/> and sign in as `guest`, `associate`, `manager` or `compliance`, with the password `kp-demo-<user>`. See [docs/SETUP.md](docs/SETUP.md#login-in-the-hybrid-mode).
 
-Real login on Docker Desktop: `KP_AUTH=oidc make k8s-up`, then open <http://kp.localhost:8088/>. See [`app/bff`](app/bff/README.md).
+Without login (`make k8s-up`, `make dev-mock` or `KP_AUTH=demo make demo`), the UI has a role switcher and the API accepts demo Bearer roles: `guest` | `associate` | `manager` | `compliance`.
 
 ## Known deviations
 

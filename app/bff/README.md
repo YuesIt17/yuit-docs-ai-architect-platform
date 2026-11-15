@@ -42,7 +42,7 @@ docker run --rm -v "$PWD":/src -w /src golang:1.26 sh -c "go vet ./... && go tes
 docker run --rm -v "$PWD":/src -w /src golangci/golangci-lint:v2.15.0 golangci-lint run ./...
 ```
 
-Run on Docker Desktop, from the repository root:
+Run on Docker Desktop, from the repository root. `make demo` enables the BFF by default, with Ollama and the observability stack. For the platform alone:
 
 ```bash
 KP_AUTH=oidc bash app/scripts/k8s/k8s-up.sh

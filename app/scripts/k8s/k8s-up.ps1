@@ -75,7 +75,19 @@ if ($mode -eq "kind") {
     --set controller.service.ports.https=8443 `
     --wait --timeout 5m
 
-  # Local images are visible to Desktop K8s; Never avoids Hub pulls.
+  # Docker Desktop can run Kubernetes as a kind cluster named "desktop". Its node does not see images built
+  # with `docker build`, so pods would fail with ErrImageNeverPull until the images are loaded.
+  $kindClusters = if (Get-Command kind -ErrorAction SilentlyContinue) { kind get clusters 2>$null } else { @() }
+  if ($kindClusters -contains "desktop") {
+    $images = @("kp-api:dev", "kp-frontend:dev")
+    if ($auth -eq "oidc") { $images += @("kp-bff:dev", "kp-keycloak:dev") }
+    Write-Host "==> Loading local images into the Docker Desktop kind node (takes a few minutes)"
+    kind load docker-image @images --name desktop
+    if ($LASTEXITCODE -ne 0) { throw "kind load failed" }
+  } elseif ((docker ps --format "{{.Names}}") -contains "desktop-control-plane") {
+    Write-Warning "Docker Desktop runs Kubernetes with kind, but the kind CLI is missing. Install it, or pods fail with ErrImageNeverPull."
+  }
+
   $values = @("-f", "app/infra/helm/knowledge-platform/values-desktop.yaml")
 }
 
@@ -101,9 +113,11 @@ helm upgrade --install kp app/infra/helm/knowledge-platform `
   -n kp --create-namespace `
   @values `
   @extra `
-  --wait --timeout 5m
+  --wait --timeout 10m
+# PowerShell does not stop on a native command's exit code, so a failed release would otherwise look like success.
+if ($LASTEXITCODE -ne 0) { throw "helm upgrade failed. Check: kubectl -n kp get pods" }
 
-# Mutable tags (kp-*:dev) + imagePullPolicy Never: Helm spec unchanged → pods keep old digest.
+# Mutable tags (kp-*:dev) + imagePullPolicy Never: Helm spec unchanged, so pods keep the old digest.
 # Force recreate so Docker Desktop / kind pick up the images we just built.
 Write-Host "==> Rollout restart api/frontend (pick up rebuilt :dev images)"
 kubectl -n kp rollout restart deploy/api deploy/frontend
@@ -133,5 +147,5 @@ Docker Desktop:
   Or: curl.exe -H "Host: kp.local" http://127.0.0.1:8088/api/health
 
 Hybrid LLM: make llm-ollama; then `$env:KP_LLM='compose-ollama'; .\app\scripts\k8s\k8s-up.ps1
-Observability: make obs  (Prometheus / Grafana / Loki / Tempo — Compose only)
+Observability: make obs  (Prometheus / Grafana / Loki / Tempo, Compose only)
 "@
