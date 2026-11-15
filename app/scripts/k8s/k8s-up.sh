@@ -105,7 +105,7 @@ helm upgrade --install kp app/infra/helm/knowledge-platform \
   -n kp --create-namespace \
   "${values[@]+"${values[@]}"}" \
   "${extra[@]+"${extra[@]}"}" \
-  --wait --timeout 5m
+  --wait --timeout 10m
 
 # Mutable tags (kp-*:dev) + imagePullPolicy Never: Helm spec unchanged → pods keep old digest.
 echo "==> Rollout restart api/frontend (pick up rebuilt :dev images)"

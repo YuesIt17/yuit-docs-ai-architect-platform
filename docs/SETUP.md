@@ -2,16 +2,16 @@
 
 | Mode | When | Windows (PowerShell) | macOS (bash/zsh) |
 |-------|-------|----------------------|------------------|
-| **Hybrid (recommended)** | Desktop / demo, **no duplicate services** | `.\app\scripts\hybrid\hybrid-up.ps1` | `bash app/scripts/hybrid/hybrid-up.sh` |
-| **K8s only** | MOCK, without Ollama/obs | `.\app\scripts\k8s\k8s-up.ps1` | `bash app/scripts/k8s/k8s-up.sh` |
+| **Hybrid (recommended)** | Desktop / demo, **no duplicate services**, real login | `.\app\scripts\hybrid\hybrid-up.ps1` | `bash app/scripts/hybrid/hybrid-up.sh` |
+| **K8s only** | MOCK, without Ollama/obs, demo role switcher | `.\app\scripts\k8s\k8s-up.ps1` | `bash app/scripts/k8s/k8s-up.sh` |
 | **DevSecOps lab** | Trivy / Semgrep / kubectl | `.\app\scripts\sec\sec-scan.ps1` | `bash app/scripts/sec/sec-scan.sh` |
 
 > **`make`** (if installed): runs `.ps1` on Windows and `.sh` on macOS/Linux.
 
 | Command | What it does |
 |---------|------------|
-| `make demo` | Hybrid: side-stack (Ollama + obs) + `k8s-up` |
-| `make k8s-up` / `make k8s-down` | Kubernetes only (bring up / tear down) |
+| `make demo` | Hybrid: side-stack (Ollama + obs) + `k8s-up` with real login (Keycloak + BFF). `KP_AUTH=demo make demo` keeps the role switcher |
+| `make k8s-up` / `make k8s-down` | Kubernetes only (bring up / tear down), demo role switcher. `KP_AUTH=oidc make k8s-up` adds real login |
 | `make side` | Compose side-stack: Ollama + observability |
 | `make llm-ollama` | Ollama + pull `qwen2.5:0.5b` (desktop) |
 | Compose `--profile vllm` | Submission vLLM AWQ profile — see [infra/vllm-profile.md](infra/vllm-profile.md); GPU **runtime not verified** without NVIDIA |
@@ -69,7 +69,7 @@ sudo sh -c 'grep -q "kp.local" /etc/hosts || echo "127.0.0.1 kp.local" >> /etc/h
 ```powershell
 cd yuit-docs-ai-architect-platform
 .\app\scripts\hybrid\hybrid-up.ps1
-# = side-stack (ollama + obs) + k8s-up with KP_LLM=compose-ollama
+# = side-stack (ollama + obs) + k8s-up with KP_LLM=compose-ollama and KP_AUTH=oidc
 ```
 
 **macOS**
@@ -80,10 +80,35 @@ bash app/scripts/hybrid/hybrid-up.sh
 # or: make demo
 ```
 
+### Login in the hybrid mode
+
+`make demo` turns on real login: Keycloak as the identity provider and the Go BFF in front of the API ([ADR-010](../architecture/adr/ADR-010-bff-auth.md)). The browser gets only a session cookie, and the role comes from your Keycloak account, so the role switcher is hidden.
+
+1. Open <http://kp.localhost:8088/> and choose **Sign in**. No hosts entry is needed: browsers resolve `*.localhost` themselves.
+2. Sign in as one of the demo users:
+
+   | User | Role | Sees |
+   |------|------|------|
+   | `guest` | guest | public documents |
+   | `associate` | store_associate | public + internal |
+   | `manager` | category_manager | public + internal |
+   | `compliance` | compliance_officer | public + internal + secret |
+
+   Passwords are `kp-demo-<user>`, such as `kp-demo-manager`. They are local demo values, set in [`values-desktop-oidc.yaml`](../app/infra/helm/knowledge-platform/values-desktop-oidc.yaml).
+3. **Sign out** ends both the platform session and the Keycloak session.
+
+What to expect:
+
+- Keycloak's first start takes a few minutes. Until it is ready, **Sign in** answers 503.
+- The old `kp.local` host does not work in this mode, because the session cookie needs a secure context.
+- For the previous behavior, with no login and a role switcher on `kp.local`, run `KP_AUTH=demo make demo`. In PowerShell: `$env:KP_AUTH = "demo"; make demo`.
+- To check all four users from the command line: `python app/scripts/k8s/oidc_e2e.py`.
+
 | What | URL |
 |-----|-----|
-| UI | http://kp.local:8088 |
-| API health | http://kp.local:8088/api/health |
+| UI | http://kp.localhost:8088 (`KP_AUTH=demo`: http://kp.local:8088) |
+| API health | Needs a session in this mode. `KP_AUTH=demo`: http://kp.local:8088/api/health |
+| Keycloak | Login pages only, under http://kp.localhost:8088/idp/realms/kp. The admin console is not exposed |
 | Ollama | http://127.0.0.1:11434/v1/models |
 | Grafana | http://127.0.0.1:3000 (admin / admin) → **KP Overview** + Explore Tempo/Loki |
 | Prometheus | http://127.0.0.1:9090 |
@@ -206,7 +231,7 @@ manager cannot see the secret promo (`42%`); compliance can.
 
 ---
 
-With real login (`KP_AUTH=oidc make k8s-up`, Docker Desktop only), the role comes from a Keycloak account instead of the switcher, which is hidden. Open <http://kp.localhost:8088/>, with no hosts entry needed. The demo users are in [`values-desktop-oidc.yaml`](../app/infra/helm/knowledge-platform/values-desktop-oidc.yaml). Keycloak's first start took about 3 minutes on a 4 GB VM. See [ADR-010](../architecture/adr/ADR-010-bff-auth.md).
+With real login (`make demo`, or `KP_AUTH=oidc make k8s-up`, Docker Desktop only), the role comes from a Keycloak account instead of the switcher, which is hidden. Open <http://kp.localhost:8088/>, with no hosts entry needed. The demo users are in [`values-desktop-oidc.yaml`](../app/infra/helm/knowledge-platform/values-desktop-oidc.yaml). Keycloak's first start took about 3 minutes on a 4 GB VM. See [ADR-010](../architecture/adr/ADR-010-bff-auth.md).
 
 ## Variables
 
