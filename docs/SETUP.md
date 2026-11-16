@@ -108,15 +108,16 @@ What to expect:
 |-----|-----|
 | UI | http://kp.localhost:8088 (`KP_AUTH=demo`: http://kp.local:8088) |
 | API health | Needs a session in this mode. `KP_AUTH=demo`: http://kp.local:8088/api/health |
-| Keycloak | Login pages only, under http://kp.localhost:8088/idp/realms/kp. The admin console is not exposed |
+| Keycloak | Login: http://kp.localhost:8088/idp/realms/kp · Admin: http://kp.localhost:8088/idp/admin/ (`admin` / `kp-demo-admin`, desktop OIDC only) |
 | Ollama | http://127.0.0.1:11434/v1/models |
 | Grafana | http://127.0.0.1:3000 (admin / admin) → **KP Overview** + Explore Tempo/Loki |
 | Prometheus | http://127.0.0.1:9090 |
 | Tempo | http://127.0.0.1:3200 (OTLP :4317/:4318) |
 | Loki | http://127.0.0.1:3100 |
-| MinIO Console | http://127.0.0.1:30901 (NodePort, minioadmin / minioadmin) |
-| Neo4j Browser | http://127.0.0.1:30474 (NodePort) |
-| API /metrics | http://127.0.0.1:30080/metrics (NodePort) |
+| Neo4j Browser | http://kp.localhost:8088/ops/neo4j/ (`neo4j` / `retailpartnerx`; Bolt stays in-cluster) |
+| Qdrant Dashboard | http://kp.localhost:8088/ops/qdrant/dashboard |
+| MinIO Console | http://kp.localhost:8088/ops/minio/ (`minioadmin` / `minioadmin`) |
+| Ops page | http://kp.localhost:8088/ops (in-app deep links; no port-forward on kind) |
 
 Side-stack on its own:
 
@@ -254,12 +255,12 @@ See [.env.example](../.env.example).
 | OLLAMA unreachable | Base URL `host.docker.internal`, not `localhost` from the pod |
 | Ingress `:8088` 404 IIS (Windows) | Hosts `kp.local`, LB on 8088 |
 | `ollama pull` TLS timeout | `ollama-pull.ps1` / `ollama-pull.sh` |
-| MinIO 9000 on the host is empty | MinIO is in K8s → Console NodePort `:30901` |
+| MinIO 9000 on the host is empty | MinIO is in K8s → Console at http://kp.localhost:8088/ops/minio/ |
 | Grafana is empty | Dashboards: Knowledge Platform → **KP Overview**; `docker compose -f app/infra/docker-compose.yml --profile obs up -d` |
 | Tempo / Loki are empty | Chat traffic is required; OTel `host.docker.internal:4318`; Grafana Explore; rebuild `kp-api:dev` |
 | Prometheus target DOWN | Scrape `host.docker.internal:30080/metrics` |
 | Pods in `ErrImageNeverPull` | Docker Desktop runs Kubernetes as a kind cluster, whose node does not see local images. `make k8s-up` loads them when the `kind` CLI is installed. By hand: `kind load docker-image kp-api:dev kp-frontend:dev --name desktop` |
-| NodePorts `:30080`, `:30474`, `:30901` refuse connections | A kind-based Docker Desktop cluster does not publish NodePorts to the host, only the ingress on `:8088`. Use `kubectl -n kp port-forward svc/api 30080:8080` for Prometheus and the same for the consoles. Not fixed in the chart |
+| NodePorts `:30080`, `:30474`, `:30901` refuse connections | kind does not publish NodePorts. Desktop sets `ingress.ops.enabled`: use `/ops/neo4j`, `/ops/qdrant`, `/ops/minio` on `:8088`. Compose Prometheus stays on `:9090` |
 | Chat returns 500 and `/api/ready` says `degraded` after install | The API started before Neo4j or Qdrant was ready and does not retry. `kubectl -n kp rollout restart deploy/api` |
 
 ---
@@ -271,5 +272,5 @@ See [.env.example](../.env.example).
 3. ACL manager vs compliance
 4. Labels upload (MinIO in-cluster)
 5. Observability: Prometheus `kp-api-k8s` UP → Grafana **KP Overview** → Explore Tempo `kp-api` / Loki after chat
-6. (Optional) Graph Neo4j Browser :30474
+6. (Optional) Graph Neo4j Browser http://kp.localhost:8088/ops/neo4j/
 7. (Optional) `make sec-scan` → reports in `tmp/sec-ops/`

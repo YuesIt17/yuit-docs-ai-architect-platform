@@ -6,6 +6,9 @@ ingress:
   enabled: true
   host: kp.local
   className: nginx
+  # kind does not publish NodePorts; Ops UIs go through the ingress on :8088.
+  ops:
+    enabled: true
 
 api:
   # NodePort for Compose Prometheus scrape (host.docker.internal:30080/metrics)

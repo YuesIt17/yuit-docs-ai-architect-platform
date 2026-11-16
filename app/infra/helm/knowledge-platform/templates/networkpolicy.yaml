@@ -181,6 +181,24 @@ spec:
           port: {{ $port }}
         {{- end }}
     {{- end }}
+    {{- /* Desktop Ops Ingress: consoles through ingress-nginx, not NodePorts. */ -}}
+    {{- if and $.Values.ingress.ops.enabled (or (eq $store.app "neo4j") (eq $store.app "qdrant") (eq $store.app "minio")) }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ingressNs }}
+      ports:
+        {{- if eq $store.app "neo4j" }}
+        - protocol: TCP
+          port: 7474
+        {{- else if eq $store.app "qdrant" }}
+        - protocol: TCP
+          port: 6333
+        {{- else if eq $store.app "minio" }}
+        - protocol: TCP
+          port: 9001
+        {{- end }}
+    {{- end }}
 {{- end }}
 {{- if .Values.bff.enabled }}
 ---

@@ -283,6 +283,12 @@ spec:
                   key: MINIO_ROOT_PASSWORD
             - name: MINIO_DEFAULT_BUCKETS
               value: knowledge-platform
+            {{- if .Values.ingress.ops.enabled }}
+            - name: MINIO_SERVER_URL
+              value: http://minio:9000
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: {{ printf "%s/ops/minio" (include "kp.publicBase" .) | quote }}
+            {{- end }}
           ports:
             - containerPort: 9000
             - containerPort: 9001

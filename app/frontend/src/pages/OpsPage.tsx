@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getAudit, getHealth, type Health } from "../api/client";
 import { useApp } from "../state/AppContext";
 
-/** Hybrid deep links — Compose LGTM + K8s NodePorts. */
+/** Hybrid deep links — Compose LGTM on the host + K8s Ops Ingress on this origin. */
 const OPS_LINKS: { title: string; href: string; note: string }[] = [
   {
     title: "Grafana — KP Overview",
@@ -36,18 +36,23 @@ const OPS_LINKS: { title: string; href: string; note: string }[] = [
   },
   {
     title: "Neo4j Browser",
-    href: "http://localhost:30474",
-    note: "k8s NodePort :30474",
+    href: "/ops/neo4j/",
+    note: "ingress /ops/neo4j · neo4j / retailpartnerx",
+  },
+  {
+    title: "Qdrant Dashboard",
+    href: "/ops/qdrant/dashboard",
+    note: "ingress /ops/qdrant",
   },
   {
     title: "MinIO Console",
-    href: "http://localhost:30901",
-    note: "k8s NodePort :30901 · minioadmin",
+    href: "/ops/minio/",
+    note: "ingress /ops/minio · minioadmin",
   },
   {
-    title: "API /metrics",
-    href: "http://localhost:30080/metrics",
-    note: "k8s NodePort :30080",
+    title: "Keycloak Admin",
+    href: "/idp/admin/",
+    note: "desktop OIDC · admin / kp-demo-admin",
   },
 ];
 
@@ -88,8 +93,9 @@ export function OpsPage() {
         <pre className="mono">{JSON.stringify(health, null, 2)}</pre>
         <h3>Deep links (hybrid)</h3>
         <p>
-          Compose LGTM: Grafana / Prometheus / Loki / Tempo. K8s NodePort: Neo4j / MinIO / API metrics. Requires
-          the side-stack (<code>make obs</code>) and the Desktop Helm release.
+          Compose LGTM: Grafana / Prometheus / Loki / Tempo on the host. K8s consoles: Neo4j / Qdrant / MinIO /
+          Keycloak through this origin (<code>/ops/…</code>, <code>/idp/admin</code>) — no port-forward on kind.
+          Requires the side-stack (<code>make obs</code>) and the Desktop Helm release.
         </p>
         <ul className="ops-links">
           {OPS_LINKS.map((link) => (
@@ -98,7 +104,7 @@ export function OpsPage() {
                 <strong>{link.title}</strong> <span className="badge">{link.note}</span>
               </div>
               <a className="ops-link" href={link.href} target="_blank" rel="noreferrer">
-                {link.href}
+                {link.href.startsWith("http") ? link.href : `${window.location.origin}${link.href}`}
               </a>
             </li>
           ))}

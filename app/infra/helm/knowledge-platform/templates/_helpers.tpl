@@ -9,6 +9,15 @@ app.kubernetes.io/part-of: retailpartnerx-kp
 {{- end -}}
 
 
+{{- /* Browser origin for redirects (OIDC publicUrl, else ingress host on the desktop LB port). */ -}}
+{{- define "kp.publicBase" -}}
+{{- if .Values.bff.publicUrl -}}
+{{- trimSuffix "/" .Values.bff.publicUrl -}}
+{{- else -}}
+{{- printf "http://%s:8088" .Values.ingress.host -}}
+{{- end -}}
+{{- end -}}
+
 {{- /* The issuer in tokens: the URL the browser sees. */ -}}
 {{- define "kp.oidcIssuer" -}}
 {{- if .Values.bff.oidc.issuerUrl -}}

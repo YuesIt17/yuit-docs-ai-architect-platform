@@ -67,6 +67,8 @@ keycloak:
   accessTokenLifespan: 300
   adminUser: admin
   adminPassword: ""
+  # Off by default: /idp/admin stays off the Ingress. Desktop OIDC turns this on.
+  exposeAdmin: false
   javaHeapOpts: "-Xms128m -Xmx384m"
   # One per role. values-desktop-oidc.yaml sets them with local demo passwords.
   demoUsers: []
@@ -75,6 +77,9 @@ ingress:
   enabled: true
   host: kp.local
   className: nginx
+  # Desktop only: Neo4j / Qdrant / MinIO consoles on /ops/* (kind does not publish NodePorts).
+  ops:
+    enabled: false
 
 postgres:
   enabled: true

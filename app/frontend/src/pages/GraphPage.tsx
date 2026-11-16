@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getOutbox, graphStats, graphSubgraph, type GraphSubgraph } from "../api/client";
 import { useApp } from "../state/AppContext";
 
-const NEO4J_BROWSER = "http://localhost:30474";
+const NEO4J_BROWSER = "/ops/neo4j/";
 
 function layoutNodes(sub: GraphSubgraph) {
   const docs = sub.nodes.filter((n) => n.kind === "document");
@@ -85,7 +85,7 @@ export function GraphPage() {
             <option value="milk" />
           </datalist>
           <a className="ops-link" href={NEO4J_BROWSER} target="_blank" rel="noreferrer">
-            Open Neo4j Browser (:30474)
+            Open Neo4j Browser (/ops/neo4j)
           </a>
         </div>
         {error && <p className="error">{error}</p>}

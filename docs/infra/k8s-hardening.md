@@ -35,6 +35,7 @@ These pods keep a writable root filesystem. Each carries a `kp.retailpartnerx.io
 | all pods | kube-dns | 53 |
 | api (desktop overlay only) | host network: Ollama, vLLM, Tempo | 11434, 8000, 4318 |
 | host network (desktop overlay only) | api, neo4j, minio console | 8080 / 7474, 7687 / 9001 |
+| ingress-nginx (desktop `ingress.ops` only) | neo4j / qdrant / minio console | 7474 / 6333 / 9001 |
 
 ## Real login mode
 
@@ -52,7 +53,8 @@ With `bff.enabled=true`, these rules replace the matching rows above:
 So in this mode:
 
 - Only the BFF can reach the API. The ingress, the frontend and the host network no longer can, and the API's NodePort is removed even if an overlay asks for it.
-- The Ingress routes `/api` and `/auth` to the BFF, and only `/idp/realms` and `/idp/resources` to Keycloak. The Keycloak admin console is not routed.
+- The Ingress routes `/api` and `/auth` to the BFF, and only `/idp/realms` and `/idp/resources` to Keycloak. `/idp/admin` stays off the Ingress unless `keycloak.exposeAdmin` is set (desktop OIDC overlay only).
+- Desktop `ingress.ops.enabled` adds `/ops/neo4j`, `/ops/qdrant` and `/ops/minio` (rewrite to the store UIs) and allows ingress-nginx to those ports. kind does not publish NodePorts, so this is how Ops deep links work without port-forward.
 - The BFF's `/metrics` and probes are on a separate port that the Ingress never routes to, and its proxy allowlist keeps the API's `/metrics` and `/docs` internal.
 - The realm import is a Secret, not a ConfigMap, because it holds the client secret and demo passwords. Neither the session key nor the client secret has a chart default outside the desktop overlay.
 - Compose Prometheus cannot scrape the API, so its `kp-api-k8s` job shows as down. The BFF is scraped through NodePort 30091.

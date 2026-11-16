@@ -248,17 +248,46 @@ def test_only_the_bff_reaches_the_api(oidc):
 
 def test_ingress_never_routes_to_the_api_or_the_keycloak_admin(oidc):
     backends = {}
+    hosts: set[str] = set()
     for ingress in (d for d in oidc if d["kind"] == "Ingress"):
         for rule in ingress["spec"]["rules"]:
+            hosts.add(rule["host"])
             for route in rule["http"]["paths"]:
                 backends[route["path"]] = route["backend"]["service"]["name"]
-    assert backends == {
+    expected = {
         "/api": "bff",
         "/auth": "bff",
         "/idp/realms": "keycloak",
         "/idp/resources": "keycloak",
         "/": "frontend",
     }
+    # values-desktop-oidc.yaml exposes the admin console for local demos only.
+    if "kp.localhost" in hosts:
+        expected["/idp/admin"] = "keycloak"
+    # values-desktop.yaml turns on Ops Ingress (kind has no NodePorts).
+    if any(d["metadata"]["name"] == "kp-ops" for d in oidc if d["kind"] == "Ingress"):
+        expected["/ops/neo4j(/|$)(.*)"] = "neo4j"
+        expected["/ops/qdrant(/|$)(.*)"] = "qdrant"
+        expected["/ops/minio(/|$)(.*)"] = "minio"
+    assert backends == expected
+    assert "api" not in backends.values()
+
+
+def test_desktop_ops_ingress_allows_ingress_nginx_to_store_uis():
+    docs = render("-f", str(DESKTOP))
+    assert by_name(docs, "Ingress", "kp-ops")
+    ingress_peer = {
+        "namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ingress-nginx"}}
+    }
+    for app, port in (("neo4j", 7474), ("qdrant", 6333), ("minio", 9001)):
+        rules = by_name(docs, "NetworkPolicy", f"kp-{app}")["spec"]["ingress"]
+        assert any(
+            ingress_peer in rule.get("from", [])
+            and {"protocol": "TCP", "port": port} in rule.get("ports", [])
+            for rule in rules
+        ), app
+    assert env_of(docs, "minio")["MINIO_BROWSER_REDIRECT_URL"]["value"].endswith("/ops/minio")
+    assert not any(d["metadata"]["name"] == "kp-ops" for d in render() if d["kind"] == "Ingress")
 
 
 def test_streaming_is_not_buffered_or_cut_by_the_ingress(oidc):

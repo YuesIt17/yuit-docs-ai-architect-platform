@@ -51,7 +51,7 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          # Only what browsers need, as Keycloak's reverse-proxy guide advises. /idp/admin stays internal.
+          # Login needs realms + static resources. Admin stays off the Ingress unless exposeAdmin is set.
           - path: /idp/realms
             pathType: Prefix
             backend:
@@ -66,6 +66,15 @@ spec:
                 name: keycloak
                 port:
                   number: 8080
+          {{- if .Values.keycloak.exposeAdmin }}
+          - path: /idp/admin
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+          {{- end }}
 {{- end }}
 {{- else }}
 apiVersion: networking.k8s.io/v1
@@ -93,6 +102,57 @@ spec:
                 name: api
                 port:
                   number: 8080
+{{- end }}
+{{- if .Values.ingress.ops.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kp-ops
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    # Neo4j Browser and MinIO console use WebSockets.
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  labels:
+    {{- include "kp.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          {{- if .Values.neo4j.enabled }}
+          - path: /ops/neo4j(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: neo4j
+                port:
+                  number: 7474
+          {{- end }}
+          {{- if .Values.qdrant.enabled }}
+          - path: /ops/qdrant(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: qdrant
+                port:
+                  number: 6333
+          {{- end }}
+          {{- if .Values.minio.enabled }}
+          - path: /ops/minio(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9001
+          {{- end }}
 {{- end }}
 ---
 apiVersion: networking.k8s.io/v1

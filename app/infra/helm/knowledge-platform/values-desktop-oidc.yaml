@@ -18,6 +18,8 @@ keycloak:
   enabled: true
   sslRequired: none
   adminPassword: kp-demo-admin
+  # Local demos only: Keycloak redirects the admin UI to this public host.
+  exposeAdmin: true
   demoUsers:
     - {username: guest, role: guest, password: kp-demo-guest}
     - {username: associate, role: store_associate, password: kp-demo-associate}
