@@ -4,7 +4,7 @@ A pragmatic plan to evolve **RetailPartnerX Knowledge Platform** into a **secure
 
 The existing course GraphRAG use case remains operational. New capabilities must reuse proven components, stay testable on a laptop, and demonstrate concrete platform contracts, security, recovery, and developer experience.
 
-## Principles and scope
+For related source-of-truth documents, see the [capability map](./capabilities.md), [Engineering Excellence standards](./engineering/README.md), and [specification/delivery workflow](./delivery-workflow.md). These capture document intelligence (RapidOCR/optional Docling), Vault/ESO verification, Python/TypeScript/Go engineering quality, algorithmic reasoning and lightweight OpenSpec-compatible requirements without adding a new mandatory toolchain.\n\n## Principles and scope
 
 | Principle | Decision |
 | --- | --- |
@@ -155,7 +155,7 @@ Each phase needs an ADR when a real trade-off warrants one, executable tests, do
 
 **Exit evidence:** a new agent is registered, invoked, governed, observed and evaluated with **no framework-specific change in the shared API**, and its limitations are documented.
 
-## Optional follow-ups — only when justified (P3)
+## Product and engineering quality tracks (cross-cutting)\n\nThese are **not competing phases**: apply them as relevant to each P0/P1 capability. Refer to the [capability map](./capabilities.md) for current evidence and gaps.\n\n- **Document intelligence:** keep RapidOCR for local CPU label OCR; benchmark optional Docling on tables, page structure and citations before adopting it. Use versioned normalized document/provenance contracts and evaluate OCR accuracy on permissible real-world samples. LlamaIndex is optional ingestion/indexing integration, not an OCR requirement.\n- **Secrets and identity:** keep the existing Vault + External Secrets Operator design; validate live dynamic-credential rotation and deny overbroad agent tool credentials. Do not introduce another secret store.\n- **Backend and BFF quality:** apply responsibility-based architecture, useful Python docstrings, idiomatic Go documentation, typed public contracts, testing, concurrency and explicit timeouts; avoid giant handlers and cosmetic rewrites.\n- **Frontend quality:** retain React/TypeScript/Vite; adopt pragmatic Feature-Sliced Design boundaries, type-safe API/events, accessibility and focused tests without adding an unnecessary UI/state framework.\n- **Algorithms in production:** apply hashing, graph traversal, caching, queues, rate limits, state machines and retry algorithms where appropriate. Document invariants, complexity and trade-offs; avoid bespoke implementations of solved infrastructure problems.\n- **Specification-driven delivery:** use the [delivery workflow](./delivery-workflow.md). Capture behavior and acceptance tests in lightweight specs, decisions in ADRs, and proofs in tests/evidence. OpenSpec-compatible structure is optional until a real feature justifies it.\n- **Additional quality gates:** contract testing across Python/Go/TypeScript and runtimes; basic supply-chain hygiene, performance baselines, retention/deletion and resilience tests.\n\n## Optional follow-ups — only when justified (P3)
 
 | Candidate technology | Current equivalent / trigger to add | Decision |
 | --- | --- | --- |
