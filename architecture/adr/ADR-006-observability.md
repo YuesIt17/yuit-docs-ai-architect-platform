@@ -64,4 +64,4 @@ flowchart LR
 
 - `app/backend/kp/main.py`, `app/backend/kp/observability/metrics.py`, `app/backend/kp/observability/logging_json.py`
 - Compose profile `obs` (tempo, loki, alloy, prometheus, grafana)
-- Ops: [docs/infra/compose-dev.md](../../docs/infra/compose-dev.md)
+- Ops: [docs/infra/compose/compose-dev.md](../../docs/infra/compose/compose-dev.md)

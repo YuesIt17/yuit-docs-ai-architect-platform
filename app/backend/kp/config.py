@@ -28,10 +28,17 @@ class Settings(BaseSettings):
     prompt_version: str = "v1"
 
     # Ollama/vLLM URL/model: Helm `llm.baseUrl` / `llm.model` → env, or .env (see .env.example).
-    llm_provider: str = "MOCK"  # MOCK | OLLAMA | VLLM
+    llm_provider: str = "MOCK"  # MOCK | OLLAMA | VLLM (ignored when llm_gateway=litellm)
     openai_base_url: str = ""
     openai_api_key: str = "not-needed"
     llm_model: str = "mock-graph-rag"
+    # direct (default, ADR-001) | litellm (ADR-012 gateway proxy)
+    llm_gateway: str = "direct"
+    litellm_base_url: str = "http://127.0.0.1:4000/v1"
+    litellm_model_alias: str = "chat-default"
+    litellm_api_key: str = "sk-kp-local-gateway"
+    # Cost / metering attribution (FinOps tags on audit + Prometheus).
+    llm_team_id: str = "platform"
     # Comma-separated host:port allowlist for runtime LLM URL changes (empty = settings URL only).
     llm_allowed_base_urls: str = (
         "http://127.0.0.1:11434/v1,"
@@ -40,10 +47,19 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8000/v1,"
         "http://localhost:8000/v1,"
         "http://vllm:8000/v1,"
-        "http://host.docker.internal:8000/v1"
+        "http://host.docker.internal:8000/v1,"
+        "http://127.0.0.1:4000/v1,"
+        "http://localhost:4000/v1,"
+        "http://litellm:4000/v1,"
+        "http://host.docker.internal:4000/v1"
     )
     # When false (submission profile), PUT /v1/llm/config cannot set an arbitrary base_url.
     llm_allow_runtime_url_override: bool = False
+
+    # Feature flags (Phase 3). Empty FLAGD_URL → in-memory provider from flags file.
+    flagd_url: str = ""
+    feature_flags_file: str = ""
+    feature_flags_enabled: bool = True
 
     # Off by default until cache hits re-authorize sources (SEC-01).
     enable_semantic_cache: bool = False
@@ -97,6 +113,10 @@ class Settings(BaseSettings):
     embedding_local_path: str = ""  # air-gap: local weights dir; empty = HF id / hub cache
 
     datasets_dir: str = "../datasets"
+
+    # Agent registry: empty = <backend>/agents. Declarative manifests (Phase 1).
+    agent_manifests_dir: str = ""
+    default_agent_id: str = "graphrag-chat"
 
     @property
     def oidc_algorithm_list(self) -> list[str]:

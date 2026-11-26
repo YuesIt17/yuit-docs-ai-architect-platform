@@ -1,6 +1,6 @@
-"""Parameterized load smoke (not a capacity test). Writes raw JSON under docs/evidence/load/.
+"""Parameterized load smoke (not a capacity test). Writes raw JSON under docs/load-testing/load/.
 
-Optionally refreshes a markdown fragment; the curated docs/load-report.md is maintained by hand.
+Optionally refreshes a markdown fragment; the curated docs/quality/load-report.md is maintained by hand.
 """
 
 from __future__ import annotations
@@ -84,7 +84,7 @@ async def main() -> None:
     p.add_argument(
         "--write-report-fragment",
         action="store_true",
-        help="Also write docs/evidence/load/last_run.md (does not overwrite load-report.md)",
+        help="Also write docs/load-testing/load/last_run.md (does not overwrite load-report.md)",
     )
     p.add_argument(
         "--timeout",
@@ -142,7 +142,7 @@ async def main() -> None:
         "results": results,
     }
 
-    raw_dir = ROOT / "docs" / "evidence" / "load"
+    raw_dir = ROOT / "docs" / "load-testing" / "load"
     raw_dir.mkdir(parents=True, exist_ok=True)
     tag = (args.label or args.scenario).strip().replace(" ", "_")
     provider = health_json.get("llm_provider", "unknown")

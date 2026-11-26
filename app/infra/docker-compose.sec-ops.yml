@@ -9,7 +9,7 @@
 # Or one-shot: make sec-scan  (SEC_SCAN_DEEP=1 for ZAP)
 #   Windows → app/scripts/sec/sec-scan.ps1
 #   macOS   → app/scripts/sec/sec-scan.sh
-# Docs: docs/infra/sec-ops.md
+# Docs: docs/infra/sec-ops/sec-ops.md
 # Reports: tmp/sec-ops/ (mounted as /out)
 #
 # /src mounts app/ (sibling of infra/), so /src/backend and /src/infra stay valid.

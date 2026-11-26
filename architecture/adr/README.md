@@ -14,3 +14,6 @@ ADR registry for the RetailPartnerX Knowledge Platform. Format: Status → Conte
 | [ADR-008](ADR-008-sync-async-cache.md) | Sync/Async + Semantic Cache | Accepted |
 | [ADR-009](ADR-009-object-store.md) | Object Store (MinIO) | Accepted |
 | [ADR-010](ADR-010-bff-auth.md) | Real login: Keycloak and a Go BFF | Accepted, optional |
+| [ADR-011](ADR-011-agent-manifest-registry.md) | Agent manifest & registry | Accepted |
+| [ADR-012](ADR-012-genai-gateway.md) | GenAI gateway (LiteLLM) | Accepted |
+| [ADR-013](ADR-013-feature-flags.md) | Feature flags (Flagd / OpenFeature) | Accepted |

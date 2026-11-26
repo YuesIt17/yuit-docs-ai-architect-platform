@@ -141,7 +141,7 @@ networkPolicy:
     - {app: redis, ports: [6379]}
     - {app: minio, ports: [9000, 9001], hostPorts: [9001]}
 
-# Admission policies. Install Kyverno first: see docs/infra/k8s-hardening.md.
+# Admission policies. Install Kyverno first: see docs/infra/k8s/k8s-hardening.md.
 kyverno:
   enabled: false
 

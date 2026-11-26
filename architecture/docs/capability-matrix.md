@@ -16,8 +16,6 @@
 | GraphRAG | critical | graph resolve + vector hybrid + graph-on/off |
 | Serving | hw-7 | Ollama desktop + vLLM AWQ profile (GPU may be unverified) |
 | Control/Data Plane | PE | compose + Helm + NetworkPolicy templates |
-| Video | course | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) |
-
 ## SLO Card (MVP design targets)
 
 | Path | SLI | Target (learning design) |

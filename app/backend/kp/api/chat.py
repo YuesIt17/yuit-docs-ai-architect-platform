@@ -5,6 +5,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
+from kp.agents.registry import (
+    AgentDisabledError,
+    AgentKillSwitchError,
+    AgentNotFoundError,
+    AgentRoleDeniedError,
+)
+from kp.api.agent_errors import http_from_registry
 from kp.api.deps import container_dep, principal_dep
 from kp.application.chat import ChatService
 from kp.config import Settings, get_settings
@@ -21,7 +28,10 @@ async def chat(
     c: AppContainer = Depends(container_dep),
     settings: Settings = Depends(get_settings),
 ):
-    result = await ChatService(c, settings).handle(body, principal)
+    try:
+        result = await ChatService(c, settings).handle(body, principal)
+    except (AgentNotFoundError, AgentDisabledError, AgentRoleDeniedError, AgentKillSwitchError) as exc:
+        raise http_from_registry(exc) from exc
     if isinstance(result, tuple) and result[0] == "stream":
         return StreamingResponse(result[1], media_type="text/event-stream")
     return result

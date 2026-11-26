@@ -9,4 +9,4 @@
 | `datasets/` | Seed data and fixtures |
 | `scripts/` | hybrid / k8s / ollama / sec |
 
-The repository map, run instructions and ADD are in the [root README](../README.md) and [docs/SETUP.md](../docs/SETUP.md).
+The repository map, run instructions and ADD are in the [root README](../README.md) and [docs/getting-started/SETUP.md](../docs/getting-started/SETUP.md).

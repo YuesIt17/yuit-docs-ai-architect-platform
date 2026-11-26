@@ -21,6 +21,7 @@ COPY --from=deps /opt/venv /opt/venv
 COPY app/backend/kp ./kp
 COPY app/backend/pipelines ./pipelines
 COPY app/backend/scripts ./scripts
+COPY app/backend/agents ./agents
 COPY app/datasets /datasets
 
 ENV DATASETS_DIR=/datasets

@@ -76,7 +76,7 @@ This was tested in the Chromium-based browser pane of the Claude desktop app: bo
 
 ## Measurements
 
-Docker Desktop on Windows, with a 3.8 GiB VM and no GPU. Raw output is in [`docs/evidence/bff-overhead.md`](../../docs/evidence/bff-overhead.md).
+Docker Desktop on Windows, with a 3.8 GiB VM and no GPU. Raw output is in [`docs/load-testing/bff-overhead.md`](../../docs/load-testing/bff-overhead.md).
 
 ### Latency added by the BFF
 
@@ -147,7 +147,7 @@ With the full observability stack added, it reported 1,126 MB available with swa
 - **Browsers other than Chromium**
 - **Several BFF replicas in a cluster.** The cross-replica lock is tested with two instances against an in-memory Redis, and the live run used one replica
 - **Keycloak's reuse detection.** The realm enables it, but only the fake IdP in the Go tests exercised reuse
-- **BFF logs in Loki.** Alloy does not ship Docker Desktop Kubernetes pod logs, which is the existing gap in [`docs/evidence/loki.md`](../../docs/evidence/loki.md)
+- **BFF logs in Loki.** Alloy does not ship Docker Desktop Kubernetes pod logs, which is the existing gap in [`docs/load-testing/loki.md`](../../docs/load-testing/loki.md)
 - **Flushing with a real LLM.** Immediate flush is proven by a Go test, and the live runs used the MOCK provider
 - **An external IdP, Vault-backed BFF secrets and Kyverno with the new pods.** These are rendered and tested as manifests, not run
 - **The `bff` CI workflow on GitHub.** Its steps were run locally
@@ -156,5 +156,5 @@ With the full observability stack added, it reported 1,126 MB available with swa
 ## References
 
 - [`app/bff`](../../app/bff/README.md), `app/backend/kp/security/rbac.py`
-- [`docs/infra/k8s-hardening.md`](../../docs/infra/k8s-hardening.md)
+- [`docs/infra/k8s/k8s-hardening.md`](../../docs/infra/k8s/k8s-hardening.md)
 - Supersedes the "demo tokens" decision in [ADR-005](ADR-005-security.md) when the BFF is enabled

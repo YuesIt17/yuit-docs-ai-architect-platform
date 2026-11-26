@@ -30,7 +30,7 @@ Critical criterion: **User B must not receive an answer based on a secret docume
 - Retrieval is **always** ACL-filtered; the Output Guard blocks secret leaks
 - Vision: MIME allowlist + size limit
 - Demo tokens in the UI by default (not a production IdP). Optional real login through Keycloak and a Go BFF: [ADR-010](ADR-010-bff-auth.md). A corporate IdP is on the roadmap
-- Cluster layer: Restricted Pod Security, default-deny NetworkPolicy, optional Kyverno admission ([k8s-hardening.md](../../docs/infra/k8s-hardening.md))
+- Cluster layer: Restricted Pod Security, default-deny NetworkPolicy, optional Kyverno admission ([k8s-hardening.md](../../docs/infra/k8s/k8s-hardening.md))
 
 ## Consequences
 
@@ -40,4 +40,3 @@ Critical criterion: **User B must not receive an answer based on a secret docume
 ## References
 
 - `app/backend/kp/security/rbac.py`, `guardrails.py`
-- Demo: [video](https://www.youtube.com/watch?v=y2_mY9_ceuU)

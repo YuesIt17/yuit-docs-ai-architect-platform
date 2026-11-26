@@ -32,7 +32,7 @@ Interactive chat and label recognition need low latency (sync/SSE). Heavy multi-
 - API replicas follow a Redis stream to update their in-memory mirrors with documents the worker stored
 - Semantic cache **after** the Output Guard; invalidation through `index_version` (hw-9)
 - Partial invalidation: each entry stores content hashes of its sources, and a changed hash evicts only the entries citing that document
-- The similarity threshold is configurable and calibrated per embedding model ([evaluation.md](../../docs/evaluation.md))
+- The similarity threshold is configurable and calibrated per embedding model ([evaluation.md](../../docs/quality/evaluation.md))
 
 ## Consequences
 

@@ -5,10 +5,12 @@ from __future__ import annotations
 from functools import lru_cache
 
 from kp.agent.graph import KnowledgeAgent
+from kp.agents.registry import AgentRegistry
 from kp.application.jobs import CeleryJobQueue, InlineJobQueue
 from kp.config import Settings, get_settings
 from kp.infrastructure.cache import build_semantic_cache
 from kp.infrastructure.embeddings import EmbeddingService
+from kp.infrastructure.feature_flags import FeatureFlagService
 from kp.infrastructure.llm import LLMClient
 from kp.infrastructure.neo4j_graph import Neo4jGraphRepository
 from kp.infrastructure.object_store import ObjectStore
@@ -44,6 +46,8 @@ class AppContainer:
         self.vision = VisionService(settings)
         self.cache = build_semantic_cache(settings, self.embeddings)
         self.agent = KnowledgeAgent(self.store, self.llm)
+        self.registry = AgentRegistry.from_settings(settings)
+        self.flags = FeatureFlagService(settings)
         self.jobs = self._build_job_queue(settings)
         self._seeded = False
 

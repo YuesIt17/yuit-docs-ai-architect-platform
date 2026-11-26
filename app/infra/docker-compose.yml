@@ -105,7 +105,7 @@ services:
     mem_reservation: 512m
 
   # Submission serving profile (GPU). Desktop convenience remains Ollama above.
-  # If no NVIDIA GPU: configs are static — mark "runtime not verified" in docs/evidence.
+  # If no NVIDIA GPU: configs are static — mark "runtime not verified" in docs/load-testing.
   vllm:
     image: vllm/vllm-openai:v0.6.6
     profiles: ["vllm"]
@@ -136,3 +136,34 @@ services:
               count: 1
               capabilities: [gpu]
     # Health: GET http://localhost:8000/v1/models after GPU start (may take minutes).
+
+  # Optional GenAI gateway (Phase 2). Use with --profile gateway[,llm].
+  # API: LLM_GATEWAY=litellm LITELLM_BASE_URL=http://127.0.0.1:4000/v1
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    profiles: ["gateway"]
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm/config.gateway-local.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--host", "0.0.0.0"]
+    environment:
+      LITELLM_MASTER_KEY: sk-kp-local-gateway
+    networks: [data, control]
+    # Start with --profile gateway --profile llm so Ollama is up for chat-default.
+
+  # Optional Flagd (Phase 3). Use with --profile flags.
+  # API: FLAGD_URL=http://127.0.0.1:8016
+  flagd:
+    image: ghcr.io/open-feature/flagd:v0.11.1
+    profiles: ["flags"]
+    ports:
+      - "8013:8013"
+      - "8016:8016"
+    volumes:
+      - ./flagd/flags.json:/etc/flagd/flags.json:ro
+    command:
+      - start
+      - --uri
+      - file:/etc/flagd/flags.json
+    networks: [control]
