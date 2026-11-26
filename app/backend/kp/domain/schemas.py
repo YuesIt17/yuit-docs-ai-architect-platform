@@ -12,6 +12,19 @@ class ChatRequest(BaseModel):
     # Send the same id to continue a dialog; omit it for a stateless request.
     session_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
     stream: bool = True
+    # Registry agent id; empty uses Settings.default_agent_id (graphrag-chat).
+    agent_id: str | None = Field(default=None, max_length=64, pattern=r"^[a-z][a-z0-9_-]*$")
+
+
+class AgentSummary(BaseModel):
+    id: str
+    version: str
+    display_name: str
+    description: str = ""
+    runtime: str
+    enabled: bool = True
+    skills: list[str] = Field(default_factory=list)
+    triggers: list[str] = Field(default_factory=list)
 
 
 class Citation(BaseModel):
@@ -121,7 +134,7 @@ class HealthResponse(BaseModel):
 
 
 class LLMConfigUpdate(BaseModel):
-    provider: Literal["MOCK", "OLLAMA", "VLLM"]
+    provider: Literal["MOCK", "OLLAMA", "VLLM", "LITELLM"]
     base_url: str | None = None
     model: str | None = None
 

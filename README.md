@@ -2,11 +2,9 @@
 
 **A secure platform for multimodal analysis of corporate knowledge (GraphRAG)**, built for the AI Architect course.
 
-> **Glossary:** [docs/Glossary.md](docs/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/SETUP.md](docs/SETUP.md) · **Evidence:** [docs/evidence/](docs/evidence/) · **Video:** [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU)
+> **Docs index:** [docs/README.md](docs/README.md) · **Glossary:** [docs/getting-started/Glossary.md](docs/getting-started/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/getting-started/SETUP.md](docs/getting-started/SETUP.md) · **Load testing:** [docs/load-testing/](docs/load-testing/)
 
 RetailPartnerX store associates, category managers and compliance officers get grounded answers from the Product/Policy KB and demo labels **inside a closed perimeter** (no SaaS OpenAI/Anthropic), with role-based ACL and a verifiable GraphRAG path (product → allergen → policy).
-
-[![Project demo · YouTube](https://img.youtube.com/vi/y2_mY9_ceuU/hqdefault.jpg)](https://www.youtube.com/watch?v=y2_mY9_ceuU)
 
 ---
 
@@ -28,26 +26,26 @@ These criteria come from the course submission form. Everything else in the repo
 
 | Requirement | Where | Status |
 | ----------- | ----- | ------ |
-| Full set of diagrams (UML / C4) | [`architecture/diagrams/`](architecture/diagrams/) · [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md) · C4 L1–L4 [`architecture/docs/`](architecture/docs/) | done |
-| Capacity Planning section | [`docs/capacity-planning.md`](docs/capacity-planning.md) | done |
-| Hardware sizing: VRAM, CPU, RAM | [`docs/capacity-planning.md`](docs/capacity-planning.md) (desktop Ollama + submission vLLM AWQ) | done |
+| Full set of diagrams (UML / C4) | [`architecture/diagrams/`](architecture/diagrams/) · [`docs/infra/diagrams/DIAGRAMS.md`](docs/infra/diagrams/DIAGRAMS.md) · C4 L1–L4 [`architecture/docs/`](architecture/docs/) | done |
+| Capacity Planning section | [`docs/quality/capacity-planning.md`](docs/quality/capacity-planning.md) | done |
+| Hardware sizing: VRAM, CPU, RAM | [`docs/quality/capacity-planning.md`](docs/quality/capacity-planning.md) (desktop Ollama + submission vLLM AWQ) | done |
 
 ### 3. Deep-dive demo and load report
 
 | Requirement | Where | Status |
 | ----------- | ----- | ------ |
-| 5–7 min video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · URL in [`docs/evidence/manifest.json`](docs/evidence/manifest.json) | done |
-| Jaeger traces / vLLM logs | [`docs/evidence/trace.md`](docs/evidence/trace.md) (Tempo ≈ Jaeger) · [`docs/evidence/loki.md`](docs/evidence/loki.md) (Ollama) · [`ADR-006`](architecture/adr/ADR-006-observability.md) · [`vllm-profile`](docs/infra/vllm-profile.md) | done* |
-| Neo4j graph visualization | [`GraphPage.tsx`](app/frontend/src/pages/GraphPage.tsx) (ACL subgraph SVG) · [`docs/SETUP.md`](docs/SETUP.md) (Browser `:30474`) · [`demo_graph.cypher`](app/scripts/demo_graph.cypher) · [`ADR-003`](architecture/adr/ADR-003-graph-db.md) | done |
-| Load report: RPS and latency | [`docs/load-report.md`](docs/load-report.md) · [`docs/evidence/load/`](docs/evidence/load/) | done |
+| 5–7 min video | Removed from the repository; `video_url` cleared in [`docs/load-testing/manifest.json`](docs/load-testing/manifest.json) | not provided |
+| Jaeger traces / vLLM logs | [`docs/load-testing/trace.md`](docs/load-testing/trace.md) (Tempo ≈ Jaeger) · [`docs/load-testing/loki.md`](docs/load-testing/loki.md) (Ollama) · [`ADR-006`](architecture/adr/ADR-006-observability.md) · [`vllm-profile`](docs/infra/serving/vllm-profile.md) | done* |
+| Neo4j graph visualization | [`GraphPage.tsx`](app/frontend/src/pages/GraphPage.tsx) (ACL subgraph SVG) · [`docs/getting-started/SETUP.md`](docs/getting-started/SETUP.md) (Browser `:30474`) · [`demo_graph.cypher`](app/scripts/demo_graph.cypher) · [`ADR-003`](architecture/adr/ADR-003-graph-db.md) | done |
+| Load report: RPS and latency | [`docs/quality/load-report.md`](docs/quality/load-report.md) · [`docs/load-testing/load/`](docs/load-testing/load/) | done |
 
-\* Desktop evidence is Ollama in Loki/Tempo. Without NVIDIA, the vLLM **runtime is not verified** ([`vllm-profile`](docs/infra/vllm-profile.md)).
+\* Desktop evidence is Ollama in Loki/Tempo. Without NVIDIA, the vLLM **runtime is not verified** ([`vllm-profile`](docs/infra/serving/vllm-profile.md)).
 
 | Summary | Status |
 | ------- | ------ |
 | Git monorepo | done |
 | ADD | done |
-| Demo & Load | done |
+| Demo & Load | load done; video not provided |
 
 ---
 
@@ -59,10 +57,10 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | ---- | ----------- | --------------- |
 | Closed LLM perimeter | MOCK / Ollama / vLLM only, no SaaS | [ADR-001](architecture/adr/ADR-001-llm-serving.md) |
 | GraphRAG on/off | verifiable product→policy path | `pytest tests/test_rag_graph_on_off.py` |
-| RAG evaluation | golden-set gate in CI + optional local LLM judge (DeepEval) | [docs/evaluation.md](docs/evaluation.md) |
-| Semantic cache | calibrated threshold, per-document invalidation | [docs/evaluation.md](docs/evaluation.md) |
+| RAG evaluation | golden-set gate in CI + optional local LLM judge (DeepEval) | [docs/quality/evaluation.md](docs/quality/evaluation.md) |
+| Semantic cache | calibrated threshold, per-document invalidation | [docs/quality/evaluation.md](docs/quality/evaluation.md) |
 | ACL / security | secret deny, cache revoke, asset ACL, path traversal | `tests/test_acl.py`, `tests/test_sec_*` |
-| Cluster hardening | Restricted pods, default-deny network, Kyverno admission | [docs/infra/k8s-hardening.md](docs/infra/k8s-hardening.md) |
+| Cluster hardening | Restricted pods, default-deny network, Kyverno admission | [docs/infra/k8s/k8s-hardening.md](docs/infra/k8s/k8s-hardening.md) |
 | LangGraph | state machine, not ReAct | `kp/agent/graph.py` |
 | Frontend | Chat, Graph, Labels, Ops, LLM settings | `app/frontend/` |
 | Hybrid desktop | K8s data plane + Compose LLM/obs | `app/scripts/hybrid/` |
@@ -73,19 +71,25 @@ Features of the learning MVP beyond the submission form. They are useful for the
 | Real login | Keycloak and a Go BFF: tokens stay server-side, the API validates each one. Optional | [ADR-010](architecture/adr/ADR-010-bff-auth.md) |
 | Secrets | Vault through External Secrets Operator, with rotating PostgreSQL credentials (optional) | [docs/infra/secrets.md](docs/infra/secrets.md) |
 | Background ingest | Celery jobs for document catalogs, with per-document failure reporting | [ADR-008](architecture/adr/ADR-008-sync-async-cache.md) |
+| Agent manifest & registry | Declarative YAML agents + `/v1/agents` API; GraphRAG + label reference agents | [ADR-011](architecture/adr/ADR-011-agent-manifest-registry.md) · [docs/agent-platform/agents.md](docs/agent-platform/agents.md) · `tests/test_agent_registry.py` |
+| GenAI gateway (LiteLLM) | Optional `LLM_GATEWAY=litellm`; default remains direct MOCK/Ollama/vLLM | [ADR-012](architecture/adr/ADR-012-genai-gateway.md) · [docs/agent-platform/genai-gateway.md](docs/agent-platform/genai-gateway.md) |
+| Feature flags / kill-switch | Flagd definitions + in-memory/OFREP evaluator; emergency agent stop | [ADR-013](architecture/adr/ADR-013-feature-flags.md) · [docs/agent-platform/feature-flags.md](docs/agent-platform/feature-flags.md) |
 
 ### Current state vs plan (additional functionality)
+
+Agent-platform evolution (manifest/registry, LiteLLM gateway, Flagd, MCP/A2A/AG-UI, HITL, MLflow): **[docs/agent-platform/roadmap.md](docs/agent-platform/roadmap.md)** · request path: **[docs/agent-platform/genai-gateway.md](docs/agent-platform/genai-gateway.md)**. Demo video is **out of scope** (none in the repo).
 
 | Area | Now | Plan |
 |------|-----|------|
 | Auth | Demo Bearer by default; optional bundled Keycloak with a Go BFF | Corporate IdP |
 | LLM desktop | Ollama `qwen2.5:0.5b` | — |
 | LLM submission | vLLM AWQ profile | runtime on a GPU |
+| LLM gateway | `LLM_GATEWAY=direct` default; optional LiteLLM `gateway-local` (+ multiprovider stubs) | Multiprovider live calls remain **not verified** until exercised |
+| Agent control plane | Manifest + registry; Flagd kill-switch + model/prompt flags | MCP/A2A/AG-UI — see roadmap |
 | Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
 | OCR | RapidOCR on CPU; MOCK by default | Accuracy measured on real label photos |
 | Secrets | Chart values by default; Vault + ESO optional | Verify rotation on a live cluster |
-| Session memory | LangGraph checkpoints in PostgreSQL ([ADR-004](architecture/adr/ADR-004-orchestration.md)) | Retention policy |
-| Video | [YouTube](https://www.youtube.com/watch?v=y2_mY9_ceuU) · `video_url` in the manifest | — |
+| Session memory | LangGraph checkpoints in PostgreSQL ([ADR-004](architecture/adr/ADR-004-orchestration.md)) | Retention policy; HITL snapshot/resume (roadmap Phase 5) |
 
 ---
 
@@ -95,13 +99,13 @@ Features of the learning MVP beyond the submission form. They are useful for the
 |------|-------|-----|------------|-------|------|
 | CI / unit | memory | MOCK | MOCK | off | `pytest` |
 | Desktop hybrid | memory/live | OLLAMA | MOCK/LOCAL | off default | `make demo`, with real login |
-| Submission | live strict | VLLM | LOCAL e5-small | off default | [vllm-profile](docs/infra/vllm-profile.md) |
+| Submission | live strict | VLLM | LOCAL e5-small | off default | [vllm-profile](docs/infra/serving/vllm-profile.md) |
 
 **vLLM GPU:** without NVIDIA, the configuration is static and its status is **"runtime not verified"**.
 
 ## Hardware / models
 
-Calculations: **[docs/capacity-planning.md](docs/capacity-planning.md)**.
+Calculations: **[docs/quality/capacity-planning.md](docs/quality/capacity-planning.md)**.
 
 | Component | Default |
 |-----------|---------|
@@ -117,7 +121,7 @@ Calculations: **[docs/capacity-planning.md](docs/capacity-planning.md)**.
 | [`app/infra/`](app/infra/) | Compose + Helm | ≈ `/infra` |
 | [`app/backend/`](app/backend/) | Agents + API | ≈ `/backend` |
 | [`app/frontend/`](app/frontend/) | UI | additional |
-| [`docs/`](docs/) | SETUP, capacity, load, evidence | `/docs` |
+| [`docs/`](docs/) | SETUP, capacity, load-testing, infra | `/docs` |
 | [`architecture/`](architecture/) | ADD: C4, ADR, diagrams | ADD |
 | [`tools/diagrams/`](tools/diagrams/) | diagram generation from code | additional |
 | [`data/`](data/) | runtime object store (not source) | — |
@@ -132,11 +136,11 @@ python tools/diagrams/build.py --profile desktop
 python tools/diagrams/build.py --profile desktop --check
 ```
 
-Documentation: **[docs/DIAGRAMS.md](docs/DIAGRAMS.md)** · SVG: [architecture/diagrams/images/](architecture/diagrams/images/).
+Documentation: **[docs/infra/diagrams/DIAGRAMS.md](docs/infra/diagrams/DIAGRAMS.md)** · SVG: [architecture/diagrams/images/](architecture/diagrams/images/).
 
 ## Quick start
 
-Full instructions: **[docs/SETUP.md](docs/SETUP.md)**.
+Full instructions: **[docs/getting-started/SETUP.md](docs/getting-started/SETUP.md)**.
 
 ```powershell
 .\app\scripts\hybrid\hybrid-up.ps1
@@ -147,7 +151,7 @@ bash app/scripts/hybrid/hybrid-up.sh
 cd app/backend && .venv/Scripts/python -m pytest -q   # Windows venv
 ```
 
-`make demo` runs the platform with real login: open <http://kp.localhost:8088/> and sign in as `guest`, `associate`, `manager` or `compliance`, with the password `kp-demo-<user>`. See [docs/SETUP.md](docs/SETUP.md#login-in-the-hybrid-mode).
+`make demo` runs the platform with real login: open <http://kp.localhost:8088/> and sign in as `guest`, `associate`, `manager` or `compliance`, with the password `kp-demo-<user>`. See [docs/getting-started/SETUP.md](docs/getting-started/SETUP.md#login-in-the-hybrid-mode).
 
 Without login (`make k8s-up`, `make dev-mock` or `KP_AUTH=demo make demo`), the UI has a role switcher and the API accepts demo Bearer roles: `guest` | `associate` | `manager` | `compliance`.
 
@@ -158,7 +162,7 @@ Without login (`make k8s-up`, `make dev-mock` or `KP_AUTH=demo make demo`), the 
 3. **OCR defaults to MOCK:** real local OCR needs `OCR_PROVIDER=RAPIDOCR`, and is tested on generated labels only.
 4. **Demo auth by default:** learning Bearer tokens. Real login is optional, and [ADR-010](architecture/adr/ADR-010-bff-auth.md) lists what it has not been verified on.
 5. **Vault and ESO:** implemented, but the full flow has not run on a live cluster.
-6. **vLLM GPU:** the profile and [benchmark](docs/infra/vllm-profile.md) exist, but no GPU results have been recorded.
+6. **vLLM GPU:** the profile and [benchmark](docs/infra/serving/vllm-profile.md) exist, but no GPU results have been recorded.
 
 ## Author
 

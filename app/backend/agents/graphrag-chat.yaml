@@ -1,0 +1,71 @@
+# Reference agent: existing GraphRAG LangGraph chat (course MVP).
+# Loaded by AgentRegistry at startup. See docs/agent-platform/agents.md.
+apiVersion: kp.retailpartnerx/v1
+kind: Agent
+metadata:
+  id: graphrag-chat
+  version: "1.0.0"
+  display_name: GraphRAG Chat
+  description: >
+    Grounded Product/Policy Q&A with role-based ACL, GraphRAG retrieval,
+    and citationed answers. Runtime is the fixed LangGraph state machine
+    (not autonomous ReAct).
+  labels:
+    tier: reference
+    domain: retail-compliance
+spec:
+  runtime: langgraph
+  entrypoint: kp.agent.graph:KnowledgeAgent
+  enabled: true
+  skills:
+    - id: grounded-qa
+      description: Answer questions from the Product/Policy KB with citations
+    - id: acl-filtered-retrieval
+      description: Retrieve only documents allowed for the caller's role
+  tools:
+    - id: graph_retrieve
+      kind: builtin
+      description: Neo4j / in-memory ontology resolve (product → allergen → policy)
+    - id: vector_retrieve
+      kind: builtin
+      description: Hybrid vector + lexical retrieve with ACL filters
+  memory:
+    kind: langgraph_checkpoint
+    backend: settings
+  model:
+    provider_ref: settings
+    alias: chat-default
+    prompt_version_ref: settings
+  guardrails:
+    input: true
+    output: true
+    acl: role_based
+  sandbox:
+    network: deny_egress_except_llm_store
+    tool_allowlist:
+      - graph_retrieve
+      - vector_retrieve
+    timeout_seconds: 60
+  security:
+    required_roles:
+      - guest
+      - store_associate
+      - category_manager
+      - compliance_officer
+    classifications:
+      - public
+      - internal
+      - secret
+  triggers:
+    - type: api
+      enabled: true
+      path: /v1/chat
+    - type: api
+      enabled: true
+      path: /v1/agents/graphrag-chat/invoke
+    - type: a2a
+      enabled: false
+      note: Wired in protocol phase (MCP/A2A)
+    - type: schedule
+      enabled: false
+      note: Optional Celery/cron trigger later

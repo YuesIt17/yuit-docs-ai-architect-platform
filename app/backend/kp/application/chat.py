@@ -8,11 +8,14 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from kp.agents.manifest import AgentManifest
+from kp.agents.registry import AgentKillSwitchError
 from kp.application.audit import record_request_audit
 from kp.config import Settings
 from kp.deps import AppContainer
 from kp.domain.schemas import ChatRequest, ChatResponse, Citation
 from kp.infrastructure.cache import CacheEntry, document_fingerprint
+from kp.infrastructure.feature_flags import FlagEvaluation
 from kp.observability import metrics
 from kp.observability.spans import current_trace_id, span
 from kp.security.guardrails import input_guard, output_guard
@@ -25,6 +28,7 @@ class ChatService:
     def __init__(self, container: AppContainer, settings: Settings):
         self.c = container
         self.settings = settings
+        self._turn_attrs: dict[str, Any] = {}
 
     @staticmethod
     def thread_id(principal: Principal, session_id: str) -> str:
@@ -154,26 +158,82 @@ class ChatService:
             index_version=self.settings.index_version,
         )
 
+    def _attribution(self, agent_id: str, flags: FlagEvaluation) -> dict[str, Any]:
+        cfg = self.c.llm.get_config()
+        return {
+            "agent_id": agent_id,
+            "team_id": self.settings.llm_team_id,
+            "gateway": cfg.gateway,
+            "model_route": flags.model_route,
+            "prompt_version": flags.prompt_version,
+            "flag_variant": flags.variants,
+        }
+
+    def _enrich(self, state: dict[str, Any]) -> dict[str, Any]:
+        merged = dict(state)
+        merged.update(self._turn_attrs)
+        return merged
+
+    def require_agent(
+        self, body: ChatRequest, principal: Principal
+    ) -> tuple[AgentManifest, FlagEvaluation, str]:
+        """Authorize via flags + registry. Raises kill-switch / registry errors."""
+        agent_id = (body.agent_id or self.settings.default_agent_id).strip()
+        flags = self.c.flags.evaluate(
+            agent_id=agent_id, role=principal.role, user_id=principal.user_id
+        )
+        self._turn_attrs = self._attribution(agent_id, flags)
+        if flags.kill_switch or not flags.agent_enabled:
+            raise AgentKillSwitchError(agent_id)
+        manifest = self.c.registry.authorize(agent_id, principal.role)
+        if self.c.llm.get_config().gateway == "litellm":
+            self.c.llm.set_model_alias(flags.model_route)
+        return manifest, flags, agent_id
+
     async def handle(self, body: ChatRequest, principal: Principal) -> ChatResponse | Any:
         """Run a chat turn; returns ChatResponse or ("stream", async generator) for SSE."""
         started = time.perf_counter()
         request_id = str(uuid.uuid4())
         session_id = body.session_id or str(uuid.uuid4())
         thread = self.thread_id(principal, body.session_id) if body.session_id else None
+        try:
+            _manifest, flags, agent_id = self.require_agent(body, principal)
+        except AgentKillSwitchError:
+            denied = self._enrich(
+                {
+                    "answer": "Agent invocations are temporarily disabled by the emergency kill-switch.",
+                    "citations": [],
+                    "acl_decision": "deny_kill_switch",
+                    "degraded": False,
+                    "model_uri": self._cache_model_uri(),
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "trace_id": current_trace_id(),
+                }
+            )
+            # Attribution may be empty if flags never ran; fill agent id at least.
+            denied.setdefault("agent_id", (body.agent_id or self.settings.default_agent_id).strip())
+            denied.setdefault("team_id", self.settings.llm_team_id)
+            denied.setdefault("gateway", self.c.llm.get_config().gateway)
+            record_request_audit(self.c, self.settings, request_id, principal, denied, started, "chat")
+            metrics.REQUESTS.labels(endpoint="chat", status="kill_switch").inc()
+            raise
 
         # SEC-01: Input Guard before cache lookup
         guard = input_guard(body.message)
         if not guard.ok:
             metrics.REQUESTS.labels(endpoint="chat", status="guard_deny").inc()
-            denied = {
-                "answer": "Request rejected by the input guard (suspected prompt injection).",
-                "citations": [],
-                "acl_decision": "deny_input",
-                "degraded": False,
-                "model_uri": self._cache_model_uri(),
-                "tokens_in": 0,
-                "tokens_out": 0,
-            }
+            denied = self._enrich(
+                {
+                    "answer": "Request rejected by the input guard (suspected prompt injection).",
+                    "citations": [],
+                    "acl_decision": "deny_input",
+                    "degraded": False,
+                    "model_uri": self._cache_model_uri(),
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                }
+            )
             record_request_audit(self.c, self.settings, request_id, principal, denied, started, "chat")
             if body.stream:
                 return ("stream", self._deny_stream(denied, request_id, session_id))
@@ -193,24 +253,26 @@ class ChatService:
         in_dialog = bool(thread and await self.c.agent.session_history(thread))
         cached = None
         if not in_dialog:
-            with span("cache", request_id=request_id, role=principal.role):
+            with span("cache", request_id=request_id, role=principal.role, agent_id=agent_id):
                 cached = self._lookup_cache(message, principal)
         if cached:
             if thread:
                 await self.c.agent.record_turn(thread, message, cached.answer, list(cached.source_doc_ids))
             metrics.CACHE_HIT_RATE.set(self.c.cache.hit_rate)
             metrics.REQUESTS.labels(endpoint="chat", status="cache").inc()
-            state = {
-                "answer": cached.answer,
-                "citations": cached.citations,
-                "acl_decision": "allow_cache",
-                "degraded": False,
-                "model_uri": "cache://semantic",
-                # Cache hit: no inference token recount
-                "tokens_in": 0,
-                "tokens_out": 0,
-                "trace_id": current_trace_id(),
-            }
+            state = self._enrich(
+                {
+                    "answer": cached.answer,
+                    "citations": cached.citations,
+                    "acl_decision": "allow_cache",
+                    "degraded": False,
+                    "model_uri": "cache://semantic",
+                    # Cache hit: no inference token recount
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "trace_id": current_trace_id(),
+                }
+            )
             record_request_audit(self.c, self.settings, request_id, principal, state, started, "chat")
             if body.stream:
                 return ("stream", self._cache_stream(cached, request_id, session_id))
@@ -229,13 +291,15 @@ class ChatService:
                 "role": principal.role,
                 "user_id": principal.user_id,
                 "errors": [],
-            }
-            ,
+            },
             thread_id=thread,
         )
         # Attach active OTel trace for audit / Loki↔Tempo correlation
         if not state.get("trace_id"):
             state["trace_id"] = current_trace_id()
+        state = self._enrich(state)
+        # Effective prompt version from flags is recorded for rollout audit.
+        state["prompt_version"] = flags.prompt_version
         record_request_audit(self.c, self.settings, request_id, principal, state, started, "chat")
         citations = [Citation(**x) for x in state.get("citations") or []]
         if not in_dialog:
@@ -356,4 +420,6 @@ class ChatService:
         yield f"event: final\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
         if not state.get("trace_id"):
             state["trace_id"] = current_trace_id()
-        record_request_audit(self.c, self.settings, request_id, principal, state, started, "chat")
+        record_request_audit(
+            self.c, self.settings, request_id, principal, self._enrich(state), started, "chat"
+        )

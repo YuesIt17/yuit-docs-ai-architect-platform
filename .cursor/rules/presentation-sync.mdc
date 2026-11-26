@@ -1,0 +1,26 @@
+---
+description: Keep docs/presentation aligned after documentation or portfolio-status changes
+alwaysApply: true
+---
+
+# Presentation stays current
+
+When you change documentation layout, paths, course-status claims, or agent-platform features, update [`docs/presentation/`](docs/presentation/) in the **same** change set (at least [`defense-deck.html`](docs/presentation/defense-deck.html)).
+
+## Trigger
+
+Do this whenever you:
+
+- Move/rename docs (e.g. `evidence` → `load-testing`, `ops` → `infra/...`)
+- Change README / docs index links or “done / not provided / not verified” status
+- Add or finish agent-platform phases (registry, LiteLLM, Flagd, …)
+- Remove demos or artifacts the deck still cites (e.g. YouTube)
+
+## Checklist
+
+1. Grep `docs/presentation` for old paths and labels (`docs/evidence`, `docs/SETUP.md`, `docs/ops`, YouTube IDs, stale phase status).
+2. Fix footers, kickers, and link text to match [`docs/README.md`](docs/README.md) and the real folders (`getting-started/`, `infra/`, `load-testing/`, `agent-platform/`, `quality/`).
+3. Align claim language with the repo rule: only assert what was run; keep “not verified” / “not provided” where evidence is missing.
+4. If the deck structure itself is obsolete (missing a shipped Phase 1–3 slide), add or adjust a slide rather than leaving the narrative on the old Knowledge-Platform-only story.
+
+Do **not** treat presentation as out of scope after a docs reorg.

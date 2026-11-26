@@ -1,7 +1,7 @@
 # Real login on Docker Desktop. Apply after values-desktop.yaml. All credentials here are local demo values.
 #
 # The host is kp.localhost on purpose: browsers treat *.localhost as a secure context, so the same strict
-# __Host- cookie works over plain HTTP, with no insecure mode in the BFF. See docs/infra/k8s-hardening.md.
+# __Host- cookie works over plain HTTP, with no insecure mode in the BFF. See docs/infra/k8s/k8s-hardening.md.
 ingress:
   host: kp.localhost
 

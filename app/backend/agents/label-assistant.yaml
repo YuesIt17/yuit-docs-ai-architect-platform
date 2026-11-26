@@ -1,0 +1,63 @@
+# Second reference agent: multimodal label path (vision/OCR + policy check).
+# Registered for discovery and resolve; invoke via /v1/vision (not LangGraph chat).
+apiVersion: kp.retailpartnerx/v1
+kind: Agent
+metadata:
+  id: label-assistant
+  version: "1.0.0"
+  display_name: Label Assistant
+  description: >
+    Recognizes demo product labels (OCR/VLM) and maps extracts to policy
+    citations. Declared here so product teams can discover the capability
+    through the same registry as chat agents.
+  labels:
+    tier: reference
+    modality: vision
+spec:
+  runtime: stub
+  entrypoint: kp.application.vision:VisionService
+  enabled: true
+  skills:
+    - id: label-extract
+      description: Extract brand, allergens, and ingredients from a label image
+    - id: policy-link
+      description: Attach policy citations for recognized allergens
+  tools:
+    - id: ocr_extract
+      kind: builtin
+      description: MOCK or RapidOCR label read
+    - id: policy_check
+      kind: builtin
+      description: Match extract fields against the Policy corpus
+  memory:
+    kind: none
+    backend: memory
+  model:
+    provider_ref: settings
+    alias: vision-default
+  guardrails:
+    input: true
+    output: true
+    acl: role_based
+  sandbox:
+    network: deny_egress_except_llm_store
+    tool_allowlist:
+      - ocr_extract
+      - policy_check
+    timeout_seconds: 90
+  security:
+    required_roles:
+      - store_associate
+      - category_manager
+      - compliance_officer
+    classifications:
+      - public
+      - internal
+  triggers:
+    - type: api
+      enabled: true
+      path: /v1/vision/label
+    - type: a2a
+      enabled: false
+    - type: schedule
+      enabled: false

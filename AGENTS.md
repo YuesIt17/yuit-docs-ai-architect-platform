@@ -5,7 +5,7 @@ Rules for coding agents. It covers only what the code does not show. For an over
 ## Project rules
 
 - All project text is English: UI, docs, code, comments, commit messages. This repository is a public portfolio.
-- Cyrillic is allowed only in the RusLawOD status match in `app/backend/pipelines/ingest_ruslaw.py`, because removing it would ingest classified acts as public, and in raw captures under `docs/evidence/load/`.
+- Cyrillic is allowed only in the RusLawOD status match in `app/backend/pipelines/ingest_ruslaw.py`, because removing it would ingest classified acts as public, and in raw captures under `docs/load-testing/load/`.
 - Claim only what was run. Label the rest as "not verified", as the README does for the vLLM GPU runtime. Do not raise a status without evidence.
 - `sources/gen`, `images`, `inventory.json` and `provenance.json` under `architecture/diagrams/` are generated. Do not edit them by hand.
 
@@ -32,15 +32,16 @@ app/backend/.venv/Scripts/python.exe -m pytest -q tests/architecture
 - Backend dependencies are locked in `app/backend/uv.lock`, and CI fails if it is stale. After editing `pyproject.toml`, run `uv lock` and commit both. The Dockerfile installs from the lockfile, so it needs no change unless you add an extra the image should have.
 - `uv sync` removes packages the lockfile does not list, such as the diagram tools. Reinstall them with `uv pip install -r tools/diagrams/requirements.txt` before building diagrams.
 - On Windows, a system proxy can break `kubectl`. Add `kubernetes.docker.internal` to `NO_PROXY`.
-- Docker Desktop `hostpath` volumes ignore `fsGroup`, and its CNI does not enforce NetworkPolicy. See [`docs/infra/k8s-hardening.md`](docs/infra/k8s-hardening.md).
+- Docker Desktop `hostpath` volumes ignore `fsGroup`, and its CNI does not enforce NetworkPolicy. See [`docs/infra/k8s/k8s-hardening.md`](docs/infra/k8s/k8s-hardening.md).
 
 ## When you change these
 
 | Change | Also do |
 | ------ | ------- |
-| `kp/agent/graph.py` or the Helm chart | Rebuild the diagrams, or the `diagrams` workflow fails on drift. See [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md) |
-| Helm security settings | Run `tests/architecture` and update `docs/infra/k8s-hardening.md` |
-| Retrieval, routing or the answer flow | Run the eval gate. See [`docs/evaluation.md`](docs/evaluation.md) |
+| `kp/agent/graph.py` or the Helm chart | Rebuild the diagrams, or the `diagrams` workflow fails on drift. See [`docs/infra/diagrams/DIAGRAMS.md`](docs/infra/diagrams/DIAGRAMS.md) |
+| Helm security settings | Run `tests/architecture` and update `docs/infra/k8s/k8s-hardening.md` |
+| Retrieval, routing or the answer flow | Run the eval gate. See [`docs/quality/evaluation.md`](docs/quality/evaluation.md) |
+| Docs layout, paths, or portfolio status claims | Update [`docs/presentation/`](docs/presentation/) (defense deck) in the same change — see `.cursor/rules/presentation-sync.mdc` |
 | Python code or tests | Run ruff and pytest |
 | `app/bff` | Run `go vet`, `go test -race` and `golangci-lint`. See [`app/bff/README.md`](app/bff/README.md) |
 

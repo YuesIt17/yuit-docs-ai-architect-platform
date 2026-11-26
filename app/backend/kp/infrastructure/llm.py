@@ -1,6 +1,7 @@
-"""LLM client: MOCK | OLLAMA | VLLM via OpenAI-compatible API with mutable runtime config.
+"""LLM client: MOCK | OLLAMA | VLLM | LITELLM via OpenAI-compatible API with mutable runtime config.
 
 Base URL allowlist prevents SSRF via PUT /v1/llm/config (SEC-04).
+LLM_GATEWAY=litellm routes through the LiteLLM proxy (ADR-012); default remains direct.
 """
 
 from __future__ import annotations
@@ -12,12 +13,15 @@ import httpx
 
 from kp.config import Settings
 
-SUPPORTED_PROVIDERS = frozenset({"MOCK", "OLLAMA", "VLLM"})
+SUPPORTED_PROVIDERS = frozenset({"MOCK", "OLLAMA", "VLLM", "LITELLM"})
+DIRECT_PROVIDERS = frozenset({"MOCK", "OLLAMA", "VLLM"})
 MOCK_MODEL = "mock-graph-rag"
 DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434/v1"
 DEFAULT_OLLAMA_MODEL = "qwen2.5:0.5b"
 DEFAULT_VLLM_BASE_URL = "http://127.0.0.1:8000/v1"
 DEFAULT_VLLM_MODEL = "Qwen/Qwen2.5-1.5B-Instruct-AWQ"
+DEFAULT_LITELLM_BASE_URL = "http://127.0.0.1:4000/v1"
+DEFAULT_LITELLM_ALIAS = "chat-default"
 
 
 def _normalize_base_url(url: str) -> str:
@@ -41,28 +45,44 @@ def vllm_endpoint(settings: Settings) -> tuple[str, str]:
     return base_url, model
 
 
+def litellm_endpoint(settings: Settings) -> tuple[str, str]:
+    base_url = (settings.litellm_base_url or "").strip() or DEFAULT_LITELLM_BASE_URL
+    model = (settings.litellm_model_alias or "").strip() or DEFAULT_LITELLM_ALIAS
+    return base_url, model
+
+
+def gateway_mode(settings: Settings) -> str:
+    mode = (settings.llm_gateway or "direct").strip().lower()
+    return "litellm" if mode == "litellm" else "direct"
+
+
 def provider_presets(settings: Settings) -> dict[str, dict[str, str]]:
-    """UI presets: MOCK fixed; OLLAMA/VLLM from Settings."""
+    """UI presets: MOCK fixed; OLLAMA/VLLM/LITELLM from Settings."""
     o_url, o_model = ollama_endpoint(settings)
     v_url, v_model = vllm_endpoint(settings)
+    l_url, l_model = litellm_endpoint(settings)
     return {
         "MOCK": {"base_url": "", "model": MOCK_MODEL},
         "OLLAMA": {"base_url": o_url, "model": o_model},
         "VLLM": {"base_url": v_url, "model": v_model},
+        "LITELLM": {"base_url": l_url, "model": l_model},
     }
 
 
 def allowed_llm_base_urls(settings: Settings) -> set[str]:
     raw = (settings.llm_allowed_base_urls or "").strip()
     urls = {_normalize_base_url(u) for u in raw.split(",") if u.strip()}
-    # Always allow the configured settings URL when present.
     configured = _normalize_base_url(settings.openai_base_url or "")
     if configured:
         urls.add(configured)
+    litellm = _normalize_base_url(settings.litellm_base_url or "")
+    if litellm:
+        urls.add(litellm)
     urls.update(
         {
             _normalize_base_url(DEFAULT_OLLAMA_BASE_URL),
             _normalize_base_url(DEFAULT_VLLM_BASE_URL),
+            _normalize_base_url(DEFAULT_LITELLM_BASE_URL),
         }
     )
     return {u for u in urls if u}
@@ -83,7 +103,6 @@ def validate_llm_base_url(settings: Settings, base_url: str) -> str:
     host = (parsed.hostname or "").lower()
     if host in {"169.254.169.254", "metadata.google.internal"}:
         raise ValueError("base_url host is not allowed")
-    # Canonical form ends with /v1 for OpenAI-compatible clients.
     path = (parsed.path or "").rstrip("/")
     if not path.endswith("/v1"):
         normalized = f"{parsed.scheme}://{parsed.netloc}/v1"
@@ -109,6 +128,22 @@ class LLMClient:
     def get_config(self) -> LLMRuntimeConfig:
         return self.runtime
 
+    def set_model_alias(self, alias: str) -> LLMRuntimeConfig:
+        """Update the active model id/alias (used for flag-driven model_route)."""
+        chosen = (alias or "").strip()
+        if not chosen:
+            return self.runtime
+        if self.runtime.provider == "MOCK":
+            return self.runtime
+        self.runtime = LLMRuntimeConfig(
+            provider=self.runtime.provider,
+            base_url=self.runtime.base_url,
+            model=chosen,
+            api_key=self.runtime.api_key,
+            gateway=self.runtime.gateway,
+        )
+        return self.runtime
+
     def apply_config(
         self, provider: str, base_url: str | None = None, model: str | None = None
     ) -> LLMRuntimeConfig:
@@ -121,25 +156,30 @@ class LLMClient:
                 base_url="",
                 model=MOCK_MODEL,
                 api_key=self.settings.openai_api_key,
+                gateway="direct",
             )
             return self.runtime
 
-        if provider == "VLLM":
+        if provider == "LITELLM":
+            fallback_url, fallback_model = litellm_endpoint(self.settings)
+            api_key = self.settings.litellm_api_key or self.settings.openai_api_key
+            gateway = "litellm"
+        elif provider == "VLLM":
             fallback_url, fallback_model = vllm_endpoint(self.settings)
+            api_key = self.settings.openai_api_key
+            gateway = "direct"
         else:
             fallback_url, fallback_model = ollama_endpoint(self.settings)
+            api_key = self.settings.openai_api_key
+            gateway = "direct"
 
         chosen_model = (model or "").strip()
-        if not chosen_model or chosen_model == MOCK_MODEL:
+        if not chosen_model or (provider != "LITELLM" and chosen_model == MOCK_MODEL):
             chosen_model = fallback_model
 
         requested = (base_url or "").strip()
         if requested:
-            if not self.settings.llm_allow_runtime_url_override:
-                # Only accept allowlisted URLs when override is disabled.
-                chosen_url = validate_llm_base_url(self.settings, requested)
-            else:
-                chosen_url = validate_llm_base_url(self.settings, requested)
+            chosen_url = validate_llm_base_url(self.settings, requested)
         else:
             chosen_url = validate_llm_base_url(self.settings, fallback_url)
 
@@ -147,7 +187,8 @@ class LLMClient:
             provider=provider,
             base_url=chosen_url,
             model=chosen_model,
-            api_key=self.settings.openai_api_key,
+            api_key=api_key,
+            gateway=gateway,
         )
         return self.runtime
 
@@ -161,6 +202,7 @@ class LLMClient:
                 "reachable": True,
                 "detail": "mock provider always reachable",
                 "model_uri": cfg.model_uri,
+                "gateway": cfg.gateway,
             }
         url = cfg.base_url.rstrip("/")
         if not url.endswith("/v1"):
@@ -190,6 +232,7 @@ class LLMClient:
                 "reachable": ok,
                 "detail": detail,
                 "model_uri": cfg.model_uri,
+                "gateway": cfg.gateway,
             }
         except Exception as exc:
             return {
@@ -199,6 +242,7 @@ class LLMClient:
                 "reachable": False,
                 "detail": f"{exc.__class__.__name__}: {exc}",
                 "model_uri": cfg.model_uri,
+                "gateway": cfg.gateway,
             }
 
     async def complete(self, system: str, user: str, max_tokens: int = 512) -> tuple[str, int, int]:
@@ -260,11 +304,21 @@ class LLMRuntimeConfig:
     base_url: str = ""
     model: str = MOCK_MODEL
     api_key: str = "not-needed"
+    gateway: str = "direct"
 
     @classmethod
     def from_settings(cls, settings: Settings) -> LLMRuntimeConfig:
+        if gateway_mode(settings) == "litellm":
+            base_url, model = litellm_endpoint(settings)
+            return cls(
+                provider="LITELLM",
+                base_url=base_url,
+                model=model,
+                api_key=settings.litellm_api_key or settings.openai_api_key,
+                gateway="litellm",
+            )
         provider = settings.llm_provider.upper()
-        if provider not in SUPPORTED_PROVIDERS:
+        if provider not in DIRECT_PROVIDERS:
             provider = "MOCK"
         if provider == "MOCK":
             return cls(
@@ -272,6 +326,7 @@ class LLMRuntimeConfig:
                 base_url="",
                 model=MOCK_MODEL,
                 api_key=settings.openai_api_key,
+                gateway="direct",
             )
         if provider == "VLLM":
             base_url, model = vllm_endpoint(settings)
@@ -282,6 +337,7 @@ class LLMRuntimeConfig:
             base_url=base_url,
             model=model,
             api_key=settings.openai_api_key,
+            gateway="direct",
         )
 
     @property

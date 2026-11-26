@@ -33,9 +33,10 @@ RetailPartnerX requires on-prem inference without SaaS OpenAI/Anthropic (this re
   - Image: `vllm/vllm-openai:v0.6.6`
   - Model: `Qwen/Qwen2.5-1.5B-Instruct-AWQ` (AWQ, context 4096, max-num-seqs 2)
   - Compose profile `vllm`, Helm overlay `values-submission-vllm.yaml`
-  - Docs: [docs/infra/vllm-profile.md](../../docs/infra/vllm-profile.md)
+  - Docs: [docs/infra/serving/vllm-profile.md](../../docs/infra/serving/vllm-profile.md)
 - Client: a single `LLMClient` (`MOCK` \| `OLLAMA` \| `VLLM`) with a `base_url` allowlist
 - If no GPU is available, the configuration is checked statically and its status is **"runtime not verified"**
+- Optional GenAI gateway (`LLM_GATEWAY=litellm`) is additive and does **not** change this closed default — see [ADR-012](ADR-012-genai-gateway.md)
 
 ## Consequences
 
@@ -46,3 +47,4 @@ RetailPartnerX requires on-prem inference without SaaS OpenAI/Anthropic (this re
 
 - Code: `app/backend/kp/infrastructure/llm.py`
 - Continuity: hw-4 (SaaS), hw-7 (sizing)
+- Gateway: [ADR-012](ADR-012-genai-gateway.md)

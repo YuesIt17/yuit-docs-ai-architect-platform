@@ -22,7 +22,7 @@
 | K8s topology (desktop, Mermaid) | [images/k8s-topology-desktop.svg](images/k8s-topology-desktop.svg) | gen |
 | K8s topology (KubeDiagrams icons) | [images/k8s-topology-desktop-kube.svg](images/k8s-topology-desktop-kube.svg) | gen |
 
-Build: [`docs/DIAGRAMS.md`](../../docs/DIAGRAMS.md)
+Build: [`docs/infra/diagrams/DIAGRAMS.md`](../../docs/infra/diagrams/DIAGRAMS.md)
 
 ```powershell
 python tools/diagrams/build.py --profile desktop

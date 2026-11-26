@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Measure TTFT and throughput of an OpenAI-compatible server across parallel sequences.
 
-Run on the GPU host. Results are written to docs/evidence/load/ and describe that host only:
+Run on the GPU host. Results are written to docs/load-testing/load/ and describe that host only:
   python scripts/bench_vllm.py --model Qwen/Qwen2.5-1.5B-Instruct-AWQ --concurrency 1 2 4
 """
 
@@ -125,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     report = asyncio.run(bench(args.base_url, args.model, args.concurrency, args.requests, args.max_tokens))
     text = json.dumps(report, indent=2)
     print(text)
-    out = REPO / "docs" / "evidence" / "load" / f"bench_{args.label}.json"
+    out = REPO / "docs" / "load-testing" / "load" / f"bench_{args.label}.json"
     out.write_text(text + "\n", encoding="utf-8")
     print(f"Wrote {out}", file=sys.stderr)
     return 0 if all(level["succeeded"] for level in report["levels"]) else 1

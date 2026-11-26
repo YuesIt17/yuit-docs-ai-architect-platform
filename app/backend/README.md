@@ -2,7 +2,7 @@
 
 The RetailPartnerX HTTP Control Plane: GraphRAG chat with ACL, label recognition, semantic cache and observability. Model answers go through the built-in **`LLMClient`**: the backend does not depend on the LLM as a hosted service, it **calls** the model from the agent (MOCK locally / Ollama in hybrid).
 
-Environment startup and ports are in [docs/SETUP.md](../../docs/SETUP.md). The map of all of `app/` is in [app/README.md](../README.md).
+Environment startup and ports are in [docs/getting-started/SETUP.md](../../docs/getting-started/SETUP.md). The map of all of `app/` is in [app/README.md](../README.md).
 
 ## Stack and purpose
 

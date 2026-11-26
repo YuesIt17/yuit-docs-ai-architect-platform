@@ -1,0 +1,49 @@
+{
+  "$schema": "https://flagd.dev/schema/v0/flags.json",
+  "flags": {
+    "kill_switch_agents": {
+      "state": "ENABLED",
+      "variants": {
+        "on": true,
+        "off": false
+      },
+      "defaultVariant": "off"
+    },
+    "agent_enabled": {
+      "state": "ENABLED",
+      "variants": {
+        "on": true,
+        "off": false
+      },
+      "defaultVariant": "on"
+    },
+    "prompt_version": {
+      "state": "ENABLED",
+      "variants": {
+        "v1": "v1",
+        "v2": "v2"
+      },
+      "defaultVariant": "v1",
+      "targeting": {
+        "fractional": [
+          ["v1", 90],
+          ["v2", 10]
+        ]
+      }
+    },
+    "model_route": {
+      "state": "ENABLED",
+      "variants": {
+        "chat-default": "chat-default",
+        "chat-mock": "chat-mock"
+      },
+      "defaultVariant": "chat-default",
+      "targeting": {
+        "fractional": [
+          ["chat-default", 80],
+          ["chat-mock", 20]
+        ]
+      }
+    }
+  }
+}

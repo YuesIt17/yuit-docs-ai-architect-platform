@@ -1,0 +1,26 @@
+# LiteLLM proxy — gateway-local (closed perimeter backends only).
+# chat-default: Ollama first, mock_response deployment as failover sibling.
+# chat-mock: deterministic mock alias for flag-driven model_route demos.
+model_list:
+  - model_name: chat-default
+    litellm_params:
+      model: ollama/qwen2.5:0.5b
+      api_base: http://ollama:11434
+  - model_name: chat-default
+    litellm_params:
+      model: openai/mock-graph-rag
+      api_key: not-needed
+      mock_response: "[gateway-failover] Based on the RetailPartnerX corporate knowledge base."
+  - model_name: chat-mock
+    litellm_params:
+      model: openai/mock-graph-rag
+      api_key: not-needed
+      mock_response: "Based on the RetailPartnerX corporate knowledge base (gateway mock)."
+
+litellm_settings:
+  drop_params: true
+  num_retries: 1
+  request_timeout: 120
+
+general_settings:
+  master_key: sk-kp-local-gateway
