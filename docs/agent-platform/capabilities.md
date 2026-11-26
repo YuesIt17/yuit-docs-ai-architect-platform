@@ -1,0 +1,54 @@
+# Agent Platform Capability Map
+
+This is the **capability inventory** for RetailPartnerX. Read with [roadmap](./roadmap.md), [engineering standards](./engineering/README.md), and [delivery workflow](./delivery-workflow.md).
+
+**Status vocabulary:** `implemented` = code exists; `verified` = reproducible recorded test; `planned` = not implemented; `optional` = no commitment without a use case. A mocked unit test is not live runtime verification.
+
+## Core platform
+
+| Capability | Existing foundation | Required outcome / gap | Priority |
+| --- | --- | --- | --- |
+| Registry and admission | AgentManifest, in-process registry, API, role checks | Versioned policy-enforced execution, approved entrypoints and tools, durable/replicated registry only if needed | P0 |
+| Orchestrator choice | Existing LangGraph GraphRAG; manifest has `runtime` | Optional local Google ADK reference agent behind same external API; no checkpoint portability claim | P1 |
+| Agent tools and interoperability | Retrieval nodes, declarative tool schema, SSE | Enforced tool allowlist and scoped identity first; MCP for one read-only tool; A2A/AG-UI when justified | P0/P2 |
+| Model gateway | Direct client and LiteLLM profiles, aliases, attribution | Live local smoke, isolation under concurrency, controlled failures, measured usage/budget | P0 |
+| Progressive rollout | Flagd/in-memory evaluator, kill-switch at admission | Well-defined Flagd outage policy, safe mid-run checks, verified rollout and rollback | P0 |
+| Durable execution | LangGraph checkpoints, PostgreSQL and Celery ingestion | Agent run ledger, retries, approval, recovery, idempotent side effects; Temporal optional | P1 |
+| Identity/permissions | Role ACL, Keycloak/Go BFF option | Agent identity, delegated user scopes, tool-level authorization and credential isolation | P0/P1 |
+| Secrets | Vault + External Secrets Operator templates, dynamic PostgreSQL DSN design | End-to-end rotation/revocation verification, no secrets in logs or agent manifests | P1 |
+| Reliability | OTel/LGTM, load tests, SRE documentation | Agent SLIs/SLOs, gateway failure drill, dashboards, actionable runbooks | P1 |
+| Quality feedback | Golden-set/ACL gates, DeepEval-shaped judge, OTel | Scrub trace → review → labeled dataset → CI regression; real local judge evidence | P1 |
+| Knowledge and artifacts | GraphRAG, Neo4j, Qdrant, MinIO, session checkpoints | Provenance-aware document model, lifecycle/retention, optional scoped long-term memory | P1 |
+| Regulated-data readiness | Closed default, ACL, audit and K8s hardening | Durable audit, privacy-by-design, deletion/retention, boundaries/controls evidence | P1 |
+
+## Product and document intelligence
+
+| Capability | Existing | Carefully scoped improvement |
+| --- | --- | --- |
+| Image/label OCR | RapidOCR ONNX on CPU; MOCK CI mode; PDF rasterization; ADR-007 | Benchmark on real permitted samples; image preprocessing and confidence/failure reporting |
+| Structured PDF extraction | Existing PDF/image ingest | Evaluate optional **Docling** adapter for tables, reading order, page coordinates and structure; keep RapidOCR for light CPU OCR |
+| Normalized documents | MinIO raw/recognized/export, GraphRAG ingestion | Canonical parsed document with text, table, page, bbox, source hash, parser version, classification and citation provenance |
+| Retrieval quality | Vector/graph hybrid, semantic cache and ACL checks | Chunking by structure, no leakage on caches, offline retrieval quality dataset, measurable latency/accuracy trade-offs |
+| OCR parser choice | Current RAPIDOCR/MOCK switch | Benchmark before adopting Docling; LlamaIndex is an indexing/RAG integration option, **not a required OCR engine** |
+
+Prefer **one** additional parser when measurements justify it; no default cloud OCR, no speculative VLM stack.
+
+## Platform foundation versus vendor adapters
+
+| Need | Existing choice | Do not add until needed |
+| --- | --- | --- |
+| Runtime | LangGraph, optional Google ADK | Other agent frameworks |
+| Serving | Ollama local; optional self-hosted vLLM + LiteLLM | Three managed clouds, KV-aware routing without GPU evidence |
+| Orchestration | LangGraph checkpoints, PostgreSQL, existing Celery for ingestion | Temporal, CRD/operator unless run lifecycle needs them |
+| Observability | OpenTelemetry, Prometheus, Grafana, Loki, Tempo | Datadog/Braintrust solely for brand matching |
+| Evaluation | Golden sets, security tests, optional DeepEval | MLflow unless comparisons/registry justify it |
+| Deployment | Compose, Docker, Helm, K8s; AWS IaC not runtime-verified | Kustomize overlays without a concrete configuration need |
+| Secrets | Vault + ESO templates | Another secrets manager |
+| Frontend | React/TypeScript/Vite | New framework/bundler |
+| Specification | Markdown roadmap/ADRs | Separate GitHub Wiki or mandatory tooling for trivial changes |
+
+See [Roadmap](./roadmap.md) for sequence, owner-independent acceptance criteria, and explicit non-goals.
+
+## Evidence matrix for interviews
+
+Every capability should have: linked code, test, whether test used MOCK or real runtime, negative/failure scenario, observed metric/trace where applicable, and a candid limit. Avoid claims of production healthcare compliance, large-scale operation, live cloud routing or ADK support before demonstrated.
