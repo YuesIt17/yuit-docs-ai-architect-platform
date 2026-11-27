@@ -219,6 +219,13 @@ spec:
       protocol: TCP
     - port: 7687
       protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    ports:
+    - port: 7474
+      protocol: TCP
   podSelector:
     matchLabels:
       app: neo4j
@@ -240,6 +247,13 @@ spec:
     - podSelector:
         matchLabels:
           app: api
+    ports:
+    - port: 6333
+      protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
     ports:
     - port: 6333
       protocol: TCP
@@ -296,6 +310,13 @@ spec:
   - from:
     - ipBlock:
         cidr: 192.168.65.0/24
+    ports:
+    - port: 9001
+      protocol: TCP
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
     ports:
     - port: 9001
       protocol: TCP
@@ -869,6 +890,10 @@ spec:
               name: kp-secrets
         - name: MINIO_DEFAULT_BUCKETS
           value: knowledge-platform
+        - name: MINIO_SERVER_URL
+          value: http://minio:9000
+        - name: MINIO_BROWSER_REDIRECT_URL
+          value: http://kp.local:8088/ops/minio
         image: bitnamilegacy/minio:2025.7.23-debian-12-r5
         name: minio
         ports:
@@ -988,6 +1013,50 @@ spec:
             port:
               number: 8080
         path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
+    nginx.ingress.kubernetes.io/proxy-http-version: '1.1'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+  labels:
+    app.kubernetes.io/instance: kp
+    app.kubernetes.io/name: knowledge-platform
+    app.kubernetes.io/part-of: retailpartnerx-kp
+  name: kp-ops
+  namespace: kp
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: kp.local
+    http:
+      paths:
+      - backend:
+          service:
+            name: neo4j
+            port:
+              number: 7474
+        path: /ops/neo4j(/|$)(.*)
+        pathType: ImplementationSpecific
+      - backend:
+          service:
+            name: qdrant
+            port:
+              number: 6333
+        path: /ops/qdrant(/|$)(.*)
+        pathType: ImplementationSpecific
+      - backend:
+          service:
+            name: minio
+            port:
+              number: 9001
+        path: /ops/minio(/|$)(.*)
         pathType: ImplementationSpecific
 ---
 apiVersion: networking.k8s.io/v1
