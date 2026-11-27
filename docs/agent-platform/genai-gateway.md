@@ -30,7 +30,7 @@ flowchart LR
 | Profile | `LLM_GATEWAY` | Backends | Status |
 | ------- | ------------- | -------- | ------ |
 | closed (default) | `direct` | MOCK / Ollama / vLLM | Supported |
-| `gateway-local` | `litellm` | Same local backends via LiteLLM | Compose profile `gateway` (+ `llm`) |
+| `gateway-local` | `litellm` | Same local backends via LiteLLM | **Verified** on desktop: Compose `litellm` + `LLMClient` (`chat-mock`; `chat-default` → mock failover without Ollama). Live Ollama primary path: start `--profile llm` (not exercised in that run) |
 | `gateway-multiprovider` | `litellm` | Local + Azure / Vertex / Bedrock stubs | Config only — **live cloud not verified** |
 
 ## Run gateway-local (desktop)
@@ -38,8 +38,13 @@ flowchart LR
 From `app/infra`:
 
 ```powershell
-docker compose --profile gateway --profile llm up -d litellm ollama
+docker compose --profile gateway --profile llm up -d litellm-db litellm ollama
 ```
+
+Admin UI: `http://127.0.0.1:4000/ui` (user `admin`, password = `LITELLM_MASTER_KEY` / `sk-kp-local-gateway`).  
+Swagger / OpenAPI: `http://127.0.0.1:4000/` (needs a responsive proxy — if `/ui` hangs without DB, OpenAPI can time out too).
+
+The gateway Compose profile starts **Postgres** (`litellm-db`). Without `DATABASE_URL`, `/get/ui_settings` returns 500 (`Database not connected`) and the Admin UI stays on loading. A 404 on `/ui/litellm-runtime-config.json` is normal in the single-host image (UI falls back to same-origin).
 
 API env (see [`.env.example`](../../.env.example)):
 
@@ -68,7 +73,7 @@ Audit rows (`/v1/audit` store) and Prometheus `llm_tokens_attributed_total` incl
 
 ## Failover
 
-`chat-default` lists Ollama first and a `mock_response` sibling deployment for LiteLLM retries. Live Ollama failover is **verified only** when the Compose stack is actually run.
+`chat-default` lists Ollama first and a `mock_response` sibling deployment for LiteLLM retries. Desktop check (proxy up, Ollama down): `chat-default` returned the `[gateway-failover]` mock sibling. Primary Ollama hop still needs `--profile llm` + a pulled model.
 
 ## Related
 

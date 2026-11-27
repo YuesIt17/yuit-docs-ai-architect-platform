@@ -30,7 +30,7 @@ The entries below describe code and documentation, **not necessarily a live inte
 | --- | --- | --- |
 | GraphRAG reference agent | Fixed LangGraph workflow, ACL-filtered Neo4j/vector retrieval, citations; existing evaluation gate | Fixed workflow is not a planning/reflection agent |
 | AgentManifest and Registry | Pydantic/YAML manifests, disk and in-memory API registry; LangGraph invoke via ChatService; [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md) | Manifest tools, sandbox, model, memory and entrypoint are not all enforced as generic runtime bindings; registration is in-process |
-| Gateway | Direct client plus LiteLLM Proxy profiles and per-agent/team attribution; [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md) | Live LiteLLM+Ollama Compose, failover and usage correctness need evidence; mock fallback must not impersonate grounded KB answers |
+| Gateway | Direct client plus LiteLLM Proxy profiles and per-agent/team attribution; [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md). Desktop proxy + mock aliases verified (`/v1/models`, `chat-mock`, `chat-default` mock failover) | Live Ollama as primary behind the proxy and usage correctness still need evidence; mock fallback must not impersonate grounded KB answers |
 | Feature flags | Flagd OFREP/in-memory, model/prompt variants, start-of-run kill-switch and audit; [ADR-013](../../architecture/adr/ADR-013-feature-flags.md) | Verify live Flagd and fail-safe behavior; active-run cancellation/rechecks not yet demonstrated |
 | State and background work | LangGraph session checkpoints (PostgreSQL in live mode); Celery for **document ingestion** | Checkpoints do not alone guarantee idempotent durable agent jobs, approval, or resume APIs |
 | Identity and security | Role-based retrieval ACL; optional Keycloak + Go BFF; Kubernetes hardening, secrets options and audit | Separate agent/delegated identity, tool authorization, retention, durable audit and sandbox enforcement still need work |
@@ -94,7 +94,7 @@ Each phase needs an ADR when a real trade-off warrants one, executable tests, do
 ### Foundation already implemented — Phases 1–3
 
 - **Phase 1 / [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md):** manifest schema, Registry, discovery, basic authorization and current LangGraph invoke.
-- **Phase 2 / [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md):** direct/LiteLLM configuration, local aliases, route/usage attribution. **Gateway integration with real Compose remains to be verified**.
+- **Phase 2 / [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md):** direct/LiteLLM configuration, local aliases, route/usage attribution. Desktop LiteLLM Compose (`gateway` profile) + `LLMClient` is **verified** (`/v1/models`, `chat-mock`, `chat-default` mock failover). Live Ollama as primary behind the proxy remains **not verified** until `--profile llm` is exercised.
 - **Phase 3 / [ADR-013](../../architecture/adr/ADR-013-feature-flags.md):** in-memory/Flagd evaluation, start-of-run kill-switch, flags and audit fields. **Failure policy and mid-run enforcement need verification**.
 
 ### Phase 4 — Harden the first end-to-end platform slice (P0)

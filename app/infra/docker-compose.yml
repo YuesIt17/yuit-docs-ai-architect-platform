@@ -14,6 +14,7 @@ volumes:
   vllm_data:
   tempo_data:
   loki_data:
+  litellm_pg_data:
 
 services:
   tempo:
@@ -139,6 +140,23 @@ services:
 
   # Optional GenAI gateway (Phase 2). Use with --profile gateway[,llm].
   # API: LLM_GATEWAY=litellm LITELLM_BASE_URL=http://127.0.0.1:4000/v1
+  # Admin UI needs Postgres (keys/spend/ui_settings). Without it /get/ui_settings → 500 and /ui hangs.
+  litellm-db:
+    image: postgres:16
+    profiles: ["gateway"]
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+      POSTGRES_DB: litellm
+    volumes:
+      - litellm_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [control]
+
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     profiles: ["gateway"]
@@ -149,6 +167,13 @@ services:
     command: ["--config", "/app/config.yaml", "--port", "4000", "--host", "0.0.0.0"]
     environment:
       LITELLM_MASTER_KEY: sk-kp-local-gateway
+      # Encrypts provider keys stored via Admin UI; local demo value only.
+      LITELLM_SALT_KEY: sk-kp-local-salt
+      DATABASE_URL: postgresql://litellm:litellm@litellm-db:5432/litellm
+      STORE_MODEL_IN_DB: "True"
+    depends_on:
+      litellm-db:
+        condition: service_healthy
     networks: [data, control]
     # Start with --profile gateway --profile llm so Ollama is up for chat-default.
 

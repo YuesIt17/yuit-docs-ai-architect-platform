@@ -38,7 +38,7 @@ The platform needs an owned GenAI gateway for routing, failover, metering, and c
 
 - (+) Closed default preserved; gateway is opt-in
 - (+) Portfolio shows owned routing/metering without SaaS in CI
-- (−) Live LiteLLM+Ollama stack is verified only when the Compose profile is actually run
+- (−) Ollama-primary behind the proxy still needs `--profile llm`; desktop verify so far covered the proxy + mock aliases / failover sibling
 
 ## References
 

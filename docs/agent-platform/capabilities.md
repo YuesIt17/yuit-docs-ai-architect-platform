@@ -11,7 +11,7 @@ This is the **capability inventory** for Coraium Agent Platform. RetailPartnerX 
 | Registry and admission | AgentManifest, in-process registry, API, role checks | Versioned policy-enforced execution, approved entrypoints and tools, durable/replicated registry only if needed | P0 |
 | Orchestrator choice | Existing LangGraph GraphRAG; manifest has `runtime` | Optional local Google ADK reference agent behind same external API; no checkpoint portability claim | P1 |
 | Agent tools and interoperability | Retrieval nodes, declarative tool schema, SSE | Enforced tool allowlist and scoped identity first; MCP for one read-only tool; A2A/AG-UI when justified | P0/P2 |
-| Model gateway | Direct client and LiteLLM profiles, aliases, attribution | Live local smoke, isolation under concurrency, controlled failures, measured usage/budget | P0 |
+| Model gateway | Direct client and LiteLLM profiles, aliases, attribution. Desktop proxy + mock aliases verified | Live Ollama-primary smoke, isolation under concurrency, controlled failures, measured usage/budget | P0 |
 | Progressive rollout | Flagd/in-memory evaluator, kill-switch at admission | Well-defined Flagd outage policy, safe mid-run checks, verified rollout and rollback | P0 |
 | Durable execution | LangGraph checkpoints, PostgreSQL and Celery ingestion | Agent run ledger, retries, approval, recovery, idempotent side effects; Temporal optional | P1 |
 | Identity/permissions | Role ACL, Keycloak/Go BFF option | Agent identity, delegated user scopes, tool-level authorization and credential isolation | P0/P1 |
