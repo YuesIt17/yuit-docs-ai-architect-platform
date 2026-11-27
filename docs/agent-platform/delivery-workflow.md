@@ -57,6 +57,12 @@ For small fixes, a PR description + tests is sufficient. For cross-component fea
 - **Acceptance:** both runtimes pass shared auth-denial and gateway-failure tests; trace includes runtime and manifest version; no external request is observed by default.
 - **ADR:** justify dispatcher/adapter abstraction; do not duplicate the behavior contract in the ADR.
 
+## Cross-domain and A2A acceptance requirements (proposal)
+
+For new domain agents, specify the actual **user problem**, data classification, principal/tenant/purpose, runtime choice, permitted tools, source provenance, failure behavior, safety evaluations and whether a remote A2A hop is justified. One application domain may have multiple runtimes. The chosen LangGraph-vs-ADK split is a useful initial specialization, not a permanent restriction.
+
+A cross-runtime A2A claim requires **separately running agents**, approved Agent Cards, authenticated and least-privilege task exchange, task ID/status/artifacts, recovery/failure tests, and end-to-end traces; ordinary REST calls, a manifest field, or shared-process delegation are insufficient. Healthcare plans require a separate legal/privacy/clinical-safety decision before real health data or clinical deployment. See [multi-domain architecture](./multi-domain-architecture.md).
+
 ## Definition of Ready / Done
 
 **Ready:** a reason and scope, owner/priority, bounded interfaces, risk and negative cases, measurable acceptance conditions.
