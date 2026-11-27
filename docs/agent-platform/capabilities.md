@@ -21,6 +21,22 @@ This is the **capability inventory** for RetailPartnerX. Read with [roadmap](./r
 | Knowledge and artifacts | GraphRAG, Neo4j, Qdrant, MinIO, session checkpoints | Provenance-aware document model, lifecycle/retention, optional scoped long-term memory | P1 |
 | Regulated-data readiness | Closed default, ACL, audit and K8s hardening | Durable audit, privacy-by-design, deletion/retention, boundaries/controls evidence | P1 |
 
+## Multi-domain expansion (proposals, not shipped)
+
+Source of truth for the intended split and sequence: [multi-domain architecture](./multi-domain-architecture.md). Preferred default: **LangGraph / Domain Intelligence** and **Google ADK / Engineering & Governance**, with per-agent runtime choice rather than a domain-enforced framework lock. **A2A cross-runtime collaboration is planned**, not currently supported. Registry manifests, tools and checkpoints do not by themselves prove A2A interoperability.
+
+| Capability / domain | Existing foundation | Next evidence / safeguard | Priority |
+| --- | --- | --- | --- |
+| Retail GraphRAG (LangGraph) | Existing retail knowledge workflow, ACL-aware retrieval | Preserve behavior; expose a scoped A2A evidence-lookup endpoint only when the cross-system use case is ready | P0/P2 |
+| Google ADK Policy/DevSecOps track | Optional ADK runtime in roadmap; not implemented | Self-hosted independent read-only reviewer, approved tools, policy enforcement, shared gateway/OTel | P1 |
+| LangGraph ↔ ADK over A2A | No verified A2A endpoint or protocol exchange | Agent Cards, identity-scoped task delegation, status/results/artifacts, timeouts, denial and trace tests | P2 |
+| LangGraph Nutrition and Fitness | General retrieval/agent foundations | Synthetic-data end-to-end Food → Nutrition → Fitness with grounded ingredient evidence and safe uncertainty | P2 |
+| LangGraph Health Evidence | General GraphRAG/security foundations only | Educational evidence lookup, citations, safety evals, no diagnosis/treatment | P2 |
+| Healthcare regulated-data readiness | Closed default, ACL, optional Keycloak/Vault | Separate patient/tenant/purpose/consent boundaries, retention/deletion, legal/privacy/clinical risk gate; FHIR only if needed | Later |
+| ADK Compliance, Approval, Policy Research | Existing general platform controls | Delegate analysis only; deterministic policy decision and trusted approval backend for sensitive actions | P2 |
+
+**Personal Life Assistant** (food, wellness, fitness) and **Enterprise Agent Platform** (retail, governance, possible healthcare later) are product concepts, not currently shipped offerings. Keep health data isolated and never imply regulatory certification.
+
 ## Product and document intelligence
 
 | Capability | Existing | Carefully scoped improvement |
