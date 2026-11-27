@@ -1,11 +1,11 @@
-# Multi-Domain Agent Platform: Domain Intelligence + Engineering & Governance
+# Coraium Agent Platform — Multi-Domain Architecture: Domain Intelligence + Engineering & Governance
 
 > **Status: proposed architecture / roadmap, not a claim of deployed capabilities.**
-> Current working reference: RetailPartnerX GraphRAG on LangGraph. Google ADK, cross-runtime A2A, healthcare-specific modules, and most cross-domain workflows are **planned**. Preserve the existing RetailPartnerX name and working use case until a separate product decision warrants rebranding.
+> Current working reference: RetailPartnerX GraphRAG on LangGraph. Google ADK, cross-runtime A2A, healthcare-specific modules, and most cross-domain workflows are **planned**. The platform brand is **Coraium Agent Platform**; keep **RetailPartnerX** as the existing working retail reference and do not rename internal APIs or data models without a separate migration decision.
 
 ## Product direction and boundaries
 
-Evolve the retail-focused knowledge platform into a **domain-agnostic, secure, self-hosted agent platform** supporting distinct applications for everyday needs (food, health education/wellness, fitness) and organizational needs (retail knowledge, policy, compliance, DevSecOps). The *platform* provides reusable contracts; *domain products* own their user journeys, policy rules, data classifications, datasets and evaluations. This is not a commitment to build every proposed product simultaneously.
+Evolve the retail-focused knowledge platform into **Coraium Agent Platform**, a **domain-agnostic, secure, self-hosted agent platform** supporting distinct applications for everyday needs (food, health education/wellness, fitness) and organizational needs (retail knowledge, policy, compliance, DevSecOps). The *platform* provides reusable contracts; *domain products* own their user journeys, policy rules, data classifications, datasets and evaluations. This is not a commitment to build every proposed product simultaneously.
 
 Two possible product surfaces may reuse the same core:
 - **Personal Life Assistant (future):** food-product evidence, general nutrition, exercise planning and educational health information, without autonomous diagnosis, treatment or clinical decisions.
@@ -107,3 +107,5 @@ Test contract compatibility (manifest/API, A2A task/result), timeouts, transient
 5. **Later / separate gate:** health-data interoperability, patient consent workflows and regulated clinical use only after explicit product scope, privacy/legal assessment, and security/safety validation.
 
 Status is `planned` until code exists, and `verified` only after reproducible test evidence. Keep each new capability tied to requirements, acceptance criteria and corresponding capability-map status. No implementation tasks or Cursor prompts are created by this document.
+
+For public-facing architecture illustrations, see [public-architecture.md](./public-architecture.md). For release-readiness and promotion, see [open-source-strategy.md](./open-source-strategy.md).
