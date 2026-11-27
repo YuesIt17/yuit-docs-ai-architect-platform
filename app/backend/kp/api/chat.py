@@ -9,7 +9,9 @@ from kp.agents.registry import (
     AgentDisabledError,
     AgentKillSwitchError,
     AgentNotFoundError,
+    AgentPolicyDeniedError,
     AgentRoleDeniedError,
+    AgentRuntimeUnsupportedError,
 )
 from kp.api.agent_errors import http_from_registry
 from kp.api.deps import container_dep, principal_dep
@@ -30,7 +32,14 @@ async def chat(
 ):
     try:
         result = await ChatService(c, settings).handle(body, principal)
-    except (AgentNotFoundError, AgentDisabledError, AgentRoleDeniedError, AgentKillSwitchError) as exc:
+    except (
+        AgentNotFoundError,
+        AgentDisabledError,
+        AgentRoleDeniedError,
+        AgentKillSwitchError,
+        AgentPolicyDeniedError,
+        AgentRuntimeUnsupportedError,
+    ) as exc:
         raise http_from_registry(exc) from exc
     if isinstance(result, tuple) and result[0] == "stream":
         return StreamingResponse(result[1], media_type="text/event-stream")

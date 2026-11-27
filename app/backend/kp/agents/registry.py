@@ -43,6 +43,35 @@ class AgentKillSwitchError(AgentRegistryError):
         super().__init__(f"agent kill-switch active: {agent_id}")
 
 
+class AgentRuntimeUnsupportedError(AgentRegistryError):
+    """The manifest runtime is registered but this process cannot execute it."""
+
+    def __init__(self, agent_id: str, runtime: str):
+        self.agent_id = agent_id
+        self.runtime = runtime
+        super().__init__(
+            f"agent {agent_id!r} runtime={runtime!r} "
+            "is not invokable via this endpoint yet; use its API trigger path"
+        )
+
+
+class AgentPolicyDeniedError(AgentRegistryError):
+    """A declared binding is not approved for execution."""
+
+    def __init__(self, agent_id: str, reason: str):
+        self.agent_id = agent_id
+        self.reason = reason
+        super().__init__(f"agent {agent_id} denied: {reason}")
+
+
+# The chat path always runs KnowledgeAgent. The entrypoint string is not imported.
+APPROVED_LANGGRAPH_ENTRYPOINT = "kp.agent.graph:KnowledgeAgent"
+# Tools the fixed GraphRAG graph actually executes. Anything else is denied.
+APPROVED_LANGGRAPH_TOOLS = frozenset({"graph_retrieve", "vector_retrieve"})
+# LiteLLM aliases shipped in the local gateway config and Flagd definitions.
+APPROVED_GATEWAY_ALIASES = frozenset({"chat-default", "chat-mock"})
+
+
 class AgentConflictError(AgentRegistryError):
     def __init__(self, agent_id: str):
         self.agent_id = agent_id
@@ -143,6 +172,25 @@ class AgentRegistry:
         allowed = set(manifest.spec.security.required_roles)
         if role not in allowed:
             raise AgentRoleDeniedError(agent_id, role)
+        return manifest
+
+    def admit(self, agent_id: str, role: str, *, model_route: str, gateway: str) -> AgentManifest:
+        """Authorize a run and reject bindings this process cannot enforce.
+
+        Network and process sandbox fields stay declarative. This check only
+        allows the fixed LangGraph GraphRAG entrypoint and its two builtin tools.
+        """
+        manifest = self.authorize(agent_id, role)
+        if manifest.spec.runtime != "langgraph":
+            raise AgentRuntimeUnsupportedError(agent_id, manifest.spec.runtime)
+        if manifest.spec.entrypoint != APPROVED_LANGGRAPH_ENTRYPOINT:
+            raise AgentPolicyDeniedError(agent_id, "unapproved_entrypoint")
+        tool_ids = {tool.id for tool in manifest.spec.tools}
+        tool_kinds = {tool.kind for tool in manifest.spec.tools}
+        if tool_ids != APPROVED_LANGGRAPH_TOOLS or tool_kinds != {"builtin"}:
+            raise AgentPolicyDeniedError(agent_id, "disallowed_tool")
+        if gateway == "litellm" and (model_route or "").strip() not in APPROVED_GATEWAY_ALIASES:
+            raise AgentPolicyDeniedError(agent_id, "disallowed_model")
         return manifest
 
     def resolve(self, agent_id: str, settings: Settings, llm: LLMClient) -> ResolvedAgent:

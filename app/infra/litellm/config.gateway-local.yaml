@@ -10,12 +10,12 @@ model_list:
     litellm_params:
       model: openai/mock-graph-rag
       api_key: not-needed
-      mock_response: "[gateway-failover] Based on the RetailPartnerX corporate knowledge base."
+      mock_response: "[gateway-failover] The model gateway is unavailable. No grounded answer was produced."
   - model_name: chat-mock
     litellm_params:
       model: openai/mock-graph-rag
       api_key: not-needed
-      mock_response: "Based on the RetailPartnerX corporate knowledge base (gateway mock)."
+      mock_response: "[gateway-mock] Deterministic gateway mock. Not a grounded knowledge-base answer."
 
 litellm_settings:
   drop_params: true

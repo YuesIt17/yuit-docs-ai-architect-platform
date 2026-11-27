@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
+from kp.agent.graph import KnowledgeAgent
 from kp.config import get_settings
 from kp.deps import get_container
 from kp.infrastructure.feature_flags import (
@@ -108,6 +110,149 @@ def test_prompt_and_model_route_on_audit(seeded):
     assert row["prompt_version"] == "v2"
     assert row["model_route"] == "chat-mock"
     assert row["flag_variant"][FLAG_PROMPT_VERSION] == "v2"
+
+
+class _FlagdClient:
+    def __init__(self, status_code: int | None = None, exc: Exception | None = None):
+        self.status_code = status_code
+        self.exc = exc
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def post(self, *args, **kwargs):
+        if self.exc is not None:
+            raise self.exc
+
+        class _Resp:
+            status_code = 503
+
+            def json(self):
+                return {"error": "unavailable"}
+
+        _Resp.status_code = self.status_code or 503
+        return _Resp()
+
+
+def test_flagd_timeout_fails_closed_and_audits(seeded, monkeypatch):
+    seeded.settings.flagd_url = "http://127.0.0.1:8016"
+    monkeypatch.setattr(
+        "kp.infrastructure.feature_flags.httpx.Client",
+        lambda *args, **kwargs: _FlagdClient(exc=httpx.TimeoutException("timed out")),
+    )
+    flags = seeded.flags.evaluate(agent_id="graphrag-chat", role="compliance_officer")
+    assert flags.provider_status == "flagd_unavailable"
+    assert flags.kill_switch is True
+    assert flags.agent_enabled is False
+    assert flags.model_route == "chat-default"
+    assert flags.prompt_version == "v1"
+
+    client = TestClient(app)
+    r = client.post(
+        "/v1/chat",
+        headers=AUTH,
+        json={"message": "gluten allergen policy", "stream": False},
+    )
+    assert r.status_code == 503, r.text
+    row = seeded.store.audit[-1]
+    assert row["acl_decision"] == "deny_kill_switch"
+    assert row["flag_provider"] == "flagd_unavailable"
+    assert row["agent_id"] == "graphrag-chat"
+    assert "gluten" not in str(row)
+
+
+def test_flagd_http_error_fails_closed(seeded, monkeypatch):
+    seeded.settings.flagd_url = "http://127.0.0.1:8016"
+    monkeypatch.setattr(
+        "kp.infrastructure.feature_flags.httpx.Client",
+        lambda *args, **kwargs: _FlagdClient(status_code=500),
+    )
+    flags = seeded.flags.evaluate(agent_id="graphrag-chat")
+    assert flags.kill_switch is True
+    assert flags.agent_enabled is False
+    assert flags.provider_status == "flagd_unavailable"
+
+
+def test_in_memory_defaults_stay_open_without_flagd(seeded):
+    assert seeded.settings.flagd_url == ""
+    flags = seeded.flags.evaluate(agent_id="graphrag-chat", role="compliance_officer")
+    assert flags.provider_status == "in_memory"
+    assert flags.kill_switch is False
+    assert flags.agent_enabled is True
+
+
+@pytest.mark.asyncio
+async def test_gateway_mock_is_not_a_grounded_success(seeded):
+    class _FakeLLM:
+        model_uri = "litellm://chat-default"
+
+        async def complete(self, system, user, max_tokens=512, *, model=None):
+            return (
+                "[gateway-failover] Based on the RetailPartnerX corporate knowledge base.",
+                3,
+                8,
+            )
+
+    agent = KnowledgeAgent(seeded.store, _FakeLLM())
+    out = await agent.synthesize(
+        {
+            "request_id": "r-outage",
+            "modality": "chat",
+            "role": "compliance_officer",
+            "guarded_message": "gluten allergen policy",
+            "retrieved": [
+                {
+                    "doc_id": "pol-1",
+                    "classification": "internal",
+                    "text": "Gluten policy body",
+                }
+            ],
+            "citations": [
+                {
+                    "doc_id": "pol-1",
+                    "chunk_id": "c1",
+                    "corpus": "policy",
+                    "classification": "internal",
+                    "snippet": "Gluten policy body",
+                    "score": 1.0,
+                }
+            ],
+            "model_alias": "chat-default",
+        }
+    )
+    assert out["degraded"] is True
+    assert out["citations"] == []
+    assert out["acl_decision"] == "degraded_model"
+    assert out["answer"].startswith("[degraded:]")
+    assert "corporate knowledge base" not in out["answer"].lower()
+    assert "Gluten policy body" not in out["answer"]
+
+
+def test_provider_exception_chat_has_no_citations(seeded):
+    async def fake_complete(system, user, max_tokens=512, *, model=None):
+        return (
+            "[degraded:] The model gateway is unavailable. No grounded answer was produced.",
+            0,
+            0,
+        )
+
+    seeded.llm.complete = fake_complete
+    client = TestClient(app)
+    r = client.post(
+        "/v1/chat",
+        headers=AUTH,
+        json={"message": "gluten allergen policy", "stream": False},
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["degraded"] is True
+    assert data["citations"] == []
+    assert data["answer"].startswith("[degraded:]")
+    assert "corporate knowledge" not in data["answer"].lower()
+    assert seeded.store.audit[-1]["acl_decision"] == "degraded_model"
 
 
 def test_feature_flags_disabled_uses_settings_prompt(seeded):

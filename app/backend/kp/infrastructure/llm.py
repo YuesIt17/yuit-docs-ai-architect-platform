@@ -22,6 +22,14 @@ DEFAULT_VLLM_BASE_URL = "http://127.0.0.1:8000/v1"
 DEFAULT_VLLM_MODEL = "Qwen/Qwen2.5-1.5B-Instruct-AWQ"
 DEFAULT_LITELLM_BASE_URL = "http://127.0.0.1:4000/v1"
 DEFAULT_LITELLM_ALIAS = "chat-default"
+# Shown instead of a mock KB answer when the provider call fails or the proxy returns a marked mock.
+DEGRADED_ANSWER = "[degraded:] The model gateway is unavailable. No grounded answer was produced."
+_UNGROUNDED_PREFIXES = ("[degraded:", "[gateway-failover]", "[gateway-mock]")
+
+
+def is_ungrounded_model_answer(answer: str) -> bool:
+    """True when the completion is an outage or a marked gateway mock, not a model answer."""
+    return (answer or "").lstrip().startswith(_UNGROUNDED_PREFIXES)
 
 
 def _normalize_base_url(url: str) -> str:
@@ -245,8 +253,25 @@ class LLMClient:
                 "gateway": cfg.gateway,
             }
 
-    async def complete(self, system: str, user: str, max_tokens: int = 512) -> tuple[str, int, int]:
+    async def complete(
+        self,
+        system: str,
+        user: str,
+        max_tokens: int = 512,
+        *,
+        model: str | None = None,
+    ) -> tuple[str, int, int]:
+        """Complete one chat turn.
+
+        `model` is the request-scoped LiteLLM alias. Direct MOCK, Ollama, and vLLM
+        keep the configured runtime model. This method does not mutate `runtime`.
+        """
         provider = self.runtime.provider.upper()
+        chosen_model = self.runtime.model
+        if provider == "LITELLM":
+            alias = (model or "").strip()
+            if alias:
+                chosen_model = alias
         if provider == "MOCK":
             return self._mock_complete(system, user), len(user.split()), 80
         try:
@@ -257,7 +282,7 @@ class LLMClient:
                 trust_env=False, timeout=120.0, follow_redirects=False
             ) as http_async_client:
                 llm = ChatOpenAI(
-                    model=self.runtime.model,
+                    model=chosen_model,
                     api_key=self.runtime.api_key or "not-needed",
                     base_url=self.runtime.base_url,
                     temperature=0.1,
@@ -276,9 +301,8 @@ class LLMClient:
                 if token_usage.get("completion_tokens") is not None:
                     usage_out = int(token_usage["completion_tokens"])
             return text, usage_in, usage_out
-        except Exception as exc:
-            answer = self._mock_complete(system, user)
-            return f"[degraded:{exc.__class__.__name__}] {answer}", len(user.split()), 40
+        except Exception:
+            return DEGRADED_ANSWER, 0, 0
 
     def _mock_complete(self, system: str, user: str) -> str:
         if "CONTEXT:" in user:

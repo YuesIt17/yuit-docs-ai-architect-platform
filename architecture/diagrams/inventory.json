@@ -11,6 +11,17 @@
       ]
     },
     {
+      "image": "ghcr.io/open-feature/flagd:v0.11.1",
+      "name": "flagd",
+      "ports": [
+        "8013",
+        "8016"
+      ],
+      "profiles": [
+        "flags"
+      ]
+    },
+    {
       "image": "grafana/grafana:11.3.0",
       "name": "grafana",
       "ports": [
@@ -18,6 +29,24 @@
       ],
       "profiles": [
         "obs"
+      ]
+    },
+    {
+      "image": "ghcr.io/berriai/litellm:main-latest",
+      "name": "litellm",
+      "ports": [
+        "4000"
+      ],
+      "profiles": [
+        "gateway"
+      ]
+    },
+    {
+      "image": "postgres:16",
+      "name": "litellm-db",
+      "ports": [],
+      "profiles": [
+        "gateway"
       ]
     },
     {
@@ -77,11 +106,11 @@
   "helm_inputs": [
     {
       "path": "app/infra/helm/knowledge-platform/values.yaml",
-      "sha256": "46a04d55f14381f3411e71f2fa818e52d6677b245e77ff2d1fc1850cffd30947"
+      "sha256": "e936171c336466ff085f77db0df4e91368e9e58d28ca70e3ca7acdb41a64ac2b"
     },
     {
       "path": "app/infra/helm/knowledge-platform/values-desktop.yaml",
-      "sha256": "3445b0a1f2db9b20430b09252b8c7e7ea81d383a330ce0725fbf18eceb1c1da5"
+      "sha256": "66da2db7f112cf39151bec8e15f542eaefb033d50fef95de016ebcdb70b1b7bb"
     }
   ],
   "k8s_resources": [
@@ -162,6 +191,16 @@
         "app.kubernetes.io/part-of": "retailpartnerx-kp"
       },
       "name": "kp-api",
+      "namespace": "kp"
+    },
+    {
+      "kind": "Ingress",
+      "labels": {
+        "app.kubernetes.io/instance": "kp",
+        "app.kubernetes.io/name": "knowledge-platform",
+        "app.kubernetes.io/part-of": "retailpartnerx-kp"
+      },
+      "name": "kp-ops",
       "namespace": "kp"
     },
     {
@@ -568,6 +607,6 @@
   "postgres_status": "dialog-checkpoints",
   "profile": "desktop",
   "provenance": "generated-from-helm-template",
-  "sanitized_manifest_sha256": "1c807d6b526e5d4442bedf4d66855b0cf58309feed4995804d8a56df7c895952",
+  "sanitized_manifest_sha256": "83566433d3b10ea11bfcdd1f007d638ff5bf13e491cf6970e0fa27c6f17c8e91",
   "status": "declared-deployment"
 }

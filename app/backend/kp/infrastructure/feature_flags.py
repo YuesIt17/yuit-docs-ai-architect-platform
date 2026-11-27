@@ -30,12 +30,18 @@ def resolve_flags_path(settings: Settings) -> Path:
     return default_flags_path()
 
 
+class FlagdUnavailable(Exception):
+    """OFREP could not be evaluated. Callers fail closed for security flags."""
+
+
 @dataclass(frozen=True)
 class FlagEvaluation:
     kill_switch: bool = False
     agent_enabled: bool = True
     prompt_version: str = "v1"
     model_route: str = "chat-default"
+    # in_memory | flagd | flagd_unavailable | disabled
+    provider_status: str = "in_memory"
     variants: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
@@ -88,34 +94,73 @@ class FeatureFlagService:
             return variants[default_name]
         return fallback
 
-    def _ofrep_evaluate(self, key: str, default: Any, context: dict[str, Any]) -> Any:
+    def _ofrep_value(self, key: str, context: dict[str, Any]) -> Any:
+        """Read one flag from Flagd. Raises FlagdUnavailable; does not fall open."""
         base = (self.settings.flagd_url or "").rstrip("/")
         url = f"{base}/ofrep/v1/evaluate/{key}"
         try:
             with httpx.Client(timeout=2.0, trust_env=False) as client:
                 resp = client.post(url, json={"context": context})
-            if resp.status_code >= 400:
-                return self._default_variant_value(key, default)
+        except Exception as exc:
+            raise FlagdUnavailable(key) from exc
+        if resp.status_code >= 400:
+            raise FlagdUnavailable(key)
+        try:
             data = resp.json()
-            if "value" in data:
-                return data["value"]
-            variant = data.get("variant")
-            flag = self._defs.get(key) or {}
-            variants = flag.get("variants") or {}
-            if variant in variants:
-                return variants[variant]
-        except Exception:
-            return self._default_variant_value(key, default)
-        return self._default_variant_value(key, default)
+        except Exception as exc:
+            raise FlagdUnavailable(key) from exc
+        if isinstance(data, dict) and "value" in data:
+            return data["value"]
+        variant = data.get("variant") if isinstance(data, dict) else None
+        flag = self._defs.get(key) or {}
+        variants = flag.get("variants") or {}
+        if variant in variants:
+            return variants[variant]
+        raise FlagdUnavailable(key)
 
-    def _value(self, key: str, default: Any, context: dict[str, Any]) -> Any:
-        if key in self._overrides or not self.settings.flagd_url:
-            return self._default_variant_value(key, default)
-        return self._ofrep_evaluate(key, default, context)
+    def _fail_closed(self) -> FlagEvaluation:
+        """Security flags deny new runs. Prompt and model stay on the file defaults."""
+        return FlagEvaluation(
+            kill_switch=True,
+            agent_enabled=False,
+            prompt_version=str(
+                self._default_variant_value(FLAG_PROMPT_VERSION, self.settings.prompt_version)
+            ),
+            model_route=str(
+                self._default_variant_value(
+                    FLAG_MODEL_ROUTE,
+                    self.settings.litellm_model_alias or "chat-default",
+                )
+            ),
+            provider_status="flagd_unavailable",
+        )
+
+    def _from_defaults(self) -> FlagEvaluation:
+        return FlagEvaluation(
+            kill_switch=bool(self._default_variant_value(FLAG_KILL_SWITCH, False)),
+            agent_enabled=bool(self._default_variant_value(FLAG_AGENT_ENABLED, True)),
+            prompt_version=str(
+                self._default_variant_value(FLAG_PROMPT_VERSION, self.settings.prompt_version)
+            ),
+            model_route=str(
+                self._default_variant_value(
+                    FLAG_MODEL_ROUTE,
+                    self.settings.litellm_model_alias or "chat-default",
+                )
+            ),
+            provider_status="in_memory",
+        )
 
     def evaluate(self, *, agent_id: str, role: str = "", user_id: str = "") -> FlagEvaluation:
         if not self.settings.feature_flags_enabled:
-            return FlagEvaluation(prompt_version=self.settings.prompt_version)
+            return FlagEvaluation(
+                prompt_version=self.settings.prompt_version,
+                provider_status="disabled",
+            )
+
+        # In-process overrides are a test hook and replace OFREP for the whole evaluation.
+        if self._overrides or not self.settings.flagd_url:
+            return self._from_defaults()
 
         context = {
             "targetingKey": user_id or role or agent_id,
@@ -123,17 +168,17 @@ class FeatureFlagService:
             "role": role,
             "user_id": user_id,
         }
+        try:
+            kill_switch = bool(self._ofrep_value(FLAG_KILL_SWITCH, context))
+            agent_enabled = bool(self._ofrep_value(FLAG_AGENT_ENABLED, context))
+            prompt_version = str(self._ofrep_value(FLAG_PROMPT_VERSION, context))
+            model_route = str(self._ofrep_value(FLAG_MODEL_ROUTE, context))
+        except FlagdUnavailable:
+            return self._fail_closed()
         return FlagEvaluation(
-            kill_switch=bool(self._value(FLAG_KILL_SWITCH, False, context)),
-            agent_enabled=bool(self._value(FLAG_AGENT_ENABLED, True, context)),
-            prompt_version=str(
-                self._value(FLAG_PROMPT_VERSION, self.settings.prompt_version, context)
-            ),
-            model_route=str(
-                self._value(
-                    FLAG_MODEL_ROUTE,
-                    self.settings.litellm_model_alias or "chat-default",
-                    context,
-                )
-            ),
+            kill_switch=kill_switch,
+            agent_enabled=agent_enabled,
+            prompt_version=prompt_version,
+            model_route=model_route,
+            provider_status="flagd",
         )

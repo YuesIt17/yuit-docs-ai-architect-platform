@@ -22,7 +22,7 @@ flowchart LR
 | ChatService | Authorizes the agent (registry + kill-switch flags), then calls the LLM |
 | OpenFeature / Flagd | Progressive `model_route` / `prompt_version`; emergency `kill_switch_agents` |
 | AgentRegistry | Declarative manifest (Phase 1) |
-| LLMClient | OpenAI-compatible HTTP client; `direct` or `litellm` |
+| LLMClient | OpenAI-compatible HTTP client; `direct` or `litellm`. The chat alias is an argument to `complete`, not shared mutable state |
 | LiteLLM_Proxy | Aliases, failover, token metering toward local (or demo cloud) backends |
 
 ## Profiles
@@ -74,6 +74,28 @@ Audit rows (`/v1/audit` store) and Prometheus `llm_tokens_attributed_total` incl
 ## Failover
 
 `chat-default` lists Ollama first and a `mock_response` sibling deployment for LiteLLM retries. Desktop check (proxy up, Ollama down): `chat-default` returned the `[gateway-failover]` mock sibling. Primary Ollama hop still needs `--profile llm` + a pulled model.
+
+The failover and `chat-mock` strings are marked `[gateway-failover]` and `[gateway-mock]`. The API treats those prefixes, and any provider exception, as **not grounded**: the user-facing answer is `[degraded:] The model gateway is unavailable. No grounded answer was produced.`, `degraded` is true, and retrieval citations are cleared. The direct MOCK provider still echoes retrieved context and keeps citations. That path is the course demo, not an outage.
+
+On `LLM_GATEWAY=litellm`, `model_route` must be `chat-default` or `chat-mock`. Any other alias is **403** before the proxy is called. Direct MOCK / Ollama / vLLM ignore the alias and keep the configured model.
+
+## Opt-in gateway smoke
+
+From `app/infra`. This is not part of CI.
+
+```powershell
+docker compose --profile gateway --profile llm up -d litellm-db litellm ollama
+```
+
+```powershell
+$H = @{ Authorization = "Bearer compliance" }
+# API env: LLM_GATEWAY=litellm, LITELLM_BASE_URL=http://127.0.0.1:4000/v1, LITELLM_API_KEY=sk-kp-local-gateway
+Invoke-RestMethod -Method Post -Headers $H -ContentType "application/json" `
+  -Uri http://127.0.0.1:8080/v1/chat `
+  -Body '{"message":"gluten allergen policy","stream":false,"agent_id":"graphrag-chat"}'
+```
+
+Record HTTP status, response `request_id`, `degraded`, and the audit fields `model_route`, `gateway`, and `agent_id`. A proxy outage or `[gateway-failover]` completion must not come back as a cited KB success. If Docker, LiteLLM, or Ollama is not running, mark this smoke **BLOCKED** and do not invent a trace. Egress is **not verified** unless a capture is stored with the run.
 
 ## Related
 

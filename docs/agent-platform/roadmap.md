@@ -30,8 +30,8 @@ The entries below describe code and documentation, **not necessarily a live inte
 | --- | --- | --- |
 | GraphRAG reference agent | Fixed LangGraph workflow, ACL-filtered Neo4j/vector retrieval, citations; existing evaluation gate | Fixed workflow is not a planning/reflection agent |
 | AgentManifest and Registry | Pydantic/YAML manifests, disk and in-memory API registry; LangGraph invoke via ChatService; [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md) | Manifest tools, sandbox, model, memory and entrypoint are not all enforced as generic runtime bindings; registration is in-process |
-| Gateway | Direct client plus LiteLLM Proxy profiles and per-agent/team attribution; [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md). Desktop proxy + mock aliases verified (`/v1/models`, `chat-mock`, `chat-default` mock failover) | Live Ollama as primary behind the proxy and usage correctness still need evidence; mock fallback must not impersonate grounded KB answers |
-| Feature flags | Flagd OFREP/in-memory, model/prompt variants, start-of-run kill-switch and audit; [ADR-013](../../architecture/adr/ADR-013-feature-flags.md) | Verify live Flagd and fail-safe behavior; active-run cancellation/rechecks not yet demonstrated |
+| Gateway | Direct client plus LiteLLM Proxy profiles and per-agent/team attribution; [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md). Desktop proxy + mock aliases verified. Chat passes the alias per request. Marked gateway mocks and provider errors clear citations (unit-tested) | Live Ollama as primary behind the proxy, usage correctness, and egress still need evidence |
+| Feature flags | Flagd OFREP/in-memory, model/prompt variants, start-of-run kill-switch and audit; [ADR-013](../../architecture/adr/ADR-013-feature-flags.md). OFREP outage fails closed for new runs (unit-tested) | Live Flagd smoke; active-run cancellation is not implemented |
 | State and background work | LangGraph session checkpoints (PostgreSQL in live mode); Celery for **document ingestion** | Checkpoints do not alone guarantee idempotent durable agent jobs, approval, or resume APIs |
 | Identity and security | Role-based retrieval ACL; optional Keycloak + Go BFF; Kubernetes hardening, secrets options and audit | Separate agent/delegated identity, tool authorization, retention, durable audit and sandbox enforcement still need work |
 | Observability and evaluation | OTel → Prometheus/Grafana/Loki/Tempo; deterministic golden-set and ACL CI gate; optional DeepEval wiring | Agent/tool-span conventions and trace→review→eval feedback loop not yet demonstrated; real-model judge results not recorded |
@@ -95,21 +95,21 @@ Each phase needs an ADR when a real trade-off warrants one, executable tests, do
 
 - **Phase 1 / [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md):** manifest schema, Registry, discovery, basic authorization and current LangGraph invoke.
 - **Phase 2 / [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md):** direct/LiteLLM configuration, local aliases, route/usage attribution. Desktop LiteLLM Compose (`gateway` profile) + `LLMClient` is **verified** (`/v1/models`, `chat-mock`, `chat-default` mock failover). Live Ollama as primary behind the proxy remains **not verified** until `--profile llm` is exercised.
-- **Phase 3 / [ADR-013](../../architecture/adr/ADR-013-feature-flags.md):** in-memory/Flagd evaluation, start-of-run kill-switch, flags and audit fields. **Failure policy and mid-run enforcement need verification**.
+- **Phase 3 / [ADR-013](../../architecture/adr/ADR-013-feature-flags.md):** in-memory/Flagd evaluation, start-of-run kill-switch, flags and audit fields. OFREP outage fails closed in unit tests. **Live Flagd and mid-run cancellation are not verified**.
 
 ### Phase 4 — Harden the first end-to-end platform slice (P0)
 
 **Goal:** manifest registration causes real, policy-enforced execution of the existing GraphRAG agent; the local infrastructure can be reproduced.
 
-- Run and record the actual LiteLLM + Ollama + Flagd Compose path, including an unavailable dependency.
-- Eliminate shared mutable per-request model routing; demonstrate concurrent request isolation and correct attribution.
-- Validate manifest versions, explicit approved runtime/entrypoints, model aliases and tool allowlists. Distinguish configuration validation from enforcement.
-- Implement a consistent runtime admission/auth policy and prohibit unauthorized tool execution. Enforce the closed-provider allowlist across gateway profiles and observable egress.
-- Define emergency-control fallback semantics on Flagd timeout/outage; distinguish disabling new runs from stopping in-flight dangerous tool actions.
-- Remove or explicitly mark demo-only mock-model failover so it never returns fabricated corporate KB facts as a grounded success.
-- Refresh test evidence, [gateway](./genai-gateway.md), [flags](./feature-flags.md), security ADR and diagrams as needed.
+- Run and record the actual LiteLLM + Ollama + Flagd Compose path, including an unavailable dependency. **Not verified** in CI. Commands are in [genai-gateway.md](./genai-gateway.md) and [feature-flags.md](./feature-flags.md). Mark a run **BLOCKED** when Docker is down.
+- Shared mutable per-request model routing is removed. Concurrent alias isolation is unit-tested. `team_id` remains the process setting.
+- GraphRAG admission checks manifest version (audit), the approved LangGraph entrypoint, builtin tool ids, and the LiteLLM alias allowlist. Sandbox network and process isolation stay declarative.
+- Unauthorized tool, model, runtime, and role paths return an explicit error. There is no tenant id; role clearance is unchanged.
+- Flagd timeout/outage fails closed for new runs. In-flight tool cancellation is not implemented.
+- Marked gateway mocks and provider exceptions are not returned as cited KB answers. The direct MOCK success path is unchanged.
+- Closed-provider allowlist for admin `base_url` is unchanged. Observable egress of the gateway profile is **not verified**.
 
-**Exit evidence:** manifest → authorized GraphRAG invoke → local LLM route → trace/audit; unauthorized tool/model path denied; gateway/flag outage controlled; parallel model-route test; reproducible Compose smoke. No production-readiness claim.
+**Exit evidence:** unit and eval tests for the items above. Live Compose smoke is recorded separately as **PASS / FAIL / BLOCKED**. No production-readiness claim. Google ADK and A2A are not part of this slice.
 
 ### Phase 5 — Optional second orchestrator: Google ADK (P1)
 
