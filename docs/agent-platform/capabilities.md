@@ -1,6 +1,6 @@
 # Agent Platform Capability Map
 
-This is the **capability inventory** for RetailPartnerX. Read with [roadmap](./roadmap.md), [engineering standards](./engineering/README.md), and [delivery workflow](./delivery-workflow.md).
+This is the **capability inventory** for Coraium Agent Platform. RetailPartnerX is the first existing retail reference implementation. Read with [roadmap](./roadmap.md), [public architecture views](./public-architecture.md), [open-source strategy](./open-source-strategy.md), [engineering standards](./engineering/README.md), and [delivery workflow](./delivery-workflow.md).
 
 **Status vocabulary:** `implemented` = code exists; `verified` = reproducible recorded test; `planned` = not implemented; `optional` = no commitment without a use case. A mocked unit test is not live runtime verification.
 
