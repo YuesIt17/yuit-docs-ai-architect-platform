@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Coraium Agent Platform</title>
+  <desc id="desc">Eight rounded tiles in yellow, green, and cyan above the Coraium wordmark and Agent Platform subtitle.</desc>
+  <rect width="1024" height="1024" fill="#050812"/>
+  <defs>
+    <linearGradient id="tile" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#FFF500"/>
+      <stop offset="48%" stop-color="#71FC19"/>
+      <stop offset="100%" stop-color="#00E5D3"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <rect x="320" y="145" width="123" height="123" rx="29" fill="#FFF000"/>
+    <rect x="450" y="145" width="123" height="123" rx="29" fill="#B6FE12"/>
+    <rect x="580" y="145" width="123" height="123" rx="29" fill="#25ED71"/>
+    <rect x="320" y="275" width="123" height="123" rx="29" fill="#AFFE08"/>
+    <rect x="450" y="275" width="123" height="123" rx="29" fill="#38F767"/>
+    <rect x="580" y="275" width="123" height="123" rx="29" fill="#00EEC0"/>
+    <rect x="320" y="405" width="123" height="123" rx="29" fill="#4EF875"/>
+    <rect x="450" y="405" width="123" height="123" rx="29" fill="#00E9BD"/>
+  </g>
+  <text x="512" y="710" fill="#FFF" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="128" text-anchor="middle" letter-spacing="-5">Coraium</text>
+  <rect x="560" y="576" width="22" height="22" rx="5" fill="#BAFD07" opacity=".0"/>
+  <text x="512" y="797" fill="#FFF" font-family="Arial, Helvetica, sans-serif" font-size="60" font-weight="500" text-anchor="middle">Agent Platform</text>
+</svg>
