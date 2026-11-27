@@ -4,7 +4,7 @@ A pragmatic plan to evolve **RetailPartnerX Knowledge Platform** into a **secure
 
 The existing course GraphRAG use case remains operational. New capabilities must reuse proven components, stay testable on a laptop, and demonstrate concrete platform contracts, security, recovery, and developer experience.
 
-For related source-of-truth documents, see the [capability map](./capabilities.md), [Engineering Excellence standards](./engineering/README.md), and [specification/delivery workflow](./delivery-workflow.md). These capture document intelligence (RapidOCR/optional Docling), Vault/ESO verification, Python/TypeScript/Go engineering quality, algorithmic reasoning and lightweight OpenSpec-compatible requirements without adding a new mandatory toolchain.\n\n## Principles and scope
+For the multi-domain direction and LangGraph/ADK/A2A responsibilities, see the [multi-domain architecture](./multi-domain-architecture.md). For related source-of-truth documents, see the [capability map](./capabilities.md), [Engineering Excellence standards](./engineering/README.md), and [specification/delivery workflow](./delivery-workflow.md). These capture document intelligence (RapidOCR/optional Docling), Vault/ESO verification, Python/TypeScript/Go engineering quality, algorithmic reasoning and lightweight OpenSpec-compatible requirements without adding a new mandatory toolchain.\n\n## Principles and scope
 
 | Principle | Decision |
 | --- | --- |
@@ -37,6 +37,14 @@ The entries below describe code and documentation, **not necessarily a live inte
 | K8s and IaC | Docker/Compose, Helm, local K8s hardening; AWS Terraform materials | No verified CRD/operator, cloud production cluster, or multi-cloud operation |
 
 **Baseline verification gate:** rerun tests, diagrams drift check and local integration smoke tests after each phase. Keep setup instructions and failure evidence alongside success evidence.
+
+## Multi-domain product direction (proposed)
+
+The platform must become **domain-agnostic** without discarding RetailPartnerX. The preferred initial specialization is **LangGraph / Domain Intelligence** (existing Retail GraphRAG; proposed Health Evidence, Nutrition and Fitness) and **Google ADK / Engineering & Governance** (proposed DevSecOps Review, Policy Research, Compliance Coordination and Approval Requests). This is an **organizational default, not a framework limitation or a claim of runtime superiority**. Every agent selects its own runtime by manifest and measured functional/operational needs.
+
+**A2A** will provide real, authorized **inter-service** delegation between independently deployed LangGraph and ADK agents, rather than replacing ordinary local function/tool calls. The first useful scenario is an ADK read-only DevSecOps reviewer requesting supplier-policy evidence from LangGraph Retail GraphRAG. A second demonstration may connect Food, Nutrition and Fitness, with optional policy research; do not transmit sensitive health data to unrelated agents. Keep the same security, model gateway, observability and evaluation infrastructure for both tracks. Details, target topology, healthcare safety boundaries, tests and rollout stages: [multi-domain architecture](./multi-domain-architecture.md).
+
+**Product scope:** a future Personal Life Assistant may cover food, fitness and health education; enterprise applications may cover retail and engineering governance. Healthcare clinical functionality, patient data integrations, medical-device claims and regulated deployment are **not** in the initial MVP; assess regulatory and safety requirements before any such expansion. Initial demos use synthetic data.
 
 ## Target architecture
 
@@ -106,7 +114,7 @@ Each phase needs an ADR when a real trade-off warrants one, executable tests, do
 **Goal:** prove **two independently implemented reference agents** share one platform API and controls, while preserving the fixed LangGraph GraphRAG workflow.
 
 - Add a narrow `AgentRuntimeAdapter` interface: validate capabilities, invoke/stream events, return run status, cancel if supported, and expose resume semantics only where implemented.
-- First adapter wraps the existing LangGraph execution; second adapter runs a small **self-hosted Google ADK tool-using agent** via the same registered manifest/dispatcher.
+- First adapter wraps the existing LangGraph execution; second adapter runs a small **self-hosted Google ADK Policy/DevSecOps read-only tool-using agent** via the same registered manifest/dispatcher.
 - ADK runs locally in a Python process/container, using a tool-calling-capable local model through the **existing LiteLLM Proxy** when the gateway profile is active; avoid implicit calls to Vertex/Gemini or other external APIs.
 - Integrate one **real** allowlisted knowledge tool (read-only policy lookup), sharing principal permissions and audit. Do not map arbitrary manifest entrypoints to unrestricted Python imports or arbitrary executable tools.
 - Provide agent-specific runtime selection (e.g. `runtime: langgraph` / `runtime: adk`). If a user-facing runtime switch is added, route to the separately defined agent and clearly state that existing session checkpoints cannot migrate.
@@ -148,7 +156,7 @@ Each phase needs an ADR when a real trade-off warrants one, executable tests, do
 **Goal:** prove that another product team could add a bounded agent without custom platform modifications.
 
 - **MCP first:** expose a least-privilege read-only knowledge tool over MCP and call it from one reference agent. Measure permissions, input validation and failure behavior; share the same authorization/audit boundary.
-- **A2A only for a real delegation use case:** show two agents with task identity and explicit permissions; otherwise document the interoperability mapping without adding a mostly decorative service.
+- **A2A for the proposed cross-runtime delegation:** first prove an ADK DevSecOps reviewer requesting ACL-scoped supplier policy evidence from the independent LangGraph Retail GraphRAG system through Agent Cards, A2A task status/artifacts and identity-aware policy checks. Measure trace propagation, latency, denial, timeouts and failure behavior. Keep it optional, never mandatory for local calls; see [multi-domain architecture](./multi-domain-architecture.md).
 - **AG-UI only if UI interoperability needs it:** add an adapter over existing SSE events instead of rebuilding the frontend. Keep one canonical event contract.
 - Provide an agent onboarding example: manifest, approved tool, runtime choice, local gateway route, tests, logs, rollback and runbook.
 - Write a concise build-vs-buy / when-not-to-use-multi-agent note. Prove the platform is useful even when a single deterministic LangGraph workflow is the best choice.
@@ -194,6 +202,14 @@ Before marking any work *verified*, record:
 6. **Honest limits:** local/single-node versus replicas; simulated versus real provider; no unearned production or compliance claims.
 
 **Implementation order:** verify/harden existing Phases 1–3 → multi-runtime reference agent → durable run lifecycle → trace-to-eval reliability loop → interoperability only where useful. Avoid packaging work with no demonstrated runtime benefit.
+
+## Domain expansion track (P2 / later)
+
+- Preserve current Retail GraphRAG as the first working domain product. Extract reusable platform contracts only when justified by a second consumer.
+- Add synthetic-data LangGraph **Nutrition Assistant** and **Fitness Planner** after the multi-runtime platform slice; add **Health Evidence** as a source-grounded educational workflow, not a medical diagnosis service.
+- Use ADK for **DevSecOps Reviewer, Compliance Coordination, Approval Requests and Policy Research** as the initial technical-governance track; policy decisions and approvals require deterministic trusted backends.
+- Demonstrate at least one Food → Nutrition → Fitness user journey, and one real cross-runtime A2A delegation, with tests and provenance. Do not route every action through A2A.
+- Consider FHIR, regulated healthcare data/hosting or patient workflows only after an explicit use-case and privacy/legal/clinical-safety gate.
 
 ## Learning alongside implementation
 
