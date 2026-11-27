@@ -6,12 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from kp.agents.manifest import AgentManifest, ResolvedAgent
 from kp.agents.registry import (
+    APPROVED_LANGGRAPH_ENTRYPOINT,
     AgentConflictError,
     AgentDisabledError,
     AgentKillSwitchError,
     AgentManifestInvalidError,
     AgentNotFoundError,
+    AgentPolicyDeniedError,
     AgentRoleDeniedError,
+    AgentRuntimeUnsupportedError,
 )
 from kp.api.agent_errors import http_from_registry
 from kp.api.deps import container_dep, principal_dep
@@ -83,6 +86,12 @@ async def register_agent(
     """Register an agent at runtime (in-memory; not persisted across restarts)."""
     if principal.role not in LLM_ADMIN_ROLES:
         raise HTTPException(status_code=403, detail="Only compliance_officer may register agents")
+    if body.spec.entrypoint != APPROVED_LANGGRAPH_ENTRYPOINT:
+        raise http_from_registry(
+            AgentManifestInvalidError(
+                "entrypoint is not approved; arbitrary imports are not accepted"
+            )
+        )
     try:
         return c.registry.register(body, source="api", overwrite=False)
     except (AgentConflictError, AgentManifestInvalidError) as exc:
@@ -98,20 +107,6 @@ async def invoke_agent(
     settings: Settings = Depends(get_settings),
 ):
     """Invoke a registered agent. LangGraph chat agents share the ChatService path."""
-    try:
-        manifest = c.registry.authorize(agent_id, principal.role)
-    except (AgentNotFoundError, AgentDisabledError, AgentRoleDeniedError, AgentKillSwitchError) as exc:
-        raise http_from_registry(exc) from exc
-
-    if manifest.spec.runtime != "langgraph":
-        raise HTTPException(
-            status_code=501,
-            detail=(
-                f"agent {agent_id!r} runtime={manifest.spec.runtime!r} "
-                "is not invokable via this endpoint yet; use its API trigger path"
-            ),
-        )
-
     # Force the resolved agent id (body.agent_id is ignored for path-based invoke).
     payload = body.model_copy(update={"agent_id": agent_id, "stream": False})
     try:
@@ -121,6 +116,8 @@ async def invoke_agent(
         AgentDisabledError,
         AgentRoleDeniedError,
         AgentKillSwitchError,
+        AgentPolicyDeniedError,
+        AgentRuntimeUnsupportedError,
     ) as exc:
         raise http_from_registry(exc) from exc
     if isinstance(result, tuple) and result[0] == "stream":

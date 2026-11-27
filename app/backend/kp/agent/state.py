@@ -32,6 +32,8 @@ class AgentState(TypedDict, total=False):
     tokens_in: int
     tokens_out: int
     model_uri: str
+    # Request-scoped LiteLLM alias. Direct providers ignore it inside LLMClient.complete.
+    model_alias: str
     errors: Annotated[list[str], operator.add]
     # Dialog memory. Only history outlives a turn; see TURN_RESET in graph.py.
     history: Annotated[list[dict[str, Any]], append_turns]

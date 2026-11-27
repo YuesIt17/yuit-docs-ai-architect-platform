@@ -78,6 +78,25 @@ Top-level: `apiVersion`, `kind`, `metadata`, `spec`.
 
 Validation is enforced by Pydantic (`kp.agents.manifest.AgentManifest`) on load and on `POST /v1/agents`.
 
+## What invoke actually enforces
+
+`/v1/chat` and `/v1/agents/{id}/invoke` admit a run only when all of the following hold:
+
+| Check | Result |
+| ----- | ------ |
+| Unknown id | 404 |
+| Disabled manifest | 503 |
+| Role not in `required_roles` | 403 |
+| Blank bearer token | 401. In demo auth, a missing header is the guest principal, not an anonymous bypass |
+| `runtime` other than `langgraph` | 501. `label-assistant` stays on `POST /v1/vision/label` |
+| `entrypoint` other than `kp.agent.graph:KnowledgeAgent` | 403 on invoke. `POST /v1/agents` returns 422. The string is not imported |
+| Tools other than builtin `graph_retrieve` and `vector_retrieve` | 403 |
+| LiteLLM `model_route` other than `chat-default` or `chat-mock` | 403 before the model call |
+
+`graphrag-chat` matches the allowlist, so its retrieve and ACL behavior is unchanged. There is no tenant id. Clearance is the existing role map (guest cannot read secret documents).
+
+`sandbox.network` and process isolation are **declarative**. This slice does not add a sandbox, gVisor, or a network policy of its own. Disk YAML may still describe a stub agent with another entrypoint; that agent is not executed through chat invoke.
+
 ## Tests
 
 ```powershell

@@ -14,7 +14,7 @@ from langgraph.graph import END, StateGraph
 
 from kp.agent.state import AgentState
 from kp.config import get_settings
-from kp.infrastructure.llm import LLMClient
+from kp.infrastructure.llm import DEGRADED_ANSWER, LLMClient, is_ungrounded_model_answer
 from kp.observability.spans import span
 from kp.repositories.text_match import lexical_hits, tokens
 from kp.security.guardrails import input_guard, output_guard
@@ -46,6 +46,7 @@ TURN_RESET: dict[str, Any] = {
     "tokens_in": 0,
     "tokens_out": 0,
     "model_uri": "",
+    "model_alias": "",
     "visible_history": [],
     "retrieval_query": "",
 }
@@ -320,12 +321,23 @@ class KnowledgeAgent:
                 "model_uri": self.llm.model_uri,
                 "citations": [],
             }
+        alias = (state.get("model_alias") or "").strip() or None
         with span("llm", request_id=state.get("request_id"), model_uri=self.llm.model_uri):
-            answer, tin, tout = await self.llm.complete(system, user, max_tokens=256)
-        degraded = answer.startswith("[degraded:")
+            answer, tin, tout = await self.llm.complete(system, user, max_tokens=256, model=alias)
+        if is_ungrounded_model_answer(answer):
+            # Drop retrieval citations so a failover mock cannot look like a grounded answer.
+            return {
+                "answer": DEGRADED_ANSWER,
+                "degraded": True,
+                "citations": [],
+                "tokens_in": tin,
+                "tokens_out": tout,
+                "model_uri": self.llm.model_uri,
+                "acl_decision": "degraded_model",
+            }
         return {
             "answer": answer,
-            "degraded": degraded,
+            "degraded": False,
             "tokens_in": tin,
             "tokens_out": tout,
             "model_uri": self.llm.model_uri,

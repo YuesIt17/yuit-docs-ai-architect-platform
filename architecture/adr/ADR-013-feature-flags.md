@@ -29,7 +29,8 @@ Prompts, model routes, and agent availability need progressive rollout and an em
 - Definitions: `app/infra/flagd/flags.json` (fractional targeting on prompt/model)
 - Runtime: `FeatureFlagService` with in-memory provider by default; OFREP HTTP client when `FLAGD_URL` is set
 - Kill-switch / `agent_enabled=false` → HTTP 503, audit `acl_decision=deny_kill_switch`
-- Effective `prompt_version` and `model_route` recorded on audit rows and used for LiteLLM alias when gateway is on
+- Effective `prompt_version` and `model_route` recorded on audit rows. The LiteLLM alias is passed per request and does not mutate the shared client
+- **Amendment (2026-11-27):** when `FLAGD_URL` is set and OFREP times out, errors, or returns a non-success status, security flags fail closed (`kill_switch` on, `agent_enabled` off). Prompt and model use the file defaults and do not reopen the turn. Audit records `flag_provider=flagd_unavailable`. With no `FLAGD_URL`, CI keeps the in-memory file defaults. This stops new admissions only. Cancelling an in-flight tool call is not implemented
 
 ## Consequences
 

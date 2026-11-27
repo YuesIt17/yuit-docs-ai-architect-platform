@@ -8,11 +8,11 @@ This is the **capability inventory** for Coraium Agent Platform. RetailPartnerX 
 
 | Capability | Existing foundation | Required outcome / gap | Priority |
 | --- | --- | --- | --- |
-| Registry and admission | AgentManifest, in-process registry, API, role checks | Versioned policy-enforced execution, approved entrypoints and tools, durable/replicated registry only if needed | P0 |
+| Registry and admission | AgentManifest, in-process registry, API, role checks. GraphRAG invoke admits only `kp.agent.graph:KnowledgeAgent` and builtin `graph_retrieve` / `vector_retrieve` (unit-tested) | Sandbox network and process isolation remain declarative. Durable/replicated registry only if needed | P0 |
 | Orchestrator choice | Existing LangGraph GraphRAG; manifest has `runtime` | Optional local Google ADK reference agent behind same external API; no checkpoint portability claim | P1 |
 | Agent tools and interoperability | Retrieval nodes, declarative tool schema, SSE | Enforced tool allowlist and scoped identity first; MCP for one read-only tool; A2A/AG-UI when justified | P0/P2 |
-| Model gateway | Direct client and LiteLLM profiles, aliases, attribution. Desktop proxy + mock aliases verified | Live Ollama-primary smoke, isolation under concurrency, controlled failures, measured usage/budget | P0 |
-| Progressive rollout | Flagd/in-memory evaluator, kill-switch at admission | Well-defined Flagd outage policy, safe mid-run checks, verified rollout and rollback | P0 |
+| Model gateway | Direct client and LiteLLM profiles, aliases, attribution. Desktop proxy + mock aliases verified. Request-scoped alias and ungrounded outage/mock answers are unit-tested | Live Ollama-primary smoke, measured usage/budget, and a recorded egress check | P0 |
+| Progressive rollout | Flagd/in-memory evaluator, kill-switch at admission. OFREP timeout or error fails closed for new runs (unit-tested) | Live Flagd smoke, safe mid-run cancellation, verified rollout and rollback | P0 |
 | Durable execution | LangGraph checkpoints, PostgreSQL and Celery ingestion | Agent run ledger, retries, approval, recovery, idempotent side effects; Temporal optional | P1 |
 | Identity/permissions | Role ACL, Keycloak/Go BFF option | Agent identity, delegated user scopes, tool-level authorization and credential isolation | P0/P1 |
 | Secrets | Vault + External Secrets Operator templates, dynamic PostgreSQL DSN design | End-to-end rotation/revocation verification, no secrets in logs or agent manifests | P1 |

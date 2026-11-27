@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from kp.agents.manifest import AgentManifest
 from kp.agents.registry import (
+    APPROVED_LANGGRAPH_ENTRYPOINT,
     AgentNotFoundError,
     AgentRegistry,
     AgentRoleDeniedError,
@@ -17,6 +18,7 @@ from kp.agents.registry import (
 )
 from kp.config import Settings
 from kp.deps import get_container
+from kp.infrastructure.feature_flags import FLAG_MODEL_ROUTE
 from kp.main import app
 from pipelines.seed_all import seed_store
 
@@ -223,6 +225,187 @@ def test_missing_agent_raises():
     registry = AgentRegistry()
     with pytest.raises(AgentNotFoundError):
         registry.require("missing")
+
+
+def _langgraph_manifest(agent_id: str, **spec_updates: object) -> dict:
+    spec = {
+        "runtime": "langgraph",
+        "entrypoint": APPROVED_LANGGRAPH_ENTRYPOINT,
+        "enabled": True,
+        "tools": [
+            {"id": "graph_retrieve", "kind": "builtin", "description": "Graph retrieve"},
+            {"id": "vector_retrieve", "kind": "builtin", "description": "Vector retrieve"},
+        ],
+        "security": {"required_roles": ["compliance_officer"]},
+    }
+    spec.update(spec_updates)
+    return {
+        "apiVersion": "kp.retailpartnerx/v1",
+        "kind": "Agent",
+        "metadata": {
+            "id": agent_id,
+            "version": "1.2.0",
+            "display_name": agent_id,
+            "description": "Admission test agent",
+        },
+        "spec": spec,
+    }
+
+
+def test_missing_or_insufficient_principal_is_denied(seeded):
+    """Demo mode maps an absent header to guest. A blank bearer is 401.
+
+    OIDC with no token is covered in test_sec_oidc.py.
+    """
+    client = TestClient(app)
+    blank = client.post(
+        "/v1/chat",
+        headers={"Authorization": "Bearer"},
+        json={"message": "gluten", "stream": False},
+    )
+    assert blank.status_code == 401
+
+    created = client.post("/v1/agents", headers=AUTH, json=_langgraph_manifest("compliance-only-anon"))
+    assert created.status_code == 201, created.text
+    guest = client.post(
+        "/v1/agents/compliance-only-anon/invoke",
+        json={"message": "gluten", "stream": False},
+    )
+    assert guest.status_code == 403
+
+
+def test_invoke_unknown_agent_is_404(seeded):
+    client = TestClient(app)
+    r = client.post(
+        "/v1/agents/missing-agent/invoke",
+        headers=AUTH,
+        json={"message": "gluten", "stream": False},
+    )
+    assert r.status_code == 404
+
+
+def test_guest_cannot_invoke_label_assistant(seeded):
+    client = TestClient(app)
+    r = client.post(
+        "/v1/agents/label-assistant/invoke",
+        headers=AUTH_GUEST,
+        json={"message": "gluten", "stream": False},
+    )
+    assert r.status_code == 403
+
+
+def test_chat_stub_runtime_is_501(seeded):
+    client = TestClient(app)
+    r = client.post(
+        "/v1/chat",
+        headers=AUTH,
+        json={"message": "gluten", "stream": False, "agent_id": "label-assistant"},
+    )
+    assert r.status_code == 501
+
+
+def test_post_rejects_unapproved_entrypoint(seeded):
+    client = TestClient(app)
+    payload = _langgraph_manifest(
+        "imported-agent",
+        entrypoint="os:system",
+    )
+    r = client.post("/v1/agents", headers=AUTH, json=payload)
+    assert r.status_code == 422
+    assert "entrypoint" in r.json()["detail"].lower()
+
+
+def test_invoke_unapproved_entrypoint_is_403(seeded):
+    seeded.registry.register(
+        AgentManifest.model_validate(
+            _langgraph_manifest("custom-entry", entrypoint="kp.agents.registry:AgentRegistry")
+        ),
+        source="api",
+    )
+    client = TestClient(app)
+    r = client.post(
+        "/v1/agents/custom-entry/invoke",
+        headers=AUTH,
+        json={"message": "gluten", "stream": False},
+    )
+    assert r.status_code == 403
+    assert "unapproved_entrypoint" in r.json()["detail"]
+
+
+def test_invoke_disallowed_tool_is_403(seeded):
+    payload = _langgraph_manifest(
+        "shell-agent",
+        tools=[
+            {"id": "graph_retrieve", "kind": "builtin", "description": "Graph retrieve"},
+            {"id": "vector_retrieve", "kind": "builtin", "description": "Vector retrieve"},
+            {"id": "shell_exec", "kind": "http", "description": "Not executable"},
+        ],
+    )
+    client = TestClient(app)
+    created = client.post("/v1/agents", headers=AUTH, json=payload)
+    assert created.status_code == 201, created.text
+    r = client.post(
+        "/v1/agents/shell-agent/invoke",
+        headers=AUTH,
+        json={"message": "gluten", "stream": False},
+    )
+    assert r.status_code == 403
+    assert "disallowed_tool" in r.json()["detail"]
+    assert seeded.store.audit[-1]["acl_decision"] == "deny_policy"
+    assert seeded.store.audit[-1]["agent_version"] == "1.2.0"
+    assert "gluten" not in str(seeded.store.audit[-1])
+
+
+def test_role_omitted_from_manifest_cannot_invoke(seeded):
+    payload = _langgraph_manifest("compliance-only")
+    client = TestClient(app)
+    created = client.post("/v1/agents", headers=AUTH, json=payload)
+    assert created.status_code == 201, created.text
+    r = client.post(
+        "/v1/agents/compliance-only/invoke",
+        headers=AUTH_MANAGER,
+        json={"message": "gluten", "stream": False},
+    )
+    assert r.status_code == 403
+
+
+def test_disallowed_gateway_model_is_403_before_completion(seeded):
+    seeded.llm.apply_config("LITELLM", "http://127.0.0.1:4000/v1", "chat-default")
+    seeded.flags.override(FLAG_MODEL_ROUTE, "external-gpt")
+    called = {"n": 0}
+    original = seeded.llm.complete
+
+    async def spy(*args, **kwargs):
+        called["n"] += 1
+        return await original(*args, **kwargs)
+
+    seeded.llm.complete = spy
+    client = TestClient(app)
+    r = client.post(
+        "/v1/chat",
+        headers=AUTH,
+        json={"message": "gluten allergen policy", "stream": False},
+    )
+    assert r.status_code == 403, r.text
+    assert "disallowed_model" in r.json()["detail"]
+    assert called["n"] == 0
+    assert seeded.llm.get_config().model == "chat-default"
+
+
+def test_graphrag_success_keeps_citations(seeded):
+    client = TestClient(app)
+    r = client.post(
+        "/v1/chat",
+        headers=AUTH,
+        json={"message": "gluten allergen policy", "stream": False},
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["degraded"] is False
+    assert data["citations"]
+    assert not data["answer"].startswith("[degraded:")
+    assert seeded.store.audit[-1]["agent_version"] == "1.0.0"
+    assert seeded.store.audit[-1]["flag_provider"] == "in_memory"
 
 
 def test_settings_custom_manifests_dir(tmp_path: Path):

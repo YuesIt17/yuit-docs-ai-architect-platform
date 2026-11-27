@@ -101,7 +101,7 @@ Agent-platform evolution (manifest/registry, LiteLLM gateway, Flagd, MCP/A2A/AG-
 | LLM desktop | Ollama `qwen2.5:0.5b` | — |
 | LLM submission | vLLM AWQ profile | runtime on a GPU |
 | LLM gateway | `LLM_GATEWAY=direct` default; optional LiteLLM `gateway-local` (**verified** on desktop proxy + mock aliases) | Multiprovider live cloud and Ollama-primary behind proxy remain **not verified** until exercised |
-| Agent control plane | Manifest + registry; Flagd kill-switch + model/prompt flags | MCP/A2A/AG-UI — see roadmap |
+| Agent control plane | Manifest + registry; GraphRAG admission (entrypoint, builtin tools, gateway alias); Flagd kill-switch fails closed when Flagd is unreachable (unit-tested). Live Flagd smoke **not verified** | MCP/A2A/AG-UI — see roadmap |
 | Embeddings | MOCK (CI) / LOCAL e5-small | Offline weights path |
 | OCR | RapidOCR on CPU; MOCK by default | Accuracy measured on real label photos |
 | Secrets | Chart values by default; Vault + ESO optional | Verify rotation on a live cluster |

@@ -9,7 +9,11 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from kp.agents.manifest import AgentManifest
-from kp.agents.registry import AgentKillSwitchError
+from kp.agents.registry import (
+    AgentKillSwitchError,
+    AgentPolicyDeniedError,
+    AgentRuntimeUnsupportedError,
+)
 from kp.application.audit import record_request_audit
 from kp.config import Settings
 from kp.deps import AppContainer
@@ -167,6 +171,7 @@ class ChatService:
             "model_route": flags.model_route,
             "prompt_version": flags.prompt_version,
             "flag_variant": flags.variants,
+            "flag_provider": flags.provider_status,
         }
 
     def _enrich(self, state: dict[str, Any]) -> dict[str, Any]:
@@ -183,12 +188,62 @@ class ChatService:
             agent_id=agent_id, role=principal.role, user_id=principal.user_id
         )
         self._turn_attrs = self._attribution(agent_id, flags)
+        known = self.c.registry.get(agent_id)
+        if known is not None:
+            self._turn_attrs["agent_version"] = known.metadata.version
         if flags.kill_switch or not flags.agent_enabled:
             raise AgentKillSwitchError(agent_id)
-        manifest = self.c.registry.authorize(agent_id, principal.role)
-        if self.c.llm.get_config().gateway == "litellm":
-            self.c.llm.set_model_alias(flags.model_route)
+        manifest = self.c.registry.admit(
+            agent_id,
+            principal.role,
+            model_route=flags.model_route,
+            gateway=self.c.llm.get_config().gateway,
+        )
         return manifest, flags, agent_id
+
+    def _agent_input(
+        self,
+        *,
+        request_id: str,
+        message: str,
+        principal: Principal,
+        model_alias: str,
+    ) -> dict[str, Any]:
+        return {
+            "request_id": request_id,
+            "message": message,
+            "modality": "chat",
+            "role": principal.role,
+            "user_id": principal.user_id,
+            "errors": [],
+            "model_alias": model_alias,
+        }
+
+    def _audit_admission_denial(
+        self,
+        exc: AgentPolicyDeniedError | AgentRuntimeUnsupportedError,
+        *,
+        request_id: str,
+        principal: Principal,
+        started: float,
+    ) -> None:
+        decision = "deny_policy" if isinstance(exc, AgentPolicyDeniedError) else "deny_runtime"
+        reason = exc.reason if isinstance(exc, AgentPolicyDeniedError) else exc.runtime
+        denied = self._enrich(
+            {
+                "answer": "",
+                "citations": [],
+                "acl_decision": decision,
+                "degraded": False,
+                "model_uri": self._cache_model_uri(),
+                "tokens_in": 0,
+                "tokens_out": 0,
+                "policy_reason": reason,
+                "trace_id": current_trace_id(),
+            }
+        )
+        record_request_audit(self.c, self.settings, request_id, principal, denied, started, "chat")
+        metrics.REQUESTS.labels(endpoint="chat", status=decision).inc()
 
     async def handle(self, body: ChatRequest, principal: Principal) -> ChatResponse | Any:
         """Run a chat turn; returns ChatResponse or ("stream", async generator) for SSE."""
@@ -217,6 +272,11 @@ class ChatService:
             denied.setdefault("gateway", self.c.llm.get_config().gateway)
             record_request_audit(self.c, self.settings, request_id, principal, denied, started, "chat")
             metrics.REQUESTS.labels(endpoint="chat", status="kill_switch").inc()
+            raise
+        except (AgentPolicyDeniedError, AgentRuntimeUnsupportedError) as exc:
+            self._audit_admission_denial(
+                exc, request_id=request_id, principal=principal, started=started
+            )
             raise
 
         # SEC-01: Input Guard before cache lookup
@@ -280,18 +340,25 @@ class ChatService:
 
         if body.stream:
             metrics.REQUESTS.labels(endpoint="chat", status="stream").inc()
-            events = self._event_stream(message, principal, request_id, session_id, started, thread, in_dialog)
+            events = self._event_stream(
+                message,
+                principal,
+                request_id,
+                session_id,
+                started,
+                thread,
+                in_dialog,
+                flags.model_route,
+            )
             return ("stream", events)
 
         state = await self.c.agent.arun(
-            {
-                "request_id": request_id,
-                "message": message,
-                "modality": "chat",
-                "role": principal.role,
-                "user_id": principal.user_id,
-                "errors": [],
-            },
+            self._agent_input(
+                request_id=request_id,
+                message=message,
+                principal=principal,
+                model_alias=flags.model_route,
+            ),
             thread_id=thread,
         )
         # Attach active OTel trace for audit / Loki↔Tempo correlation
@@ -381,17 +448,15 @@ class ChatService:
         started: float,
         thread: str | None,
         in_dialog: bool,
+        model_alias: str,
     ) -> AsyncIterator[str]:
         state = await self.c.agent.arun(
-            {
-                "request_id": request_id,
-                "message": message,
-                "modality": "chat",
-                "role": principal.role,
-                "user_id": principal.user_id,
-                "errors": [],
-            }
-            ,
+            self._agent_input(
+                request_id=request_id,
+                message=message,
+                principal=principal,
+                model_alias=model_alias,
+            ),
             thread_id=thread,
         )
         if not in_dialog:

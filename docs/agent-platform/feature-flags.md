@@ -30,6 +30,8 @@ FEATURE_FLAGS_ENABLED=true
 
 When `FLAGD_URL` is empty, the API evaluates defaults from the JSON file (deterministic; fractional targeting is not applied in-process).
 
+When `FLAGD_URL` is set and Flagd times out or returns an error, **security flags fail closed**: new `/v1/chat` and `/v1/agents/{id}/invoke` calls return **503** with audit `acl_decision=deny_kill_switch` and `flag_provider=flagd_unavailable`. `prompt_version` and `model_route` stay on the file defaults and do not allow the turn. This is admission-time only. An in-flight graph run is not cancelled. Live Flagd is **not verified** until the Compose profile below is exercised. In-process tests cover the timeout and HTTP-error paths.
+
 ## Kill-switch demo
 
 With the API up (demo auth):
@@ -50,6 +52,26 @@ In tests / local process, force the in-memory override (see `tests/test_feature_
 3. Override back to `False` → chat works again
 
 Against live Flagd, change the flag via Flagd’s API or by editing `flags.json` and restarting the `flagd` container.
+
+## Opt-in Flagd smoke
+
+From `app/infra`, with the API on demo auth. Do not point `FLAGD_URL` at a host that is not running: the API will fail closed.
+
+```powershell
+docker compose --profile flags up -d flagd
+```
+
+```powershell
+$H = @{ Authorization = "Bearer compliance" }
+# FLAGD_URL=http://127.0.0.1:8016 on the API process
+Invoke-RestMethod -Method Post -Headers $H -ContentType "application/json" `
+  -Uri http://127.0.0.1:8080/v1/chat `
+  -Body '{"message":"gluten allergen policy","stream":false}'
+# Expect 200, a request_id, and an audit row with flag_provider=flagd.
+# Stop flagd and repeat: expect HTTP 503 and flag_provider=flagd_unavailable.
+```
+
+Record the HTTP status, `request_id`, and audit `model_route` / `flag_provider`. If Docker or Flagd is not running, mark this smoke **BLOCKED**. Do not claim a packet capture unless one was taken.
 
 ## Audit fields
 
