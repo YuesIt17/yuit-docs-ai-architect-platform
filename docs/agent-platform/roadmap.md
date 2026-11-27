@@ -1,280 +1,238 @@
-# Agent Platform Roadmap
+# Coraium Agent Platform Roadmap
 
-Portfolio plan to evolve this Knowledge Platform into an **Agent Platform Engineer** showcase, plus a parallel learning path mapped to a typical agent-platform JD.
+A pragmatic plan to evolve **Coraium Agent Platform**, whose first working reference application is **RetailPartnerX Knowledge Platform**, into a **secure, self-hosted, multi-runtime Agents Platform**. This is a reusable engineering portfolio, not a clone of a single employer's technology stack.
 
-**Decisions locked**
+The existing course GraphRAG use case remains operational. New capabilities must reuse proven components, stay testable on a laptop, and demonstrate concrete platform contracts, security, recovery, and developer experience.
 
-| Decision | Choice |
-| -------- | ------ |
-| Deliverable | Evolve this repo in phases **and** follow a JD-mapped learning path |
-| LLM perimeter | **Closed default** (MOCK / Ollama / vLLM). **LiteLLM gateway** as an optional profile. **Multi-provider demo** profile (Azure OpenAI / Vertex / Bedrock adapters or stubs) for portfolio realism — never the default |
-| Demo video | **Out of scope** — no video in the repository |
-| Evidence rule | Claim only what was run. Label the rest "not verified" (same as vLLM GPU today) |
+For the multi-domain direction and LangGraph/ADK/A2A responsibilities, see the [multi-domain architecture](./multi-domain-architecture.md), [public architecture views](./public-architecture.md), and [open-source strategy](./open-source-strategy.md). For related source-of-truth documents, see the [capability map](./capabilities.md), [Engineering Excellence standards](./engineering/README.md), and [specification/delivery workflow](./delivery-workflow.md). These capture document intelligence (RapidOCR/optional Docling), Vault/ESO verification, Python/TypeScript/Go engineering quality, algorithmic reasoning and lightweight OpenSpec-compatible requirements without adding a new mandatory toolchain.
 
-This roadmap does **not** replace the course submission criteria in [`README.md`](../../README.md). Course MVP stays green; agent-platform work is additional functionality with new ADRs.
+## Principles and scope
 
----
+| Principle | Decision |
+| --- | --- |
+| Framework-agnostic platform | One external agent API and declarative manifest; **LangGraph** is the existing runtime and **Google ADK** is an optional second runtime |
+| Runtime choice | Choose a runtime per agent at registration/invocation. Do **not** promise checkpoint or workflow portability between frameworks |
+| Closed LLM perimeter | Default to MOCK / Ollama (CPU) / self-hosted vLLM (GPU when available). LiteLLM Proxy is optional; external providers are explicit opt-in, never the default |
+| Reuse before adding | Preserve Neo4j + vector RAG, PostgreSQL, Celery/Redis ingestion, Keycloak + Go BFF, OTel/LGTM, Helm and existing CI evaluations |
+| Security boundary | Authorize at admission **and** before tool execution; distinguish a manifest declaration from enforced sandbox/network policy |
+| Evidence | **Configured ≠ tested ≠ runtime-verified ≠ production-ready.** Never claim scale, safety, compliance or failover without measurements |
+| Incremental delivery | One end-to-end reference-agent slice before extra protocols, control planes or cloud adapters |
+| Documentation | Keep ADRs, architecture diagrams, README and presentation claims aligned with actual implementation; do not hand-edit generated diagrams |
+| Deliverables | Public portfolio and reproducible local demo; a demo video and cloud infrastructure are optional |
 
-## Gap vs JD (summary)
+**Explicit non-goal:** implementing every vendor tool mentioned in one job description. Prefer portable engineering capabilities and explain substitute technologies.
 
-| JD responsibility | Repo today | Target in this roadmap |
-| ----------------- | ---------- | ---------------------- |
-| Agent manifest & registry | Fixed LangGraph SM; no declarative agent spec | Single YAML/JSON manifest → registry → wire tools/memory/model/guardrails |
-| GenAI gateway (LiteLLM) | Single `LLMClient` ([`llm.py`](../../app/backend/kp/infrastructure/llm.py)) | LiteLLM proxy: routing, failover, metering, cost attribution; local + multi-provider demo |
-| Long-running / streaming / HITL | SSE + LangGraph checkpoints; Celery for ingest; Temporal rejected for ingest ([ADR-008](../../architecture/adr/ADR-008-sync-async-cache.md)) | HITL interrupts, resume, queue/retry for agent runs; Temporal as optional later learning track |
-| Feature flags / kill-switch | Env toggles | OpenFeature + Flagd; progressive prompt/model rollout; emergency kill-switch + audit |
-| Reliability / SLOs / runbooks | Capacity + load docs | Gateway failover runbook, agent SLOs, on-call sketch |
-| Observability & eval | OTel LGTM + golden eval + DeepEval | Keep LGTM; add MLflow registry; optional Braintrust/Datadog LLM Obs exporters |
-| Reference agents | One GraphRAG chat agent | 1–2 reference agents on the new manifest (keep GraphRAG; add a tool-using / A2A peer) |
-| Protocols MCP / A2A / AG-UI | Absent | MCP tools first → A2A between agents → AG-UI event stream to UI |
-| K8s CRDs / multi-cloud | Helm + AWS Terraform (unverified); no GKE/Azure | Kustomize overlays; Agent CRD sketch; GCP/Azure Terraform stubs labeled unverified |
-| Regulated data narrative | ACL / audit / hardening | Compliance-oriented audit trail design (GDPR-style data handling notes; not a certification claim) |
+## Current baseline (main branch)
 
----
+The entries below describe code and documentation, **not necessarily a live integration test**.
 
-## Architecture target (high level)
+| Capability | Current evidence | Limit / next proof |
+| --- | --- | --- |
+| GraphRAG reference agent | Fixed LangGraph workflow, ACL-filtered Neo4j/vector retrieval, citations; existing evaluation gate | Fixed workflow is not a planning/reflection agent |
+| AgentManifest and Registry | Pydantic/YAML manifests, disk and in-memory API registry; LangGraph invoke via ChatService; [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md) | Manifest tools, sandbox, model, memory and entrypoint are not all enforced as generic runtime bindings; registration is in-process |
+| Gateway | Direct client plus LiteLLM Proxy profiles and per-agent/team attribution; [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md) | Live LiteLLM+Ollama Compose, failover and usage correctness need evidence; mock fallback must not impersonate grounded KB answers |
+| Feature flags | Flagd OFREP/in-memory, model/prompt variants, start-of-run kill-switch and audit; [ADR-013](../../architecture/adr/ADR-013-feature-flags.md) | Verify live Flagd and fail-safe behavior; active-run cancellation/rechecks not yet demonstrated |
+| State and background work | LangGraph session checkpoints (PostgreSQL in live mode); Celery for **document ingestion** | Checkpoints do not alone guarantee idempotent durable agent jobs, approval, or resume APIs |
+| Identity and security | Role-based retrieval ACL; optional Keycloak + Go BFF; Kubernetes hardening, secrets options and audit | Separate agent/delegated identity, tool authorization, retention, durable audit and sandbox enforcement still need work |
+| Observability and evaluation | OTel → Prometheus/Grafana/Loki/Tempo; deterministic golden-set and ACL CI gate; optional DeepEval wiring | Agent/tool-span conventions and trace→review→eval feedback loop not yet demonstrated; real-model judge results not recorded |
+| Reference agents | `graphrag-chat` is invokable; `label-assistant` is registered but has a separate vision API/stub invoke | Prove a second agent using shared platform contract, not merely a second manifest |
+| K8s and IaC | Docker/Compose, Helm, local K8s hardening; AWS Terraform materials | No verified CRD/operator, cloud production cluster, or multi-cloud operation |
+
+**Baseline verification gate:** rerun tests, diagrams drift check and local integration smoke tests after each phase. Keep setup instructions and failure evidence alongside success evidence.
+
+## Multi-domain product direction (proposed)
+
+The platform must become **domain-agnostic** without discarding RetailPartnerX. The preferred initial specialization is **LangGraph / Domain Intelligence** (existing Retail GraphRAG; proposed Health Evidence, Nutrition and Fitness) and **Google ADK / Engineering & Governance** (proposed DevSecOps Review, Policy Research, Compliance Coordination and Approval Requests). This is an **organizational default, not a framework limitation or a claim of runtime superiority**. Every agent selects its own runtime by manifest and measured functional/operational needs.
+
+**A2A** will provide real, authorized **inter-service** delegation between independently deployed LangGraph and ADK agents, rather than replacing ordinary local function/tool calls. The first useful scenario is an ADK read-only DevSecOps reviewer requesting supplier-policy evidence from LangGraph Retail GraphRAG. A second demonstration may connect Food, Nutrition and Fitness, with optional policy research; do not transmit sensitive health data to unrelated agents. Keep the same security, model gateway, observability and evaluation infrastructure for both tracks. Details, target topology, healthcare safety boundaries, tests and rollout stages: [multi-domain architecture](./multi-domain-architecture.md).
+
+**Product scope:** a future Personal Life Assistant may cover food, fitness and health education; enterprise applications may cover retail and engineering governance. Healthcare clinical functionality, patient data integrations, medical-device claims and regulated deployment are **not** in the initial MVP; assess regulatory and safety requirements before any such expansion. Initial demos use synthetic data.
+
+## Target architecture
 
 ```mermaid
 flowchart TB
-  subgraph surfaces [Surfaces]
-    UI[Frontend_AGUI]
-    Sched[Schedules_Workflows]
-    Peer[Peer_Agents_A2A]
-  end
+  Surf[Product UI / API] --> Admission[Agent API: admission and request identity]
+  Admission --> Reg[Manifest Registry and policy resolution]
+  Reg --> Dispatch[Runtime dispatcher]
 
-  subgraph control [Control_plane]
-    Reg[Agent_Registry]
-    Flags[Flagd_OpenFeature]
-    Manifest[Agent_Manifest]
-  end
+  Dispatch --> LG[LangGraph adapter / existing GraphRAG]
+  Dispatch --> ADK[Optional Google ADK adapter / tool agent]
 
-  subgraph runtime [Runtime]
-    Orch[Orchestrator_LangGraph_or_ADK]
-    HITL[HITL_Approvals]
-    Sandbox[Sandbox_Tool_Exec]
-  end
+  LG --> Tool[Authorized tool execution boundary]
+  ADK --> Tool
+  LG --> Gateway[Shared model access / LiteLLM Proxy optional]
+  ADK --> Gateway
+  Gateway --> Local[Local Ollama / vLLM]
+  Gateway -. explicit opt-in .-> Cloud[Managed provider adapter]
 
-  subgraph gateway [GenAI_Gateway_LiteLLM]
-    Route[Routing_Failover]
-    Meter[Metering_Cost]
-    Guard[Gateway_Guardrails]
-  end
-
-  subgraph providers [Providers]
-    Local[MOCK_Ollama_vLLM]
-    Cloud[Azure_Vertex_Bedrock_demo]
-  end
-
-  subgraph obs [Obs_Eval]
-    OTel[OTel_LGTM]
-    MLF[MLflow]
-    Eval[CI_Eval_Gate]
-  end
-
-  UI --> Reg
-  Sched --> Reg
-  Peer --> Reg
-  Reg --> Manifest
-  Flags --> Orch
-  Manifest --> Orch
-  Orch --> HITL
-  Orch --> Sandbox
-  Orch --> Route
-  Route --> Guard
-  Guard --> Local
-  Guard --> Cloud
-  Orch --> OTel
-  Route --> Meter
-  Meter --> OTel
-  Eval --> MLF
+  Tool --> KB[ACL-aware Neo4j / vector / artifact stores]
+  Dispatch --> Runs[Run store: lifecycle, approvals, recovery]
+  Dispatch --> Controls[Flagd / emergency controls]
+  Dispatch --> Obs[OTel traces, audit, metrics, evaluation]
+  Tool --> Obs
+  Gateway --> Obs
 ```
 
-### Request path (Chat → flags → LiteLLM proxy)
+The diagram is a **target**, not a deployed topology. A runtime adapter is a contract for invocation and events; LangGraph and ADK retain their own internal execution semantics. Common platform policy must not depend on framework-specific prompt instructions.
 
-Concrete control/data path for Phases 2–3. Closed default keeps `LLMClient` on MOCK/Ollama/vLLM; with `LLM_GATEWAY=litellm` the same client talks to the LiteLLM proxy. Details: [genai-gateway.md](./genai-gateway.md), [feature-flags.md](./feature-flags.md).
+### Minimal shared contracts
 
-```mermaid
-flowchart LR
-  Chat[ChatService] --> Flags[OpenFeature]
-  Flags --> Flagd[Flagd_or_InMemory]
-  Chat --> Reg[AgentRegistry]
-  Chat --> LLM[LLMClient]
-  LLM -->|direct| Local[MOCK_Ollama_vLLM]
-  LLM -->|LLM_GATEWAY_litellm| Lite[LiteLLM_Proxy]
-  Lite --> Local
-```
+- **Agent definition:** immutable `agent_id` + manifest version, runtime type, approved entrypoint, tools, model alias, data classification and permissions.
+- **Invocation:** principal/delegation context, request/session/run IDs, input, deadline, idempotency key and runtime selection **from the registered manifest**.
+- **Result/events:** normalized status and streaming envelope (start, progress/tool event, approval required, completed, failed); preserve native runtime metadata without pretending identical internal state.
+- **Control:** authorize, cancel, stop, resume and flag-check at well-defined boundaries; fail predictably on unsupported capabilities.
+- **Observability:** common trace/correlation IDs, agent and manifest versions, model route, tool outcome, latency, token usage, security decision; scrub sensitive data.
+- **Persistence:** runtime-specific checkpoints behind adapters plus a platform-owned run ledger; do not deserialize ADK state as LangGraph state or vice versa.
 
-**Profile matrix**
+**Important:** switching `runtime: langgraph` to `runtime: adk` is not a conversion tool. Implement a different compatible agent behind the same platform API and compare outcomes on shared evaluation cases. Existing sessions stay bound to their original runtime/version.
 
-| Profile | Gateway | Backends | When |
-| ------- | ------- | -------- | ---- |
-| `closed` (default) | Direct `LLMClient` or LiteLLM → local only | MOCK / Ollama / vLLM | CI, desktop, course demo |
-| `gateway-local` | LiteLLM required | Same local backends | Prove routing/metering without leaving perimeter |
-| `gateway-multiprovider` | LiteLLM | Local + Azure/Vertex/Bedrock (real keys or recorded stubs) | Portfolio; mark runtime verified only when exercised |
+## Delivery plan (capabilities before technologies)
 
----
+Each phase needs an ADR when a real trade-off warrants one, executable tests, documented limitations and a reproducible demonstration. Phases **1–3 already exist in code**; remaining phases are planned, not delivered.
 
-## Phased delivery (repo)
+### Foundation already implemented — Phases 1–3
 
-Each phase: ADR → minimal code → tests → docs update in README “additional functionality”. Prefer vertical slices over big-bang rewrites. Keep LangGraph GraphRAG path working; do not break the course eval gate.
+- **Phase 1 / [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md):** manifest schema, Registry, discovery, basic authorization and current LangGraph invoke.
+- **Phase 2 / [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md):** direct/LiteLLM configuration, local aliases, route/usage attribution. **Gateway integration with real Compose remains to be verified**.
+- **Phase 3 / [ADR-013](../../architecture/adr/ADR-013-feature-flags.md):** in-memory/Flagd evaluation, start-of-run kill-switch, flags and audit fields. **Failure policy and mid-run enforcement need verification**.
 
-### Phase 0 — Foundations (1–2 weeks)
+### Phase 4 — Harden the first end-to-end platform slice (P0)
 
-**Goal:** Decide boundaries without shipping dead weight.
+**Goal:** manifest registration causes real, policy-enforced execution of the existing GraphRAG agent; the local infrastructure can be reproduced.
 
-- New ADR index entries (drafts):
-  - **ADR-011** Agent manifest & registry
-  - **ADR-012** GenAI gateway (LiteLLM) and provider profiles
-  - **ADR-013** Feature flags (OpenFeature / Flagd) and kill-switch
-  - **ADR-014** Agent protocols (MCP → A2A → AG-UI)
-  - **ADR-015** Long-running agent runs & HITL (amend relation to ADR-008: Celery stays for ingest; agent runs use LangGraph interrupts first)
-- Amend **ADR-001**: closed default remains; gateway profiles are additive
-- Amend **ADR-006**: optional SaaS exporters (Braintrust / Datadog) never required for CI
-- Skeleton dirs only if needed: `app/backend/kp/agents/`, `app/infra/flagd/`, `app/infra/litellm/`
-- Update [README](../../README.md) “Current state vs plan” table to point here
-- **Out of scope:** Demo video
+- Run and record the actual LiteLLM + Ollama + Flagd Compose path, including an unavailable dependency.
+- Eliminate shared mutable per-request model routing; demonstrate concurrent request isolation and correct attribution.
+- Validate manifest versions, explicit approved runtime/entrypoints, model aliases and tool allowlists. Distinguish configuration validation from enforcement.
+- Implement a consistent runtime admission/auth policy and prohibit unauthorized tool execution. Enforce the closed-provider allowlist across gateway profiles and observable egress.
+- Define emergency-control fallback semantics on Flagd timeout/outage; distinguish disabling new runs from stopping in-flight dangerous tool actions.
+- Remove or explicitly mark demo-only mock-model failover so it never returns fabricated corporate KB facts as a grounded success.
+- Refresh test evidence, [gateway](./genai-gateway.md), [flags](./feature-flags.md), security ADR and diagrams as needed.
 
-**Exit:** ADRs accepted (or Proposed with clear open questions); no behavior change required yet.
+**Exit evidence:** manifest → authorized GraphRAG invoke → local LLM route → trace/audit; unauthorized tool/model path denied; gateway/flag outage controlled; parallel model-route test; reproducible Compose smoke. No production-readiness claim.
 
-### Phase 1 — Agent manifest & registry (JD #1) — **done in code**
+### Phase 5 — Optional second orchestrator: Google ADK (P1)
 
-**Goal:** One declarative spec that can register an agent and resolve model/tools/memory/guardrails.
+**Goal:** prove **two independently implemented reference agents** share one platform API and controls, while preserving the fixed LangGraph GraphRAG workflow.
 
-Shipped:
+- Add a narrow `AgentRuntimeAdapter` interface: validate capabilities, invoke/stream events, return run status, cancel if supported, and expose resume semantics only where implemented.
+- First adapter wraps the existing LangGraph execution; second adapter runs a small **self-hosted Google ADK Policy/DevSecOps read-only tool-using agent** via the same registered manifest/dispatcher.
+- ADK runs locally in a Python process/container, using a tool-calling-capable local model through the **existing LiteLLM Proxy** when the gateway profile is active; avoid implicit calls to Vertex/Gemini or other external APIs.
+- Integrate one **real** allowlisted knowledge tool (read-only policy lookup), sharing principal permissions and audit. Do not map arbitrary manifest entrypoints to unrestricted Python imports or arbitrary executable tools.
+- Provide agent-specific runtime selection (e.g. `runtime: langgraph` / `runtime: adk`). If a user-facing runtime switch is added, route to the separately defined agent and clearly state that existing session checkpoints cannot migrate.
+- Test both runtimes for permission boundaries, gateway use, correct trace labels, failure propagation and equivalent **platform** API results. Compare output quality on a small common dataset; do not promise identical outputs.
+- Optional: ADK sub-agents or a bounded planner/reflection loop only if needed to prove a non-fixed agent pattern.
 
-- Manifest schema + [ADR-011](../../architecture/adr/ADR-011-agent-manifest-registry.md)
-- Disk manifests: [`app/backend/agents/`](../../app/backend/agents/) (`graphrag-chat`, `label-assistant`)
-- Registry + HTTP: `GET/POST /v1/agents`, `GET …/resolve`, `POST …/invoke`
-- `/v1/chat` authorizes `DEFAULT_AGENT_ID` / `agent_id`
-- Tests: `tests/test_agent_registry.py` · how-to: [agents.md](./agents.md)
+**Exit evidence:** two distinct manifests, one LangGraph GraphRAG agent and one ADK tool agent, invokable via the same authenticated API with the same external controls; local models only by default. No rewriting GraphRAG in ADK merely for parity.
 
-**Exit:** GraphRAG agent listed in registry; chat path still passes eval gate.
+### Phase 6 — Durable execution and human approval (P1)
 
-### Phase 2 — GenAI gateway on LiteLLM (JD #2) — **done in code**
+**Goal:** demonstrate reliable execution of at least one meaningful long-running action independently of the specific agent framework.
 
-**Goal:** Own a real gateway path without abandoning the air gap.
+- Write [ADR-015](../../architecture/adr/README.md) for the smallest run ledger + worker/queue approach; prefer existing PostgreSQL and Redis/Celery where suitable. **Do not introduce Temporal** without a demonstrated orchestration gap.
+- Define state transitions: `queued → running → waiting_approval → resuming → succeeded/failed/cancelled`, including timeouts, retries and terminal states.
+- Add human approval/rejection before a **simulated sensitive write**; bind approval to identity, action, version and expiry.
+- Add idempotency keys and a side-effect ledger; recover a crashed worker without executing a previously committed action twice.
+- Add SSE heartbeat/reconnect and replay of run status/events; retain the existing UI path. WebSockets only if bidirectional interaction actually requires them.
+- Recheck authorization, kill-switch and tool policy **before each sensitive action and on resume**. Enforce tool execution deadlines and explicit network permissions; manifests alone are not sandboxes.
+- Add an SLO draft and a small failure drill (stuck run, gateway outage or denied approval).
 
-Shipped:
+**Exit evidence:** a queued agent run pauses for approval, survives process restart, resumes once, reports its state and emits trace/audit records. No exactly-once guarantee beyond the tested idempotency contract.
 
-- [ADR-012](../../architecture/adr/ADR-012-genai-gateway.md) · [genai-gateway.md](./genai-gateway.md)
-- Compose profile `gateway` + [`app/infra/litellm/`](../../app/infra/litellm/) (`gateway-local` + multiprovider stubs)
-- `LLM_GATEWAY=litellm` → `LLMClient` provider `LITELLM`; closed default unchanged
-- Audit/metrics attribution: `agent_id`, `team_id`, `gateway`, `model_route`
-- Tests: `tests/test_llm_gateway.py` (no LiteLLM container required for CI)
+### Phase 7 — Evaluation feedback loop and operational visibility (P1)
 
-Live LiteLLM+Ollama Compose runtime: **not verified** until exercised on a machine.
+**Goal:** turn existing observability and CI evaluations into an actionable, privacy-aware quality and reliability process.
 
-### Phase 3 — Feature flags & kill-switch (JD progressive rollout) — **done in code**
+- Keep **OTel + LGTM** as the primary observability stack; enrich agent/tool spans with correlation, runtime, manifest version, gateway alias, outcome, retry and approval status.
+- Define a few meaningful **agent-specific SLIs/SLOs**: accepted run completion rate, time-to-result, tool error rate, gateway availability, unauthorized-action blocks and recovery latency. Avoid speculative targets without a load baseline.
+- Build **trace → redaction → human review → labeled eval case → CI regression gate** on a tiny local sample. Sensitive raw traces must not be copied into public datasets.
+- Preserve deterministic ACL/no-leak tests. Run an optional local LLM-as-judge with recorded measured results; never substitute a judge score for authorization guarantees.
+- Retain ACL-aware GraphRAG and artifact storage; add long-term memory only for a justified use case with isolation, TTL, delete/export and retention rules.
+- Make audit durable/tamper-evident as a design step beyond current in-memory rows. Clearly differentiate technical control demonstrations from GDPR/HDS/ISO 27001/SOC 2 certification.
+- Compare model cost/latency and capacity using **real local usage measurements**; document route/failover, cache correctness, token budget and provider-quota simulations. No made-up PTU/GSU reservations.
 
-**Goal:** Progressive rollout for prompts, models, configs + emergency stop.
+**Exit evidence:** one reproducible trace becomes a sanitized eval case that fails a deliberate regression; dashboard/runbook shows why a run failed and how it can be recovered.
 
-Shipped:
+### Phase 8 — Interoperability and platform adoption (P2)
 
-- [ADR-013](../../architecture/adr/ADR-013-feature-flags.md) · [feature-flags.md](./feature-flags.md)
-- [`app/infra/flagd/flags.json`](../../app/infra/flagd/flags.json) + Compose profile `flags`
-- In-memory evaluator (CI) / OFREP when `FLAGD_URL` set
-- Kill-switch + `agent_enabled` → 503 + audit `deny_kill_switch`
-- `prompt_version` / `model_route` on audit; LiteLLM alias follows `model_route` when gateway is on
-- Tests: `tests/test_feature_flags.py`
+**Goal:** prove that another product team could add a bounded agent without custom platform modifications.
 
-### Phase 4 — Protocols: MCP → A2A → AG-UI
+- **MCP first:** expose a least-privilege read-only knowledge tool over MCP and call it from one reference agent. Measure permissions, input validation and failure behavior; share the same authorization/audit boundary.
+- **A2A for the proposed cross-runtime delegation:** first prove an ADK DevSecOps reviewer requesting ACL-scoped supplier policy evidence from the independent LangGraph Retail GraphRAG system through Agent Cards, A2A task status/artifacts and identity-aware policy checks. Measure trace propagation, latency, denial, timeouts and failure behavior. Keep it optional, never mandatory for local calls; see [multi-domain architecture](./multi-domain-architecture.md).
+- **AG-UI only if UI interoperability needs it:** add an adapter over existing SSE events instead of rebuilding the frontend. Keep one canonical event contract.
+- Provide an agent onboarding example: manifest, approved tool, runtime choice, local gateway route, tests, logs, rollback and runbook.
+- Write a concise build-vs-buy / when-not-to-use-multi-agent note. Prove the platform is useful even when a single deterministic LangGraph workflow is the best choice.
 
-**Goal:** Interoperability story matching the JD.
+**Exit evidence:** a new agent is registered, invoked, governed, observed and evaluated with **no framework-specific change in the shared API**, and its limitations are documented.
 
-1. **MCP:** Expose 1–2 tools (e.g. policy retrieve, audit lookup) as an MCP server; optional MCP client tool node for a second agent
-2. **A2A:** Minimal agent-to-agent call between registry agents (request/response + task id); document mapping to Google A2A concepts
-3. **AG-UI:** Map SSE chat events to AG-UI-style event types in BFF/frontend (or adapter layer); keep existing SSE working
+## Product and engineering quality tracks (cross-cutting)
 
-**Google ADK:** Spike in a **side module** or second reference agent (Phase 6). Do not rip out LangGraph for the course agent. ADR documents “ADK or similar” coexistence.
+These are **not competing phases**: apply them as relevant to each P0/P1 capability. Refer to the [capability map](./capabilities.md) for current evidence and gaps.
 
-**Exit:** One MCP tool used in a path covered by tests; A2A ping between two agents; UI still streams.
+- **Document intelligence:** keep RapidOCR for local CPU label OCR; benchmark optional Docling on tables, page structure and citations before adopting it. Use versioned normalized document/provenance contracts and evaluate OCR accuracy on permissible real-world samples. LlamaIndex is optional ingestion/indexing integration, not an OCR requirement.
+- **Secrets and identity:** keep the existing Vault + External Secrets Operator design; validate live dynamic-credential rotation and deny overbroad agent tool credentials. Do not introduce another secret store.
+- **Backend and BFF quality:** apply responsibility-based architecture, useful Python docstrings, idiomatic Go documentation, typed public contracts, testing, concurrency and explicit timeouts; avoid giant handlers and cosmetic rewrites.
+- **Frontend quality:** retain React/TypeScript/Vite; adopt pragmatic Feature-Sliced Design boundaries, type-safe API/events, accessibility and focused tests without adding an unnecessary UI/state framework.
+- **Algorithms in production:** apply hashing, graph traversal, caching, queues, rate limits, state machines and retry algorithms where appropriate. Document invariants, complexity and trade-offs; avoid bespoke implementations of solved infrastructure problems.
+- **Specification-driven delivery:** use the [delivery workflow](./delivery-workflow.md). Capture behavior and acceptance tests in lightweight specs, decisions in ADRs, and proofs in tests/evidence. OpenSpec-compatible structure is optional until a real feature justifies it.
+- **Additional quality gates:** contract testing across Python/Go/TypeScript and runtimes; basic supply-chain hygiene, performance baselines, retention/deletion and resilience tests.
 
-### Phase 5 — Long-running reliability & HITL (JD #3 / #5)
+## Optional follow-ups — only when justified (P3)
 
-**Goal:** Production-shaped control plane for agent runs.
+| Candidate technology | Current equivalent / trigger to add | Decision |
+| --- | --- | --- |
+| Google ADK | LangGraph exists; add **one** optional ADK runtime for genuine multi-runtime coverage | Included in Phase 5 |
+| Temporal | LangGraph checkpoints + PostgreSQL/Redis/Celery available; add only if durable cross-service coordination cannot be met cleanly | Deferred |
+| Kubernetes Agent CRD/operator | Helm and manifest registry already work; only add if reconciliation/multi-tenant lifecycle becomes a concrete requirement | Deferred, not a sketch for résumé keywords |
+| Kustomize | Helm already provides deployment variants; add if cluster overlays solve actual configuration complexity | Deferred |
+| MLflow | Existing eval reports, prompt version fields, local files; add for reproducible experiment tracking if multiple versions need comparison | Optional after Phase 7 |
+| Braintrust / Datadog | OTel + Tempo/Loki/Grafana + DeepEval cover local fundamentals; optional export/integration if an employer or deployment requires it | Not a core dependency |
+| GCP/Azure/Bedrock | Current deployment is closed local; AWS IaC is not verified; add one real cloud only with a specific demonstration and budget | No multi-cloud stubs required |
+| vLLM GPU and KV-cache-aware routing | vLLM profile exists but GPU runtime not verified; evaluate only with suitable hardware and measured cache-aware serving | Deferred |
+| PTU / GSU / provisioned throughput | Can model quotas, utilization, overflow and cost using local simulations | No claim of real reserved capacity |
+| SOC 2 / ISO 27001 / HDS | Security practices and data handling controls exist as demos | Learn requirements and evidence mapping; **no certification claim** |
 
-- LangGraph interrupt / approval node for sensitive actions (e.g. export or policy override)
-- Run store: status, snapshot, resume API (`/v1/runs/{id}`)
-- Queue + retries for async agent runs (reuse Redis/Celery **or** a dedicated run worker — ADR-015 decides; do not force Temporal into ingest)
-- SSE resilience notes (heartbeat, reconnect) in BFF; WebSocket only if AG-UI needs it
-- SLO draft + runbook: gateway failover, kill-switch, stuck runs
-- Sandbox: tighten tool execution (timeouts, allowlisted tools, no arbitrary shell); document gVisor/Firecracker as future hardening
+## Portable skill mapping (not a single-employer checklist)
 
-**Exit:** HITL approve/reject path tested; resume from checkpoint demonstrated.
+| Engineering capability | Concrete portfolio proof |
+| --- | --- |
+| Platform API and control plane | Versioned agent manifest, registry, runtime dispatch and admission policy |
+| Distributed systems and operational correctness | Run ledger, idempotency, restart/resume, bounded retries and failure injection |
+| Agent frameworks and tool use | LangGraph GraphRAG + optional local ADK agent, both behind platform contracts |
+| AI model infrastructure | Local LiteLLM/Ollama path, per-request routing, usage/cost attribution, explicit failover |
+| Security and regulated-data readiness | Scoped agent/user identity, tool authorization, no-egress default, sensitive-data redaction and audit |
+| AI reliability and evaluation | Trace/span correlation, actual SLI baselines, eval gating and trace-to-eval feedback |
+| Developer experience and architecture | Second-agent onboarding without core API rewrite, ADR trade-offs, minimal runbooks |
 
-### Phase 6 — Observability, eval, model registry (JD #6)
+## Evidence and acceptance checklist
 
-**Goal:** Online + offline loop without making SaaS mandatory.
+Before marking any work *verified*, record:
 
-- **MLflow:** model / prompt version registry linked to Flagd variants; local tracking server in Compose optional profile
-- Keep golden-set CI gate; add optional LLM-as-judge path (already DeepEval-shaped)
-- Export hooks: OTel → Datadog LLM Observability (docs + optional exporter); Braintrust dataset export from traces (script, optional)
-- Trace enrichment: tool calls, flag variant, gateway route, agent id on every span
-- Compliance audit: durable audit sink option (Postgres/MinIO) beyond in-memory `/v1/audit`
+1. **Code:** implemented module and manifest changes.
+2. **Tests:** exact command, environment and successful/failed result.
+3. **Integration:** mock versus real local Ollama/LiteLLM/Flagd; network/perimeter assumptions.
+4. **Failure modes:** one negative test, recovery behavior and security boundary.
+5. **Artifacts:** a trace, audit sample, small eval report and linkable documentation.
+6. **Honest limits:** local/single-node versus replicas; simulated versus real provider; no unearned production or compliance claims.
 
-**Exit:** CI unchanged without SaaS; optional profiles documented; at least one “trace → eval case” script.
+**Implementation order:** verify/harden existing Phases 1–3 → multi-runtime reference agent → durable run lifecycle → trace-to-eval reliability loop → interoperability only where useful. Avoid packaging work with no demonstrated runtime benefit.
 
-### Phase 7 — Platform packaging & multi-cloud sketches
+## Domain expansion track (P2 / later)
 
-**Goal:** Kubernetes-native and IaC story for the JD “nice to have”.
+- Preserve current Retail GraphRAG as the first working domain product. Extract reusable platform contracts only when justified by a second consumer.
+- Add synthetic-data LangGraph **Nutrition Assistant** and **Fitness Planner** after the multi-runtime platform slice; add **Health Evidence** as a source-grounded educational workflow, not a medical diagnosis service.
+- Use ADK for **DevSecOps Reviewer, Compliance Coordination, Approval Requests and Policy Research** as the initial technical-governance track; policy decisions and approvals require deterministic trusted backends.
+- Demonstrate at least one Food → Nutrition → Fitness user journey, and one real cross-runtime A2A delegation, with tests and provenance. Do not route every action through A2A.
+- Consider FHIR, regulated healthcare data/hosting or patient workflows only after an explicit use-case and privacy/legal/clinical-safety gate.
 
-- Kustomize overlays: `closed`, `gateway-local`, `gateway-multiprovider`
-- Agent CRD **sketch** + sample manifest (operator can be stub/controller-lite or docs-only if time-boxed)
-- Terraform stubs: GCP (GKE) and Azure (AKS) mirroring `app/infra/aws/` style — **not verified** until applied
-- Link SLOs/runbooks from [`docs/`](../)
+## Learning alongside implementation
 
-**Exit:** Overlays render; cloud stubs exist with honest status labels.
-
-### Phase 8 — Reference agents & advisory docs (JD #7)
-
-**Goal:** Validate the platform by shipping agents yourself.
-
-1. **Reference A:** Existing GraphRAG compliance/chat agent on the manifest (hardening pass)
-2. **Reference B:** Tool-using agent (MCP tools + HITL) **or** small ADK-based agent that calls the same gateway/registry
-- Short “architecture trade-offs for feature teams” doc (build vs buy, when not to use multi-agent, cost controls)
-
-**Exit:** Two agents in registry; README additional-functionality table updated. Still **no** demo video.
-
----
-
-## Learning path (parallel to shipping)
-
-Map study to JD bullets. Prefer building in this repo over isolated tutorials.
-
-| JD theme | Learn / practice | Prove in repo |
-| -------- | ---------------- | ------------- |
-| Agent design patterns | LangGraph advanced (interrupt, subgraphs); Google ADK quickstart | Phase 1 + 4–5 + reference B |
-| MCP / A2A / AG-UI | Spec reading + small interop demos | Phase 4 |
-| Control plane (queue, retry, checkpoint) | Compare Celery vs Temporal; implement HITL resume | Phase 5; Temporal workshop optional |
-| Feature flags / kill-switch | OpenFeature + Flagd tutorials | Phase 3 |
-| LLM cost & capacity | LiteLLM routing docs; provider PTU/GSU reading; capacity math | Phase 2 + update [capacity-planning.md](../quality/capacity-planning.md) |
-| Reliability / on-call | Write SLO + incident runbook; practice failover drill locally | Phase 2 + 5 docs |
-| Security / sandbox / audit | Extend ADR-005; tool allowlists; audit durability | Phases 3, 5, 6 |
-| Memory / RAG / feedback loop | Long-term memory patterns; trace→eval dataset | Phase 6 + existing GraphRAG |
-| CRDs / operators | Kubebuilder or sample CRD | Phase 7 |
-| Regulated environments | GDPR/HDS/ISO/SOC2 **awareness** notes — no fake certification | Audit + data-handling section in security docs |
-| Languages | Python deep; Go BFF extensions; TS AG-UI client types | BFF + frontend adapters |
-| Cloud | One real apply of AWS **or** GCP when hardware/account allows; others stay stubs | Phase 7 |
-
-**Cadence suggestion:** one phase ~2–4 weeks part-time; learning spikes in the same phase’s first week.
+Study only when needed to explain or implement an upcoming milestone: ADK Runner/Session/Tool APIs while building the second adapter; execution/idempotency when adding HITL; model quota economics during gateway testing; healthcare privacy principles when designing retention and audit. Prefer small evidence-backed experiments over broad tutorial collections.
 
 ---
 
-## Explicit non-goals (for now)
+## Portfolio positioning
 
-- Demo video (none in the repository)
-- Claiming production RPM, reserved-capacity contracts, or verified multi-cloud runtimes without evidence
-- Replacing LangGraph course agent with ADK
-- Making Datadog / Braintrust / cloud LLMs required for CI
-- Full Temporal rewrite of ingest (ADR-008 stands unless a new ADR supersedes it for **agent** workflows only)
+> A secure, self-hosted, framework-agnostic Agents Platform using an existing LangGraph GraphRAG agent and an optional Google ADK runtime. Both use common declarative registration, policy enforcement, model access, observability and evaluation contracts. Capabilities are marked as implemented, verified or planned according to actual evidence.
 
----
-
-## Suggested first implementation slice (after roadmap accept)
-
-1. Land ADR-011…015 as Proposed/Accepted drafts under [`architecture/adr/`](../../architecture/adr/)
-2. Point README plan table at this document
-3. Implement Phase 1 manifest + registry for the existing GraphRAG agent
-4. Then Phase 2 `gateway-local` LiteLLM
-
-Order maximizes JD narrative (“own the manifest” then “own the gateway”) while reusing code that already works.
+This is the **target portfolio description**; do not present planned ADK, durable agent execution or multi-runtime portability as shipped until the acceptance evidence exists.

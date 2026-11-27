@@ -1,6 +1,22 @@
-# RetailPartnerX Knowledge Platform (learning MVP)
+<p align="center"><img src="docs/agent-platform/brand-assets/coraium-agent-platform.svg" alt="Coraium Agent Platform logo" width="280"></p>
 
-**A secure platform for multimodal analysis of corporate knowledge (GraphRAG)**, built for the AI Architect course.
+# Coraium Agent Platform
+
+**Secure, self-hosted infrastructure for domain-aware AI agents.**
+
+Coraium Agent Platform is an evolving open-source-oriented engineering project that explores how to make AI agents secure, observable, testable and reusable across application domains. It originated as the **RetailPartnerX Knowledge Platform** AI Architect course project; **RetailPartnerX remains the first working LangGraph/GraphRAG retail reference application**, not the name of the shared platform.
+
+**What exists today:** LangGraph Retail GraphRAG, role-scoped retrieval, agent manifest/registry, local models and optional LiteLLM gateway configuration, feature-flag controls, observability and CI evaluations. **Not yet shipped:** Google ADK runtime, A2A agent interoperability, Health/Nutrition/Fitness agents, DevSecOps agents and regulated healthcare applications. Configuration is not the same as live integration verification.
+
+**Architecture direction:** [Domain Intelligence (LangGraph) + Engineering & Governance (Google ADK, planned) + A2A interoperability (planned)](docs/agent-platform/multi-domain-architecture.md). Both frameworks remain choices *per agent* rather than hard domain locks.
+
+[Platform roadmap](docs/agent-platform/roadmap.md) · [Capability evidence map](docs/agent-platform/capabilities.md) · [Proposed diagrams](docs/agent-platform/public-architecture.md) · [Open-source strategy](docs/agent-platform/open-source-strategy.md)
+
+---
+
+## RetailPartnerX reference implementation
+
+**A secure platform for multimodal analysis of corporate knowledge (GraphRAG)**, originally built for the AI Architect course. The sections below document the existing retail reference and its course-specific requirements.
 
 > **Docs index:** [docs/README.md](docs/README.md) · **Glossary:** [docs/getting-started/Glossary.md](docs/getting-started/Glossary.md) · **ADD:** [architecture/](architecture/) · **Setup:** [docs/getting-started/SETUP.md](docs/getting-started/SETUP.md) · **Load testing:** [docs/load-testing/](docs/load-testing/)
 
